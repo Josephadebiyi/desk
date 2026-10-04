@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Ofrenda del domingo: <b>{amount}</b> recibidos. Recibos enviados a 96 donantes ✓',
   },
   metaTitle: 'ZionDesk — La gestión de tu iglesia, simplificada',
-  trust: 'Iglesias que crecen con ZionDesk',
+  trust: 'Más de 500 iglesias gestionan su ministerio con ZionDesk',
   timeline: {
     h2a: 'Software para iglesias que', h2b: 'crece contigo',
     sub: 'ZionDesk conecta a tu gente, tus ofrendas y tus reuniones: cada domingo facilita el siguiente.',

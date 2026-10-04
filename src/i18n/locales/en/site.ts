@@ -24,7 +24,7 @@ export default {
     chat2: 'Sunday offering: <b>{amount}</b> received. Receipts sent to 96 givers ✓',
   },
   metaTitle: 'ZionDesk — Church management made simple',
-  trust: 'Churches growing with ZionDesk',
+  trust: 'More than 500 churches run their ministry on ZionDesk',
   timeline: {
     h2a: 'Church software that', h2b: 'grows with you',
     sub: 'ZionDesk connects your people, your giving and your gatherings — every Sunday makes the next one easier.',

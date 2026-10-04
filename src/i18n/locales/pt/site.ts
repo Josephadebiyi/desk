@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Oferta de domingo: <b>{amount}</b> recebidos. Recibos enviados a 96 doadores ✓',
   },
   metaTitle: 'ZionDesk — Gestão da igreja simplificada',
-  trust: 'Igrejas que crescem com o ZionDesk',
+  trust: 'Mais de 500 igrejas gerem o seu ministério com o ZionDesk',
   timeline: {
     h2a: 'Software para igrejas que', h2b: 'cresce consigo',
     sub: 'O ZionDesk liga as suas pessoas, ofertas e encontros — cada domingo torna o seguinte mais fácil.',

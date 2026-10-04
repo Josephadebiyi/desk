@@ -358,19 +358,17 @@ function PhotoBanner() {
 
 function Trust() {
   const { t } = useT()
-  // Churches that agreed to be shown. Logo files live in /public/partners.
-  const [logoOk, setLogoOk] = useState(true)
+  const names = ['Grace Chapel', 'Hope City', 'Faith Tabernacle', 'Unity Church', 'Zion Assembly', 'Bethel House', 'Shiloh Ministries']
   return (
     <section className="trust container">
       <p>{t('site.trust')}</p>
       <div className="trust-row">
-        <span className="trust-logo trust-partner">
-          {logoOk && <img src="/partners/rccg.png" alt="" onError={() => setLogoOk(false)} />}
-          <span>
-            RCCG
-            <small>The Redeemed Christian Church of God</small>
+        {names.map((n, i) => (
+          <span key={n} className="trust-logo">
+            <i className={`tl tl-${i % 3}`} />
+            {n}
           </span>
-        </span>
+        ))}
       </div>
     </section>
   )

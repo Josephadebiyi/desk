@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Sonntagskollekte: <b>{amount}</b> eingegangen. Quittungen an 96 Spender gesendet ✓',
   },
   metaTitle: 'ZionDesk — Gemeindeverwaltung leicht gemacht',
-  trust: 'Gemeinden, die mit ZionDesk wachsen',
+  trust: 'Über 500 Gemeinden organisieren ihre Arbeit mit ZionDesk',
   timeline: {
     h2a: 'Gemeindesoftware, die', h2b: 'mit dir wächst',
     sub: 'ZionDesk verbindet deine Menschen, deine Spenden und deine Treffen – jeder Sonntag macht den nächsten leichter.',

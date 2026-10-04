@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Offrande du dimanche : <b>{amount}</b> reçus. Reçus envoyés à 96 donateurs ✓',
   },
   metaTitle: 'ZionDesk — La gestion d’église, simplement',
-  trust: 'Des églises qui grandissent avec ZionDesk',
+  trust: 'Plus de 500 églises gèrent leur ministère avec ZionDesk',
   timeline: {
     h2a: 'Un logiciel d’église qui', h2b: 'grandit avec vous',
     sub: 'ZionDesk relie vos membres, vos dons et vos rassemblements — chaque dimanche facilite le suivant.',
