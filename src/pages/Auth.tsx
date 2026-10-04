@@ -316,6 +316,9 @@ export function Login() {
   const navigate = useNavigate()
   const session = useSession()
   const google = useGoogleEnabled()
+  // Only same-site paths (e.g. /admin) are allowed as the post-login destination.
+  const [search] = useSearchParams()
+  const dest = /^\/(admin|dashboard)(\/|$)/.test(search.get('next') ?? '') ? search.get('next')! : '/dashboard'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -328,7 +331,7 @@ export function Login() {
     setNotice(null)
     try {
       await login({ email, password })
-      navigate('/dashboard')
+      navigate(dest)
     } catch (err) {
       setNotice(notConnected(err))
     } finally {
@@ -336,7 +339,7 @@ export function Login() {
     }
   }
 
-  if (session.remote && session.session && !session.loading) return <Navigate to="/dashboard" replace />
+  if (session.remote && session.session && !session.loading) return <Navigate to={dest} replace />
 
   return (
     <AuthLayout

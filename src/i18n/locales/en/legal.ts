@@ -98,7 +98,7 @@ export default {
     h12: 'Children',
     b12: 'ZionDesk accounts are for adults. Churches may record children (for example in a children’s ministry) only with a parent’s or guardian’s consent where required, including under COPPA in the US. We don’t knowingly collect data directly from children.',
     h13: 'AI features',
-    b13: 'When you use Ellen or AI flyers, the content you send is processed by Anthropic to produce the answer. It isn’t used to train AI models. Avoid adding sensitive details that aren’t needed.',
+    b13: 'When you use Ellen or AI flyers, the content you send is processed by Anthropic to produce the answer. It isn’t used to train AI models. Avoid adding sensitive details that aren’t needed. Birthday prayers are written by Google’s Gemini API from a member’s first name, age group, ministry and language only.',
     h14: 'How to make a request',
     b14: 'Use Account settings to download or delete your data, or email us. Church members should contact their church first; we’ll pass on and support requests we receive. We may need to verify your identity.',
   },
@@ -135,6 +135,9 @@ export default {
     b9: 'When the church is deleted we delete its data (the church can export it first in Settings), except where the law requires us to keep it. On reasonable request we provide the information needed to show compliance with this agreement.',
   },
   subprocessors: {
+    gemini: "Personalised birthday prayers (Gemini API)",
+    meta: "WhatsApp messages (WhatsApp Business Platform)",
+    twilio: "SMS messages (optional)",
     sub: 'These companies process data for ZionDesk under contracts that require them to protect it.',
     company: 'Company',
     purpose: 'Purpose',

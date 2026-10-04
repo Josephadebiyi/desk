@@ -100,7 +100,7 @@ const legal: Dict['legal'] = {
     h12: 'Crianças',
     b12: 'As contas ZionDesk são para adultos. As igrejas só podem registar crianças (por exemplo no ministério infantil) com o consentimento dos pais ou tutores quando exigido, incluindo ao abrigo da COPPA nos EUA. Não recolhemos intencionalmente dados diretamente de crianças.',
     h13: 'Funcionalidades de IA',
-    b13: 'Quando usa a Ellen ou os flyers com IA, o conteúdo enviado é processado pela Anthropic para gerar a resposta. Não é usado para treinar modelos de IA. Evite incluir dados sensíveis desnecessários.',
+    b13: 'Quando usa a Ellen ou os flyers com IA, o conteúdo enviado é processado pela Anthropic para gerar a resposta. Não é usado para treinar modelos de IA. Evite incluir dados sensíveis desnecessários. As orações de aniversário são escritas pela API Gemini da Google apenas com o primeiro nome, a faixa etária, o ministério e o idioma do membro.',
     h14: 'Como fazer um pedido',
     b14: 'Use A minha conta para descarregar ou eliminar os seus dados, ou escreva-nos. Os membros devem contactar primeiro a sua igreja; encaminharemos e apoiaremos os pedidos que recebermos. Poderemos ter de verificar a sua identidade.',
   },
@@ -137,6 +137,9 @@ const legal: Dict['legal'] = {
     b9: 'Quando a igreja é eliminada, apagamos os seus dados (pode exportá-los antes em Definições), salvo obrigação legal de conservação. Mediante pedido razoável, fornecemos a informação necessária para demonstrar o cumprimento deste acordo.',
   },
   subprocessors: {
+    gemini: "Orações de aniversário personalizadas (API Gemini)",
+    meta: "Mensagens WhatsApp (WhatsApp Business Platform)",
+    twilio: "Mensagens SMS (opcional)",
     sub: 'Estas empresas tratam dados para o ZionDesk ao abrigo de contratos que as obrigam a protegê-los.',
     company: 'Empresa',
     purpose: 'Finalidade',

@@ -112,3 +112,53 @@ npm run dev            # app on :5173 (calls the API through the dev proxy)
 
 - Google Meet links created automatically — needs Google Calendar API access.
 - Sermon/YouTube processing for Ellen.
+
+---
+
+## Staff console, promo codes, WhatsApp, Google Meet, birthday prayers
+
+Run `supabase/migrations/0005_admin_promos_support.sql` in Supabase → SQL Editor first.
+
+### Staff console (`/admin`)
+- Render → Environment: `ADMIN_EMAILS=you@ziondesk.com,teammate@ziondesk.com`
+- Sign in at `/login?next=/admin` with one of those emails (a normal ZionDesk account).
+- Manage churches (plan, status, extend trial, free month), users (suspend/restore), promo codes,
+  support tickets (replies are emailed), payments and integration status.
+- Optional `SUPPORT_EMAIL` — inbox that's notified about new tickets (default hello@ziondesk.com).
+
+### Promo codes
+Create them in `/admin/promos`. Churches enter them in Settings → Plan.
+- **% off** — charged through a discounted Flutterwave plan; for N months or forever. When N months
+  end, the discounted subscription is cancelled automatically and the church is emailed to resubscribe
+  at the regular price (no surprise charges).
+- **Free days** — free access to the plan with no card; when the days end the church chooses a plan.
+
+### WhatsApp (Meta Cloud API)
+1. business.facebook.com → WhatsApp Manager: add and verify your business phone number.
+2. developers.facebook.com → your app → WhatsApp → API Setup → copy the **Phone number ID**.
+3. Business settings → System users → add one → generate a token with `whatsapp_business_messaging`
+   (never expires) → `WHATSAPP_TOKEN`.
+4. WhatsApp Manager → Message templates → create a **Utility** template, e.g. `church_update`, body:
+   `{{1}}` (one variable). Add translations en, es, fr, de, pt_PT. When approved → `WHATSAPP_TEMPLATE=church_update`.
+   (WhatsApp only allows free text to people who messaged you in the last 24 h; the template covers broadcasts.)
+5. Webhook (delivery receipts): App → WhatsApp → Configuration → Callback URL
+   `https://desk-noae.onrender.com/api/whatsapp/webhook`, Verify token = any string you also put in
+   `WHATSAPP_VERIFY_TOKEN`; subscribe to `messages`. Optional `WHATSAPP_APP_SECRET` (App settings → Basic) to verify signatures.
+
+### Google Meet
+1. Google Cloud → APIs & Services → Library → enable **Google Calendar API**.
+2. OAuth consent screen → Data access → add scope `.../auth/calendar.events`.
+3. Credentials → your OAuth client → Authorized redirect URIs → add
+   `https://desk-noae.onrender.com/api/google/callback`.
+4. Render: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (same client as Google sign-in is fine).
+5. Each church: Settings → Integrations → **Connect Google**. Online events with Google Meet switched on
+   then get a Meet link automatically (sent in invitations and reminders).
+   Note: `calendar.events` is a sensitive scope — until Google verifies the app, up to 100 test users can connect
+   (add them under OAuth consent screen → Audience). Submit for verification before launch.
+
+### Birthday prayers (Gemini)
+- aistudio.google.com → Get API key, on a Google Cloud project **with billing enabled** (paid tier: Google
+  doesn't use prompts to train models, as promised in our Privacy Policy) → `GEMINI_API_KEY`.
+- The daily job writes a unique prayer per celebrant in their language and emails it (or sends it on WhatsApp
+  when there's no email). Admins can also generate one from Overview → Birthdays (✨ button).
+- Only first name, age group, ministry, stage and language are sent — never contact details or notes.

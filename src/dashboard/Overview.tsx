@@ -4,7 +4,8 @@ import { fmtDate, fmtTime, money, tEnum, today } from './kit'
 import { useT } from '../i18n'
 import { useSession } from '../lib/session'
 import { useWorkspace } from './workspace'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { api } from '../lib/api'
 import { Link, useNavigate } from 'react-router-dom'
 import { Initials } from './Members'
 import { useMembers } from './store'
@@ -15,8 +16,19 @@ const fmt = (d: string) => fmtDate(d, { month: 'short', day: 'numeric' })
 
 export default function Overview() {
   const { members, role } = useMembers()
-  const { events, anonGifts, settings } = useWorkspace()
+  const { events, anonGifts, settings, live } = useWorkspace()
   const { t, locale } = useT()
+  // AI birthday prayers (Gemini): one fresh prayer per click, per member.
+  const [prayer, setPrayer] = useState<{ id: string; text: string; busy: boolean; error?: string } | null>(null)
+  const writePrayer = async (id: string) => {
+    setPrayer({ id, text: '', busy: true })
+    try {
+      const r = await api<{ prayer: string }>(`/members/${id}/birthday-prayer`, {})
+      setPrayer({ id, text: r.prayer, busy: false })
+    } catch (e) {
+      setPrayer({ id, text: '', busy: false, error: e instanceof Error ? e.message : String(e) })
+    }
+  }
   const session = useSession()
   const navigate = useNavigate()
   const upcoming = events.filter((e) => e.date >= today()).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)).slice(0, 4)
@@ -163,6 +175,21 @@ export default function Overview() {
                   <small>{next.toLocaleDateString(locale, { month: 'long', day: 'numeric' })}</small>
                 </div>
                 <span className={`d-pill ${days <= 7 ? 'd-pill-lime' : ''}`}>{days === 0 ? t('common.today') : t('common.inDays', { count: days })}</span>
+                {live && (
+                  <button type="button" className="d-icon-btn" title={t('ov.prayer')} aria-label={t('ov.prayer')} disabled={prayer?.busy} onClick={() => writePrayer(m.id)}>
+                    <Sparkles size={15} />
+                  </button>
+                )}
+                {prayer?.id === m.id && (
+                  <div className="ov-prayer">
+                    {prayer.busy ? <small>{t('ov.prayerWriting')}</small> : prayer.error ? <small className="d-errors">{prayer.error}</small> : <p>{prayer.text}</p>}
+                    {prayer.text && (
+                      <button type="button" className="d-btn" onClick={() => navigator.clipboard.writeText(prayer.text)}>
+                        {t('ov.prayerCopy')}
+                      </button>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
             {!birthdays.length && <p className="d-empty-sm">{t('ov.noBirthdays')}</p>}

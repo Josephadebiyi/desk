@@ -15,9 +15,12 @@ import { configured, env } from './env'
 import { runDaily, runHourly } from './jobs'
 import { appRoutes } from './routes/app'
 import { accountRoutes } from './routes/account'
+import { googleRoutes } from './routes/google'
+import { adminRoutes } from './routes/admin'
 import { paymentRoutes } from './routes/payments'
 import { designRoutes } from './routes/design'
 import { authHookRoutes } from './routes/authHook'
+import { whatsappRoutes } from './routes/whatsapp'
 import { publicRoutes } from './routes/public'
 
 const app = express()
@@ -26,17 +29,18 @@ app.disable('x-powered-by')
 
 // The auth hook needs the raw body for its signature, so it's mounted before the JSON parser.
 app.use('/api/auth', authHookRoutes)
+app.use('/api/whatsapp', whatsappRoutes) // raw body for signature checks
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
 
 // Which settings are present (names only — never values), plus the deployed commit.
-const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLUTTERWAVE_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'FLUTTERWAVE_WEBHOOK_SECRET_HASH', 'FLUTTERWAVE_BASE_URL', 'ANTHROPIC_API_KEY', 'CRON_SECRET']
+const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLUTTERWAVE_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'FLUTTERWAVE_WEBHOOK_SECRET_HASH', 'FLUTTERWAVE_BASE_URL', 'ANTHROPIC_API_KEY', 'CRON_SECRET', 'WHATSAPP_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_APP_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GEMINI_API_KEY', 'ADMIN_EMAILS']
 app.get('/api/health', (_req, res) =>
   res.json({
     ok: true,
     ...configured,
     commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7),
     env: Object.fromEntries(ENV_NAMES.map((k) => [k, Boolean(process.env[k]?.trim())])),
-    unknownKeys: Object.keys(process.env).filter((k) => /SUPABASE|FLW|FLUTTER|ANTHROPIC|RESEND/i.test(k) && !ENV_NAMES.includes(k)),
+    unknownKeys: Object.keys(process.env).filter((k) => /SUPABASE|FLW|FLUTTER|ANTHROPIC|RESEND|WHATSAPP|GEMINI|GOOGLE|ADMIN/i.test(k) && !ENV_NAMES.includes(k)),
   }),
 )
 
@@ -91,6 +95,8 @@ app.use('/api', paymentRoutes)
 app.use('/api', designRoutes)
 app.use('/api', appRoutes)
 app.use('/api', accountRoutes)
+app.use('/api', googleRoutes)
+app.use('/api', adminRoutes)
 
 /* Render Cron Jobs call these with Authorization: Bearer $CRON_SECRET */
 const cron = (fn: () => Promise<unknown>) =>

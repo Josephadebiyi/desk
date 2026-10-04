@@ -394,7 +394,10 @@ export function WorkspaceProvider({ children, demo = false }: { children: ReactN
       saveEvent: (e) => {
         const ev = { ...e, id: e.id ?? uid() } as ChurchEvent
         setEvents((all) => (all.some((x) => x.id === ev.id) ? all.map((x) => (x.id === ev.id ? ev : x)) : [...all, ev]))
-        if (live) db.saveEvent(churchId, ev)
+        if (live)
+          db.saveEvent(churchId, ev).then((link) => {
+            if (link) setEvents((all) => all.map((x) => (x.id === ev.id ? { ...x, meetLink: link } : x)))
+          })
         return ev
       },
       removeEvent: (id) => {

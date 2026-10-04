@@ -1,4 +1,7 @@
 export default {
+  prayer: "Write a birthday prayer",
+  prayerWriting: "Writing a prayer…",
+  prayerCopy: "Copy prayer",
   hello: 'Good day,',
   people: 'People in your church',
   month_one: '+{count} this month',

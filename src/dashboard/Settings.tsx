@@ -477,6 +477,17 @@ function Team() {
   )
 }
 
+interface PromoOffer {
+  code: string
+  kind: 'percent' | 'free_days'
+  percentOff: number | null
+  durationMonths: number | null
+  freeDays: number | null
+  currency: string
+  price: number
+  discounted: number
+}
+
 const PLANS: { id: PlanId; price: number; points: number }[] = [
   { id: 'essentials', price: 8, points: 6 },
   { id: 'plus', price: 19.99, points: 5 },
@@ -504,19 +515,54 @@ function Plan() {
       setBusy('')
     }
   }
+  // Promo codes: checked against every plan so each card can show its own discount.
+  const [code, setCode] = useState('')
+  const [promo, setPromo] = useState<{ code: string; offers: Partial<Record<PlanId, PromoOffer>> } | null>(null)
+  const [promoError, setPromoError] = useState('')
+  const [redeemed, setRedeemed] = useState('')
+  const promoMsg = (m: string) => (/^PROMO_[A-Z]+$/.test(m) ? t(`settings.plan.promo.${m.slice(6).toLowerCase()}`) : m)
+  const applyPromo = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!code.trim()) return
+    setPromoError('')
+    setBusy('promo')
+    const results = await Promise.allSettled(PLANS.map((p) => api<PromoOffer>('/billing/promo', { plan: p.id, code: code.trim() })))
+    const offers: Partial<Record<PlanId, PromoOffer>> = {}
+    results.forEach((r, i) => r.status === 'fulfilled' && (offers[PLANS[i].id] = r.value))
+    if (Object.keys(offers).length) setPromo({ code: code.trim().toUpperCase(), offers })
+    else {
+      setPromo(null)
+      const first = results.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined
+      setPromoError(promoMsg(first?.reason instanceof Error ? first.reason.message : 'PROMO_INVALID'))
+    }
+    setBusy('')
+  }
   // Live: plans are paid monthly through Flutterwave; the plan switches when payment is confirmed.
   const choose = async (plan: PlanId) => {
     if (!live) return updateSettings({ plan })
     setError('')
     setBusy(plan)
     try {
-      const { link } = await api<{ link: string }>('/billing/checkout', { plan })
-      window.location.href = link
+      const r = await api<{ link?: string; redeemed?: boolean; until?: string }>('/billing/checkout', { plan, ...(promo?.offers[plan] ? { promo: promo.code } : {}) })
+      if (r.redeemed) {
+        updateSettings({ plan, planStatus: 'active', planRenewsAt: r.until ?? null })
+        setRedeemed(r.until ? fmt(r.until) : '')
+        setPromo(null)
+        setBusy('')
+        return
+      }
+      window.location.href = r.link!
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(promoMsg(e instanceof Error ? e.message : String(e)))
       setBusy('')
     }
   }
+  const offerLine = (o: PromoOffer) =>
+    o.kind === 'free_days'
+      ? t('settings.plan.promo.freeDays', { count: o.freeDays ?? 0 })
+      : o.durationMonths
+        ? t('settings.plan.promo.percentFor', { pct: o.percentOff ?? 0, count: o.durationMonths })
+        : t('settings.plan.promo.percentForever', { pct: o.percentOff ?? 0 })
   return (
     <>
       {billing === 'success' && <p className="d-hint-box st-billing-ok">{t('settings.plan.billingOk')}</p>}
@@ -529,6 +575,24 @@ function Plan() {
         </p>
       )}
       {error && <p className="d-errors">{error}</p>}
+      {redeemed && <p className="d-hint-box st-billing-ok">{t('settings.plan.promo.redeemed', { date: redeemed })}</p>}
+      {live && (
+        <form className="st-promo" onSubmit={applyPromo}>
+          <label className="d-field">
+            <span>{t('settings.plan.promo.label')}</span>
+            <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={t('settings.plan.promo.ph')} maxLength={32} autoCapitalize="characters" />
+          </label>
+          <button type="submit" className="d-btn" disabled={busy !== '' || !code.trim()}>
+            {busy === 'promo' ? t('common.loading') : t('settings.plan.promo.apply')}
+          </button>
+          {promo && (
+            <span className="d-pill d-pill-lime">
+              {promo.code} ✓
+            </span>
+          )}
+          {promoError && <small className="d-errors">{promoError}</small>}
+        </form>
+      )}
       <div className="st-plans">
         {PLANS.map((p) => {
           const current = settings.plan === p.id
@@ -539,9 +603,16 @@ function Plan() {
                 {current && <span className="d-pill d-pill-lime">{t('settings.plan.current')}</span>}
               </div>
               <b className="st-price">
-                {formatMoney(planPrice(p.id, settings.currency).amount, planPrice(p.id, settings.currency).currency, locale)}
+                {promo?.offers[p.id]?.kind === 'percent' ? (
+                  <>
+                    <s className="st-was">{formatMoney(promo.offers[p.id]!.price, promo.offers[p.id]!.currency, locale)}</s> {formatMoney(promo.offers[p.id]!.discounted, promo.offers[p.id]!.currency, locale)}
+                  </>
+                ) : (
+                  formatMoney(planPrice(p.id, settings.currency).amount, planPrice(p.id, settings.currency).currency, locale)
+                )}
                 <small>{t('common.perMonth')}</small>
               </b>
+              {promo?.offers[p.id] && <p className="st-offer">{offerLine(promo.offers[p.id]!)}</p>}
               <ul>
                 {Array.from({ length: p.points }, (_, i) => (
                   <li key={i}>
@@ -698,13 +769,28 @@ function Integrations() {
   const { live } = useWorkspace()
   // Live: real status from the server (which services have their keys set).
   const [status, setStatus] = useState<Record<string, boolean> | null>(null)
+  const [google, setGoogle] = useState<{ configured: boolean; connected: boolean; email: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [params] = useSearchParams()
+  const loadGoogle = () => api<{ configured: boolean; connected: boolean; email: string }>('/google/status').then(setGoogle).catch(() => {})
   useEffect(() => {
     if (!live) return
     fetch('/api/health')
       .then((r) => r.json())
-      .then((h) => setStatus({ meet: false, sms: !!h.sms, whatsapp: !!h.whatsapp, email: !!h.email, payments: !!h.flutterwave }))
+      .then((h) => setStatus({ sms: !!h.sms, whatsapp: !!h.whatsapp, email: !!h.email, payments: !!h.flutterwave }))
       .catch(() => {})
+    loadGoogle()
   }, [live])
+  const connectGoogle = async () => {
+    setBusy(true)
+    try {
+      const { url } = await api<{ url: string }>('/google/connect', {})
+      window.location.href = url
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e))
+      setBusy(false)
+    }
+  }
   const items = [
     { icon: <GoogleMeetLogo size={26} />, id: 'meet', name: 'Google Meet' },
     { icon: <MessageSquareText size={22} />, id: 'sms', name: 'SMS' },
@@ -714,7 +800,29 @@ function Integrations() {
   ]
   return (
     <div className="st-ints">
-      {items.map((i) => (
+      {params.get('google') === 'connected' && <p className="d-hint-box st-billing-ok">{t('settings.int.googleOk')}</p>}
+      {params.get('google') === 'failed' && <p className="d-errors">{t('settings.int.googleFailed')}</p>}
+      {live && google && (
+        <section className="d-panel st-int">
+          <span className="st-int-ico">
+            <GoogleMeetLogo size={26} />
+          </span>
+          <div>
+            <b>Google Meet</b>
+            <p>{google.connected ? t('settings.int.googleConnected', { email: google.email }) : t('settings.int.googleText')}</p>
+          </div>
+          {google.connected ? (
+            <button type="button" className="d-btn" disabled={busy} onClick={() => api('/google/disconnect', {}).then(loadGoogle)}>
+              {t('settings.int.disconnect')}
+            </button>
+          ) : (
+            <button type="button" className="d-btn d-btn-ink" disabled={busy || !google.configured} title={google.configured ? '' : t('settings.int.needs.meet')} onClick={connectGoogle}>
+              {busy ? t('common.loading') : t('settings.int.connectGoogle')}
+            </button>
+          )}
+        </section>
+      )}
+      {items.filter((i) => !(live && i.id === 'meet')).map((i) => (
         <section key={i.name} className="d-panel st-int">
           <span className="st-int-ico">{i.icon}</span>
           <div>

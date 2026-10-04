@@ -1,5 +1,8 @@
 import type { Dict } from '../en'
 const ov: Dict['ov'] = {
+  prayer: "Écrire une prière d’anniversaire",
+  prayerWriting: "Rédaction de la prière…",
+  prayerCopy: "Copier la prière",
   hello: 'Bonjour,',
   people: 'Personnes dans votre église',
   month_one: '+{count} ce mois-ci',

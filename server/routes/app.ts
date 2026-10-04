@@ -11,6 +11,7 @@ import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
 import { compose, sendEmail } from '../mail'
 import { sendCampaign } from '../messaging'
+import { ageOn, birthdayPrayers } from '../gemini'
 
 export const appRoutes = Router()
 
@@ -104,5 +105,20 @@ appRoutes.post(
       ).catch((e) => console.error('[receipt]', e))
     }
     res.json({ ok: true, memberId: member?.id ?? null })
+  }),
+)
+
+/** A fresh AI birthday prayer for one member (Overview → Birthdays), to copy or send. */
+appRoutes.post(
+  '/members/:id/birthday-prayer',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    if (!configured.gemini) throw new HttpError(503, 'Birthday prayers need GEMINI_API_KEY on the server.')
+    const { data: m } = await db().from('members').select('id, church_id, full_name, dob, gender, department, stage, language').eq('id', req.params.id).maybeSingle()
+    if (!m || m.church_id !== req.caller!.churchId) throw new HttpError(404, 'Member not found')
+    const { data: church } = await db().from('churches').select('name').eq('id', m.church_id).single()
+    const out = await birthdayPrayers(church?.name ?? '', [{ id: m.id, firstName: m.full_name.split(' ')[0], age: m.dob ? ageOn(String(m.dob)) : null, gender: m.gender, department: m.department, stage: m.stage, language: asEmailLang(m.language) }])
+    if (!out[m.id]) throw new HttpError(502, 'The prayer could not be written right now. Please try again.')
+    res.json({ prayer: out[m.id] })
   }),
 )

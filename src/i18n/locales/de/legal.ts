@@ -100,7 +100,7 @@ const legal: Dict['legal'] = {
     h12: 'Kinder',
     b12: 'ZionDesk-Konten sind für Erwachsene. Gemeinden dürfen Kinder (z. B. im Kindergottesdienst) nur mit der Einwilligung der Eltern oder Erziehungsberechtigten erfassen, wo dies erforderlich ist, auch nach COPPA in den USA. Wir erheben wissentlich keine Daten direkt von Kindern.',
     h13: 'KI-Funktionen',
-    b13: 'Wenn du Ellen oder KI-Flyer nutzt, verarbeitet Anthropic die gesendeten Inhalte, um die Antwort zu erzeugen. Sie werden nicht zum Training von KI-Modellen verwendet. Füge keine unnötigen sensiblen Angaben hinzu.',
+    b13: 'Wenn du Ellen oder KI-Flyer nutzt, verarbeitet Anthropic die gesendeten Inhalte, um die Antwort zu erzeugen. Sie werden nicht zum Training von KI-Modellen verwendet. Füge keine unnötigen sensiblen Angaben hinzu. Geburtstagsgebete schreibt Googles Gemini API nur anhand von Vorname, Altersgruppe, Dienstbereich und Sprache des Mitglieds.',
     h14: 'So stellst du einen Antrag',
     b14: 'Nutze Mein Konto, um deine Daten herunterzuladen oder zu löschen, oder schreib uns. Gemeindemitglieder wenden sich bitte zuerst an ihre Gemeinde; eingehende Anträge leiten wir weiter und unterstützen sie. Eventuell müssen wir deine Identität prüfen.',
   },
@@ -137,6 +137,9 @@ const legal: Dict['legal'] = {
     b9: 'Wird die Gemeinde gelöscht, löschen wir ihre Daten (sie kann sie vorher unter Einstellungen exportieren), soweit keine gesetzliche Aufbewahrungspflicht besteht. Auf angemessene Anfrage stellen wir die Informationen bereit, die zum Nachweis der Einhaltung dieses Vertrags nötig sind.',
   },
   subprocessors: {
+    gemini: "Persönliche Geburtstagsgebete (Gemini API)",
+    meta: "WhatsApp-Nachrichten (WhatsApp Business Platform)",
+    twilio: "SMS (optional)",
     sub: 'Diese Unternehmen verarbeiten Daten für ZionDesk unter Verträgen, die sie zum Schutz der Daten verpflichten.',
     company: 'Unternehmen',
     purpose: 'Zweck',

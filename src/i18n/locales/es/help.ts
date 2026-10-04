@@ -1,5 +1,22 @@
 import type { Dict } from '../en'
 const help: Dict['help'] = {
+  support: {
+    title: "Contactar con soporte",
+    subject: "Asunto",
+    message: "Mensaje",
+    ph: "Cuéntanos qué pasó y qué esperabas. Las capturas ayudan: pega un enlace si tienes uno.",
+    send: "Enviar a soporte",
+    sent: "Gracias: nuestro equipo responderá por correo, normalmente en un día laborable.",
+    err: "Añade un asunto y un mensaje.",
+    mine: "Tus conversaciones",
+    you: "Tú",
+    reply: "Escribe una respuesta…",
+    status: {
+      open: "Abierto",
+      pending: "Respondido",
+      closed: "Cerrado",
+    },
+  },
   faq: 'Preguntas frecuentes',
   still: '¿Necesitas más ayuda?',
   stillSub: 'Nuestro equipo te ayuda encantado a configurar tu iglesia.',

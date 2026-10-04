@@ -299,7 +299,19 @@ const eventToRow = (churchId: string, e: ChurchEvent) => ({
 export const ws = {
   updateSettings: (churchId: string, patch: Partial<Settings>) => bg(sb().from('churches').update(settingsToRow(patch)).eq('id', churchId), 'save settings'),
   updateAiSettings: (churchId: string, ai: unknown) => bg(sb().from('churches').update({ ai_settings: ai }).eq('id', churchId), 'save AI settings'),
-  saveEvent: (churchId: string, e: ChurchEvent) => bg(sb().from('events').upsert(eventToRow(churchId, e)), 'save event'),
+  /** Saves the event; for online events with Google Meet and no link, the server creates a Meet link. */
+  saveEvent: async (churchId: string, e: ChurchEvent): Promise<string | null> => {
+    const { error } = await sb().from('events').upsert(eventToRow(churchId, e))
+    if (error) {
+      console.error('[sync] save event:', error.message)
+      return null
+    }
+    if (!e.googleMeet || e.meetLink) return null
+    const { api } = await import('../lib/api')
+    return api<{ link: string | null }>(`/events/${e.id}/meet`, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+      .then((r) => r.link)
+      .catch(() => null) // Google not connected: the organiser can paste a link instead
+  },
   removeEvent: (churchId: string, id: string) => bg(sb().from('events').delete().eq('id', id).eq('church_id', churchId), 'delete event'),
   /** Saves the campaign, then asks the server to send it (each member in their own language). */
   addCampaign: async (churchId: string, c: Campaign & { vars?: Record<string, string> }) => {

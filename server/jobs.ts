@@ -9,6 +9,9 @@ import { db } from './db'
 import { configured } from './env'
 import { compose, sendEmails } from './mail'
 import { audienceMembers, sendCampaign, type Audience } from './messaging'
+import { ageOn, birthdayPrayers } from './gemini'
+import { sendWhatsApp } from './whatsapp'
+import { cancelSubscription, listSubscriptions } from './flutterwave'
 
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 
@@ -57,25 +60,70 @@ export async function runHourly() {
 }
 
 export async function runDaily() {
+  const promos = await endPromos().catch((e) => (console.error('[promos]', e), null)) // before billing
   const billing = await runBilling().catch((e) => (console.error('[billing]', e), null))
-  if (!configured.email) return { birthdays: 0, billing }
+  const birthdays = await runBirthdays().catch((e) => (console.error('[birthdays]', e), 0))
+  return { birthdays, billing, promos }
+}
+
+/**
+ * Birthday greetings, once per person per year, in each member's language. With GEMINI_API_KEY set,
+ * every celebrant gets their own AI-written prayer; otherwise the standard greeting.
+ * Email when the member has one, otherwise WhatsApp (when configured).
+ */
+async function runBirthdays() {
+  if (!configured.email && !configured.whatsapp) return 0
   const today = new Date()
   const mmdd = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   const stamp = `birthday:${today.toISOString().slice(0, 10)}`
-  // Postgres: members whose dob month-day is today (dob stored as date).
-  const { data: people } = await db().from('members').select('id, church_id, full_name, email, language, dob').not('dob', 'is', null).neq('email', '').eq('membership_status', 'Active')
-  const todays = (people ?? []).filter((m) => String(m.dob).slice(5) === mmdd)
-  const churchIds = [...new Set(todays.map((m) => m.church_id))]
-  const { data: churches } = churchIds.length ? await db().from('churches').select('id, name').in('id', churchIds) : { data: [] }
-  const name = (id: string) => churches?.find((c) => c.id === id)?.name ?? ''
+  const { data: people } = await db().from('members').select('id, church_id, full_name, email, whatsapp, language, dob, gender, department, stage').not('dob', 'is', null).eq('membership_status', 'Active')
+  const todays = (people ?? []).filter((m) => String(m.dob).slice(5) === mmdd && (m.email || m.whatsapp))
+  if (!todays.length) return 0
   const { data: sent } = await db().from('deliveries').select('member_id').eq('provider_id', stamp)
   const already = new Set((sent ?? []).map((s) => s.member_id))
   const list = todays.filter((m) => !already.has(m.id))
-  if (list.length) {
-    await sendEmails(list.map((m) => compose('birthday', m.language, m.email, { church: name(m.church_id), name: m.full_name.split(' ')[0] })))
-    await db().from('deliveries').insert(list.map((m) => ({ church_id: m.church_id, member_id: m.id, channel: 'Email', language: asEmailLang(m.language), to_address: m.email, status: 'sent', provider_id: stamp })))
+  const churchIds = [...new Set(list.map((m) => m.church_id))]
+  const { data: churches } = churchIds.length ? await db().from('churches').select('id, name').in('id', churchIds) : { data: [] }
+  const name = (id: string) => churches?.find((c) => c.id === id)?.name ?? ''
+  let count = 0
+  for (const churchId of churchIds) {
+    const members = list.filter((m) => m.church_id === churchId)
+    const prayers = await birthdayPrayers(
+      name(churchId),
+      members.map((m) => ({ id: m.id, firstName: m.full_name.split(' ')[0], age: ageOn(String(m.dob), today), gender: m.gender, department: m.department, stage: m.stage, language: asEmailLang(m.language) })),
+    )
+    const rows: Record<string, unknown>[] = []
+    const mails = []
+    for (const m of members) {
+      const lang = asEmailLang(m.language)
+      const first = m.full_name.split(' ')[0]
+      const prayer = prayers[m.id]
+      if (m.email && configured.email) {
+        mails.push(prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }) : compose('birthday', lang, m.email, { church: name(churchId), name: first }))
+        rows.push({ church_id: churchId, member_id: m.id, channel: 'Email', language: lang, to_address: m.email, status: 'sent', provider_id: stamp, body: prayer ?? null })
+      } else if (m.whatsapp && configured.whatsapp) {
+        const text = `🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]} — ${name(churchId)}`
+        try {
+          await sendWhatsApp(m.whatsapp, text, lang)
+          rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'sent', provider_id: stamp, body: text })
+        } catch (e) {
+          rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'failed', provider_id: stamp, error: e instanceof Error ? e.message : 'failed' })
+        }
+      }
+    }
+    if (mails.length) await sendEmails(mails)
+    if (rows.length) await db().from('deliveries').insert(rows)
+    count += rows.length
   }
-  return { birthdays: list.length, billing }
+  return count
+}
+
+const BIRTHDAY_LINE: Record<string, string> = {
+  en: 'Happy birthday! May God bless you abundantly in your new year.',
+  es: '¡Feliz cumpleaños! Que Dios te bendiga abundantemente en tu nuevo año.',
+  fr: 'Joyeux anniversaire ! Que Dieu te bénisse abondamment pour cette nouvelle année.',
+  de: 'Alles Gute zum Geburtstag! Gott segne dich reich im neuen Lebensjahr.',
+  pt: 'Feliz aniversário! Que Deus o abençoe abundantemente no seu novo ano.',
 }
 
 /* ───────── billing lifecycle (runs daily) ─────────
@@ -86,7 +134,7 @@ export async function runDaily() {
  */
 const PLAN_LABEL: Record<string, string> = { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' }
 
-async function tellAdmins(churchId: string, churchName: string, kind: 'trialEnding' | 'paymentFailed' | 'planExpired', extra: Record<string, string | number> = {}) {
+async function tellAdmins(churchId: string, churchName: string, kind: 'trialEnding' | 'paymentFailed' | 'planExpired' | 'promoEnded', extra: Record<string, string | number> = {}) {
   if (!configured.email) return
   const { data: team } = await db().from('church_users').select('user_id').eq('church_id', churchId).eq('role', 'admin')
   const ids = (team ?? []).map((t) => t.user_id)
@@ -126,4 +174,22 @@ export async function runBilling() {
     }
   }
   return counts
+}
+
+/**
+ * Promo codes that run out: free-day promos and limited-month discounts. The discounted Flutterwave
+ * subscription is cancelled (no surprise charges); the church keeps access until the paid/free
+ * period ends and is invited to subscribe at the regular price.
+ */
+async function endPromos() {
+  const { data: due } = await db().from('promo_redemptions').select('id, church_id, plan').eq('status', 'active').lt('ends_at', new Date().toISOString())
+  for (const r of due ?? []) {
+    const { data: c } = await db().from('churches').select('id, name, flw_subscription_email').eq('id', r.church_id).single()
+    if (!c) continue
+    if (c.flw_subscription_email) for (const s of await listSubscriptions(c.flw_subscription_email)) if (s.status === 'active') await cancelSubscription(s.id).catch(() => undefined)
+    await db().from('churches').update({ plan_status: 'cancelled' }).eq('id', c.id)
+    await db().from('promo_redemptions').update({ status: 'ended' }).eq('id', r.id)
+    await tellAdmins(c.id, c.name, 'promoEnded', { plan: PLAN_LABEL[r.plan] ?? r.plan })
+  }
+  return { ended: due?.length ?? 0 }
 }

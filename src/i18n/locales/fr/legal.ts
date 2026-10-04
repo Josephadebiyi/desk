@@ -100,7 +100,7 @@ const legal: Dict['legal'] = {
     h12: 'Enfants',
     b12: 'Les comptes ZionDesk sont réservés aux adultes. Les églises ne peuvent enregistrer des enfants (par exemple pour le ministère des enfants) qu’avec le consentement d’un parent ou tuteur lorsque la loi l’exige, notamment la COPPA aux États-Unis. Nous ne collectons pas sciemment de données directement auprès d’enfants.',
     h13: 'Fonctions d’IA',
-    b13: 'Lorsque vous utilisez Ellen ou les flyers IA, le contenu envoyé est traité par Anthropic pour produire la réponse. Il n’est pas utilisé pour entraîner des modèles d’IA. Évitez d’ajouter des informations sensibles inutiles.',
+    b13: 'Lorsque vous utilisez Ellen ou les flyers IA, le contenu envoyé est traité par Anthropic pour produire la réponse. Il n’est pas utilisé pour entraîner des modèles d’IA. Évitez d’ajouter des informations sensibles inutiles. Les prières d’anniversaire sont rédigées par l’API Gemini de Google à partir du seul prénom, de la tranche d’âge, du ministère et de la langue du membre.',
     h14: 'Comment faire une demande',
     b14: 'Utilisez Mon compte pour télécharger ou supprimer vos données, ou écrivez-nous. Les membres doivent d’abord contacter leur église ; nous transmettrons et appuierons les demandes reçues. Nous pourrons avoir besoin de vérifier votre identité.',
   },
@@ -137,6 +137,9 @@ const legal: Dict['legal'] = {
     b9: 'Lorsque l’église est supprimée, nous effaçons ses données (elle peut d’abord les exporter dans Paramètres), sauf obligation légale de conservation. Sur demande raisonnable, nous fournissons les informations nécessaires pour démontrer le respect de cet accord.',
   },
   subprocessors: {
+    gemini: "Prières d’anniversaire personnalisées (API Gemini)",
+    meta: "Messages WhatsApp (WhatsApp Business Platform)",
+    twilio: "SMS (facultatif)",
     sub: 'Ces entreprises traitent des données pour ZionDesk dans le cadre de contrats qui les obligent à les protéger.',
     company: 'Entreprise',
     purpose: 'Finalité',

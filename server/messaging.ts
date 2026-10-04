@@ -1,6 +1,6 @@
 /**
  * Sends a campaign to each recipient in their own communication language.
- * Email → Resend. SMS / WhatsApp → Twilio when configured (otherwise left "queued").
+ * Email → Resend. WhatsApp → Meta Cloud API (or Twilio). SMS → Twilio. Unconfigured channels stay "queued".
  */
 import enTpl from '../src/i18n/locales/en/tpl'
 import esTpl from '../src/i18n/locales/es/tpl'
@@ -11,6 +11,7 @@ import { asEmailLang, type EmailLang } from '../src/emails/strings'
 import { db } from './db'
 import { configured, env } from './env'
 import { compose, sendEmails } from './mail'
+import { sendWhatsApp } from './whatsapp'
 
 const TPL: Record<EmailLang, Record<string, string>> = { en: enTpl, es: esTpl, fr: frTpl, de: deTpl, pt: ptTpl }
 const LOCALE: Record<EmailLang, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
@@ -121,7 +122,7 @@ export async function sendCampaign(campaignId: string, byName: string) {
       let err: string | null = null
       if (ready) {
         try {
-          providerId = await twilio(channel, to, text)
+          providerId = channel === 'WhatsApp' && configured.whatsappCloud ? await sendWhatsApp(to, text, lang) : await twilio(channel, to, text)
           status = 'sent'
         } catch (e) {
           status = 'failed'

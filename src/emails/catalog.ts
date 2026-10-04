@@ -24,6 +24,8 @@ export type EmailKind =
   | 'trialEnding'
   | 'paymentFailed'
   | 'planExpired'
+  | 'birthdayPrayer'
+  | 'promoEnded'
 
 export interface EmailCopy {
   subject: string
@@ -133,6 +135,8 @@ const en: Catalog = {
   trialEnding: { subject: 'Your ZionDesk trial ends in {days} days', eyebrow: 'Free trial', title: 'Keep {church} running smoothly', body: ['Hi {name},', 'Your free trial ends in <b>{days} days</b>. Choose a plan to keep your members, giving records and messages — nothing is lost.'], cta: 'Choose a plan' },
   paymentFailed: { subject: 'Action needed: your ZionDesk payment didn’t go through', eyebrow: 'Billing', title: 'We couldn’t renew your plan', body: ['Hi {name},', 'Flutterwave couldn’t charge your card for <b>{church}</b>’s {plan} plan. Please update your payment to avoid interruption.'], cta: 'Update payment' },
   planExpired: { subject: 'Your ZionDesk plan has ended', eyebrow: 'Billing', title: 'Your plan for {church} has ended', body: ['Hi {name},', 'Your data is safe. Choose a plan to unlock your dashboard again — everything will be exactly where you left it.'], cta: 'Choose a plan' },
+  birthdayPrayer: { subject: 'Happy birthday, {name}! 🎉', eyebrow: '{church}', title: 'Happy birthday, {name}!', body: ['{prayer}', 'Everyone at {church} is celebrating you today. 🎉'] },
+  promoEnded: { subject: 'Your ZionDesk promotion has ended', eyebrow: 'Billing', title: 'Keep {church} on {plan}', body: ['Hi {name},', 'Your promotional offer for {plan} has ended, so we stopped the discounted payments — you won’t be charged. Your access continues until the end of the current period.', 'Subscribe at the regular price to keep everything running. All your data is safe.'], cta: 'Choose a plan' },
 }
 
 const es: Catalog = {
@@ -152,6 +156,8 @@ const es: Catalog = {
   trialEnding: { subject: 'Tu prueba de ZionDesk termina en {days} días', eyebrow: 'Prueba gratis', title: 'Mantén {church} en marcha', body: ['Hola, {name}:', 'Tu prueba gratis termina en <b>{days} días</b>. Elige un plan para conservar tus miembros, ofrendas y mensajes: no se pierde nada.'], cta: 'Elegir un plan' },
   paymentFailed: { subject: 'Acción necesaria: tu pago de ZionDesk no se completó', eyebrow: 'Facturación', title: 'No pudimos renovar tu plan', body: ['Hola, {name}:', 'Flutterwave no pudo cobrar tu tarjeta por el plan {plan} de <b>{church}</b>. Actualiza tu pago para evitar interrupciones.'], cta: 'Actualizar pago' },
   planExpired: { subject: 'Tu plan de ZionDesk ha terminado', eyebrow: 'Facturación', title: 'El plan de {church} ha terminado', body: ['Hola, {name}:', 'Tus datos están a salvo. Elige un plan para volver a abrir tu panel: todo estará tal como lo dejaste.'], cta: 'Elegir un plan' },
+  birthdayPrayer: { subject: '¡Feliz cumpleaños, {name}! 🎉', eyebrow: '{church}', title: '¡Feliz cumpleaños, {name}!', body: ['{prayer}', 'Todos en {church} celebramos contigo hoy. 🎉'] },
+  promoEnded: { subject: 'Tu promoción de ZionDesk ha terminado', eyebrow: 'Facturación', title: 'Mantén {church} en {plan}', body: ['Hola, {name}:', 'Tu oferta promocional de {plan} ha terminado, así que detuvimos los pagos con descuento: no se te cobrará. Conservas el acceso hasta el final del periodo actual.', 'Suscríbete al precio normal para seguir funcionando. Todos tus datos están a salvo.'], cta: 'Elegir un plan' },
 }
 
 const fr: Catalog = {
@@ -171,6 +177,8 @@ const fr: Catalog = {
   trialEnding: { subject: 'Votre essai ZionDesk se termine dans {days} jours', eyebrow: 'Essai gratuit', title: 'Gardez {church} sur les rails', body: ['Bonjour {name},', 'Votre essai gratuit se termine dans <b>{days} jours</b>. Choisissez un forfait pour conserver vos membres, dons et messages — rien n’est perdu.'], cta: 'Choisir un forfait' },
   paymentFailed: { subject: 'Action requise : votre paiement ZionDesk a échoué', eyebrow: 'Facturation', title: 'Nous n’avons pas pu renouveler votre forfait', body: ['Bonjour {name},', 'Flutterwave n’a pas pu débiter votre carte pour le forfait {plan} de <b>{church}</b>. Mettez à jour votre paiement pour éviter une interruption.'], cta: 'Mettre à jour le paiement' },
   planExpired: { subject: 'Votre forfait ZionDesk est terminé', eyebrow: 'Facturation', title: 'Le forfait de {church} est terminé', body: ['Bonjour {name},', 'Vos données sont en sécurité. Choisissez un forfait pour rouvrir votre tableau de bord — tout sera comme vous l’avez laissé.'], cta: 'Choisir un forfait' },
+  birthdayPrayer: { subject: 'Joyeux anniversaire, {name} ! 🎉', eyebrow: '{church}', title: 'Joyeux anniversaire, {name} !', body: ['{prayer}', 'Toute l’église {church} vous fête aujourd’hui. 🎉'] },
+  promoEnded: { subject: 'Votre offre ZionDesk est terminée', eyebrow: 'Facturation', title: 'Gardez {church} sur {plan}', body: ['Bonjour {name},', 'Votre offre promotionnelle sur {plan} est terminée : nous avons arrêté les paiements à prix réduit, vous ne serez pas débité. Votre accès continue jusqu’à la fin de la période en cours.', 'Abonnez-vous au prix normal pour que tout continue. Toutes vos données sont en sécurité.'], cta: 'Choisir un forfait' },
 }
 
 const de: Catalog = {
@@ -190,6 +198,8 @@ const de: Catalog = {
   trialEnding: { subject: 'Deine ZionDesk-Testphase endet in {days} Tagen', eyebrow: 'Testphase', title: 'Damit {church} reibungslos weiterläuft', body: ['Hallo {name},', 'Deine kostenlose Testphase endet in <b>{days} Tagen</b>. Wähle einen Tarif, um Mitglieder, Spenden und Nachrichten zu behalten – nichts geht verloren.'], cta: 'Tarif wählen' },
   paymentFailed: { subject: 'Handlung nötig: Deine ZionDesk-Zahlung ist fehlgeschlagen', eyebrow: 'Abrechnung', title: 'Wir konnten deinen Tarif nicht verlängern', body: ['Hallo {name},', 'Flutterwave konnte deine Karte für den Tarif {plan} von <b>{church}</b> nicht belasten. Bitte aktualisiere deine Zahlung, um eine Unterbrechung zu vermeiden.'], cta: 'Zahlung aktualisieren' },
   planExpired: { subject: 'Dein ZionDesk-Tarif ist abgelaufen', eyebrow: 'Abrechnung', title: 'Der Tarif von {church} ist abgelaufen', body: ['Hallo {name},', 'Deine Daten sind sicher. Wähle einen Tarif, um dein Dashboard wieder zu öffnen – alles ist genau so, wie du es verlassen hast.'], cta: 'Tarif wählen' },
+  birthdayPrayer: { subject: 'Alles Gute zum Geburtstag, {name}! 🎉', eyebrow: '{church}', title: 'Alles Gute zum Geburtstag, {name}!', body: ['{prayer}', 'Ganz {church} feiert heute mit dir. 🎉'] },
+  promoEnded: { subject: 'Dein ZionDesk-Angebot ist beendet', eyebrow: 'Abrechnung', title: 'Behalte {plan} für {church}', body: ['Hallo {name},', 'Dein Aktionsangebot für {plan} ist beendet, daher haben wir die ermäßigten Zahlungen gestoppt – es wird nichts abgebucht. Dein Zugang läuft bis zum Ende des aktuellen Zeitraums.', 'Abonniere zum regulären Preis, damit alles weiterläuft. Alle deine Daten sind sicher.'], cta: 'Tarif wählen' },
 }
 
 const pt: Catalog = {
@@ -209,6 +219,8 @@ const pt: Catalog = {
   trialEnding: { subject: 'A sua avaliação do ZionDesk termina em {days} dias', eyebrow: 'Avaliação gratuita', title: 'Mantenha {church} a funcionar', body: ['Olá {name},', 'A sua avaliação gratuita termina em <b>{days} dias</b>. Escolha um plano para manter membros, ofertas e mensagens — nada se perde.'], cta: 'Escolher um plano' },
   paymentFailed: { subject: 'Ação necessária: o seu pagamento ZionDesk falhou', eyebrow: 'Faturação', title: 'Não conseguimos renovar o seu plano', body: ['Olá {name},', 'A Flutterwave não conseguiu cobrar o seu cartão pelo plano {plan} de <b>{church}</b>. Atualize o pagamento para evitar interrupções.'], cta: 'Atualizar pagamento' },
   planExpired: { subject: 'O seu plano ZionDesk terminou', eyebrow: 'Faturação', title: 'O plano de {church} terminou', body: ['Olá {name},', 'Os seus dados estão seguros. Escolha um plano para voltar a abrir o painel — tudo estará como deixou.'], cta: 'Escolher um plano' },
+  birthdayPrayer: { subject: 'Feliz aniversário, {name}! 🎉', eyebrow: '{church}', title: 'Feliz aniversário, {name}!', body: ['{prayer}', 'Toda a {church} celebra consigo hoje. 🎉'] },
+  promoEnded: { subject: 'A sua promoção ZionDesk terminou', eyebrow: 'Faturação', title: 'Mantenha {church} no {plan}', body: ['Olá, {name},', 'A sua oferta promocional do {plan} terminou, por isso parámos os pagamentos com desconto — não será cobrado. O acesso continua até ao fim do período atual.', 'Subscreva ao preço normal para manter tudo a funcionar. Todos os seus dados estão seguros.'], cta: 'Escolher um plano' },
 }
 
 export const CATALOG: Record<EmailLang, Catalog> = { en, es, fr, de, pt }

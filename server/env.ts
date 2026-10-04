@@ -28,6 +28,8 @@ export const env = {
   emailReplyTo: v('EMAIL_REPLY_TO'),
   // Where Ministry Max flyer requests go (your design team inbox).
   designTeamEmail: v('DESIGN_TEAM_EMAIL') || 'hello@ziondesk.com',
+  // Where new support tickets are announced (optional; defaults to hello@ziondesk.com).
+  supportEmail: v('SUPPORT_EMAIL') || v('DESIGN_TEAM_EMAIL') || 'hello@ziondesk.com',
 
   // Optional SMS / WhatsApp (Twilio). Leave empty to keep those channels in "queued" state.
   twilioSid: v('TWILIO_ACCOUNT_SID'),
@@ -44,6 +46,26 @@ export const env = {
   // Monthly payment-plan ids for subscriptions (create once with: npm run flw:plans)
   flwPlans: { essentials: v('FLW_PLAN_ESSENTIALS'), plus: v('FLW_PLAN_PLUS'), max: v('FLW_PLAN_MAX') } as Record<string, string>,
 
+  // WhatsApp Cloud API (Meta → WhatsApp → API Setup). Preferred over Twilio when set.
+  waToken: v('WHATSAPP_TOKEN'), // permanent System User access token
+  waPhoneId: v('WHATSAPP_PHONE_NUMBER_ID'),
+  // Approved message template with ONE body variable {{1}} (the message text). Needed to message
+  // people who haven't written to you in the last 24 hours (WhatsApp rule). e.g. church_update
+  waTemplate: v('WHATSAPP_TEMPLATE'),
+  waVerifyToken: v('WHATSAPP_VERIFY_TOKEN'), // any string; paste the same one in Meta → Webhooks
+  waAppSecret: v('WHATSAPP_APP_SECRET'), // optional: verifies webhook signatures
+
+  // Google Meet: OAuth client (Google Cloud → Credentials). Can be the same client used for Google sign-in.
+  googleClientId: v('GOOGLE_CLIENT_ID'),
+  googleClientSecret: v('GOOGLE_CLIENT_SECRET'),
+
+  // Gemini (aistudio.google.com → API key) — personalised birthday prayers
+  geminiKey: v('GEMINI_API_KEY'),
+  geminiModel: v('GEMINI_MODEL') || 'gemini-flash-latest',
+
+  // Platform admin console (/admin): comma-separated emails of ZionDesk staff
+  adminEmails: v('ADMIN_EMAILS').toLowerCase().split(',').map((e) => e.trim()).filter(Boolean),
+
   // Protects the cron endpoints (Render Cron Job sends it as a Bearer token)
   cronSecret: v('CRON_SECRET'),
 }
@@ -52,6 +74,10 @@ export const configured = {
   supabase: Boolean(env.supabaseUrl && env.supabaseServiceKey),
   email: Boolean(env.resendKey),
   sms: Boolean(env.twilioSid && env.twilioToken && env.twilioSmsFrom),
-  whatsapp: Boolean(env.twilioSid && env.twilioToken && env.twilioWhatsappFrom),
+  whatsappCloud: Boolean(env.waToken && env.waPhoneId),
+  whatsapp: Boolean((env.waToken && env.waPhoneId) || (env.twilioSid && env.twilioToken && env.twilioWhatsappFrom)),
+  googleMeet: Boolean(env.googleClientId && env.googleClientSecret),
+  gemini: Boolean(env.geminiKey),
+  admin: env.adminEmails.length > 0,
   flutterwave: Boolean(env.flwSecretKey),
 }

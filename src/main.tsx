@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './index.css'
@@ -24,6 +24,9 @@ import Help from './dashboard/Help.tsx'
 import Links from './dashboard/Links.tsx'
 import { GivePage, JoinPage } from './pages/Public.tsx'
 
+// Staff console: separate chunk, only downloaded by staff.
+const Admin = lazy(() => import('./admin/Admin.tsx'))
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
@@ -47,6 +50,14 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/acceptable-use" element={<Legal page="aup" />} />
         <Route path="/join/:slug" element={<JoinPage />} />
         <Route path="/give/:slug" element={<GivePage />} />
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense fallback={null}>
+              <Admin />
+            </Suspense>
+          }
+        />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Overview />} />
           <Route path="members" element={<Members />} />

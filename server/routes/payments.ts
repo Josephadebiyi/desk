@@ -107,12 +107,15 @@ const nextMonth = (from: Date) => {
 /** Automatic monthly charge from Flutterwave: new reference, so match the church by plan + payer email. */
 async function recordRenewal(tx: VerifiedTx) {
   const email = (tx.customer?.email ?? '').toLowerCase()
-  const plan = await planKeyFor(tx.plan ?? tx.payment_plan, tx.currency)
-  if (tx.status !== 'successful' || !email || !plan) throw new HttpError(404, 'Unknown payment')
-  const price = PLAN_PRICES[tx.currency as FlwCurrency]?.[plan]
-  if (!price || Number(tx.amount) < price) throw new HttpError(400, 'Renewal amount mismatch')
-  const { data: church } = await db().from('churches').select('id, plan_renews_at').eq('flw_subscription_email', email).maybeSingle()
+  if (tx.status !== 'successful' || !email) throw new HttpError(404, 'Unknown payment')
+  const { data: church } = await db().from('churches').select('id, plan, plan_renews_at').eq('flw_subscription_email', email).maybeSingle()
   if (!church) throw new HttpError(404, 'No church for this subscription')
+  // Discounted (promo) plans are per-discount Flutterwave plans, so fall back to the church's plan.
+  const plan = (await planKeyFor(tx.plan ?? tx.payment_plan, tx.currency)) ?? (church.plan as PlanKey)
+  const { data: promo } = await db().from('promo_redemptions').select('percent_off').eq('church_id', church.id).eq('status', 'active').not('percent_off', 'is', null).maybeSingle()
+  const full = PLAN_PRICES[tx.currency as FlwCurrency]?.[plan]
+  const price = full && promo?.percent_off ? discounted(full, promo.percent_off, tx.currency) : full
+  if (!price || Number(tx.amount) < price) throw new HttpError(400, 'Renewal amount mismatch')
   const { error } = await db().from('online_payments').insert({ church_id: church.id, kind: 'subscription', tx_ref: tx.tx_ref, flw_transaction_id: tx.id, amount: tx.amount, currency: tx.currency, plan, email, status: 'successful', completed_at: new Date().toISOString() })
   if (error) return { status: 'successful' } // already recorded (webhook retries)
   const base = church.plan_renews_at && new Date(church.plan_renews_at) > new Date() ? new Date(church.plan_renews_at) : new Date()
@@ -160,6 +163,12 @@ async function complete(ref: { id?: string; txRef?: string }) {
       .from('churches')
       .update({ plan: p.plan, plan_status: 'active', plan_renews_at: nextMonth(new Date()).toISOString(), trial_ends_at: null, flw_subscription_email: p.email.toLowerCase() })
       .eq('id', p.church_id)
+    if (p.promo_code) {
+      const { data: r } = await db().from('promo_redemptions').select('id, promo_codes(duration_months)').eq('church_id', p.church_id).eq('status', 'pending').maybeSingle()
+      const months = (r?.promo_codes as unknown as { duration_months: number | null } | null)?.duration_months
+      const ends = months ? new Date(new Date().setMonth(new Date().getMonth() + months)).toISOString() : null
+      if (r) await db().from('promo_redemptions').update({ status: 'active', redeemed_at: new Date().toISOString(), ends_at: ends }).eq('id', r.id)
+    }
     // Upgrade / downgrade: stop any older subscription so the church is never billed twice.
     const newPlanId = String(tx.plan ?? tx.payment_plan ?? '')
     for (const s of await listSubscriptions(p.email)) {
@@ -246,6 +255,62 @@ paymentRoutes.post(
 
 /* ───────── plan billing ───────── */
 
+const ZERO_DECIMAL = new Set(['NGN', 'UGX', 'TZS', 'RWF', 'XOF', 'XAF', 'KES', 'MWK'])
+/** Price after a % discount, rounded the way that currency is normally written. */
+const discounted = (amount: number, pct: number, currency: string) => {
+  const v = amount * (1 - pct / 100)
+  return ZERO_DECIMAL.has(currency) ? Math.round(v) : Math.round(v * 100) / 100
+}
+
+interface Promo {
+  id: string
+  code: string
+  kind: 'percent' | 'free_days'
+  percent_off: number | null
+  duration_months: number | null
+  free_days: number | null
+}
+
+/** Validates a promo code for this church and plan; throws a clear message when it can't be used. */
+async function findPromo(raw: string, plan: string, churchId: string): Promise<Promo> {
+  const code = raw.trim().toUpperCase()
+  const { data: p } = await db().from('promo_codes').select('*').eq('code', code).maybeSingle()
+  const now = Date.now()
+  if (!p || !p.active || new Date(p.starts_at).getTime() > now) throw new HttpError(404, 'PROMO_INVALID')
+  if (p.expires_at && new Date(p.expires_at).getTime() < now) throw new HttpError(410, 'PROMO_EXPIRED')
+  if (p.plans?.length && !p.plans.includes(plan)) throw new HttpError(400, 'PROMO_PLAN')
+  const { data: used } = await db().from('promo_redemptions').select('id').eq('promo_id', p.id).eq('church_id', churchId).neq('status', 'pending').maybeSingle()
+  if (used) throw new HttpError(409, 'PROMO_USED')
+  if (p.max_redemptions) {
+    const { count } = await db().from('promo_redemptions').select('id', { count: 'exact', head: true }).eq('promo_id', p.id).neq('status', 'pending')
+    if ((count ?? 0) >= p.max_redemptions) throw new HttpError(410, 'PROMO_FULL')
+  }
+  return p as Promo
+}
+
+paymentRoutes.post(
+  '/billing/promo',
+  requireCaller(['admin']),
+  route(async (req, res) => {
+    limit(req, 20)
+    const plan = str(req.body?.plan) as PlanKey
+    if (!PLAN_PRICE[plan]) throw new HttpError(400, 'Unknown plan')
+    const { data: church } = await db().from('churches').select('id, currency').eq('id', req.caller!.churchId).single()
+    const p = await findPromo(str(req.body?.code, 40), plan, church!.id)
+    const base = planPrice(plan, church?.currency)
+    res.json({
+      code: p.code,
+      kind: p.kind,
+      percentOff: p.percent_off,
+      durationMonths: p.duration_months,
+      freeDays: p.free_days,
+      currency: base.currency,
+      price: base.amount,
+      discounted: p.kind === 'percent' ? discounted(base.amount, p.percent_off!, base.currency) : 0,
+    })
+  }),
+)
+
 paymentRoutes.post(
   '/billing/checkout',
   requireCaller(['admin']),
@@ -254,11 +319,27 @@ paymentRoutes.post(
     if (!PLAN_PRICE[plan]) throw new HttpError(400, 'Unknown plan')
     const { data: church } = await db().from('churches').select('id, name, logo_url, currency').eq('id', req.caller!.churchId).single()
     // Billed in the church's currency when we have a local price for it; otherwise USD.
-    const { currency, amount } = planPrice(plan, church?.currency)
-    const planId = await flwPlanId(plan, currency)
+    const base = planPrice(plan, church?.currency)
+    const currency = base.currency
+    let amount = base.amount
+    let planId: string
+    const promo = str(req.body?.promo) ? await findPromo(str(req.body.promo), plan, church!.id) : null
+    if (promo?.kind === 'free_days') {
+      // Free access, no card: the church gets the plan now and subscribes when the free days end.
+      const ends = new Date(Date.now() + promo.free_days! * 864e5).toISOString()
+      await db().from('promo_redemptions').insert({ promo_id: promo.id, church_id: church!.id, plan, status: 'active', ends_at: ends })
+      await db().from('churches').update({ plan, plan_status: 'active', plan_renews_at: ends, trial_ends_at: null }).eq('id', church!.id)
+      return res.json({ redeemed: true, until: ends })
+    }
+    if (promo?.kind === 'percent') {
+      amount = discounted(base.amount, promo.percent_off!, currency)
+      planId = await ensurePaymentPlan(`ZionDesk ${PLAN_NAME[plan]} ${currency} ${promo.percent_off}% off`, amount, currency)
+      await db().from('promo_redemptions').delete().eq('church_id', church!.id).eq('status', 'pending')
+      await db().from('promo_redemptions').insert({ promo_id: promo.id, church_id: church!.id, plan, status: 'pending', percent_off: promo.percent_off, currency, amount })
+    } else planId = await flwPlanId(plan, currency)
     const { data: prof } = await db().from('profiles').select('full_name, comm_language').eq('id', req.caller!.userId).maybeSingle()
     const txRef = `zd-sub-${randomUUID()}`
-    await db().from('online_payments').insert({ church_id: church!.id, kind: 'subscription', tx_ref: txRef, amount, currency, plan, name: prof?.full_name ?? '', email: req.caller!.email, language: prof?.comm_language ?? 'en' })
+    await db().from('online_payments').insert({ church_id: church!.id, kind: 'subscription', tx_ref: txRef, amount, currency, plan, promo_code: promo?.code ?? null, name: prof?.full_name ?? '', email: req.caller!.email, language: prof?.comm_language ?? 'en' })
     const link = await createCheckout({
       txRef,
       amount,

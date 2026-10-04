@@ -1,4 +1,21 @@
 export default {
+  support: {
+    title: "Contact support",
+    subject: "Subject",
+    message: "Message",
+    ph: "Tell us what happened and what you expected. Screenshots help — paste a link if you have one.",
+    send: "Send to support",
+    sent: "Thanks — our team will reply by email, usually within one working day.",
+    err: "Add a subject and a message.",
+    mine: "Your conversations",
+    you: "You",
+    reply: "Write a reply…",
+    status: {
+      open: "Open",
+      pending: "Replied",
+      closed: "Closed",
+    },
+  },
   faq: 'Frequently asked questions',
   still: 'Still need help?',
   stillSub: 'Our team is happy to help you set up your church.',
