@@ -28,7 +28,7 @@ app.use('/api/auth', authHookRoutes)
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
 
 // Which settings are present (names only — never values), plus the deployed commit.
-const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'ANTHROPIC_API_KEY', 'CRON_SECRET']
+const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLUTTERWAVE_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'FLUTTERWAVE_WEBHOOK_SECRET_HASH', 'FLUTTERWAVE_BASE_URL', 'ANTHROPIC_API_KEY', 'CRON_SECRET']
 app.get('/api/health', (_req, res) =>
   res.json({
     ok: true,

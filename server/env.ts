@@ -34,8 +34,10 @@ export const env = {
   twilioWhatsappFrom: v('TWILIO_WHATSAPP_FROM'),
 
   // Flutterwave (dashboard → Settings → API keys / Webhooks)
-  flwSecretKey: v('FLW_SECRET_KEY'),
-  flwWebhookHash: v('FLW_WEBHOOK_HASH'), // the "Secret hash" you set on the webhook
+  flwSecretKey: v('FLW_SECRET_KEY') || v('FLUTTERWAVE_SECRET_KEY'),
+  // Optional override, e.g. https://api.flutterwave.com/v3
+  flwBaseUrl: (v('FLUTTERWAVE_BASE_URL') || 'https://api.flutterwave.com/v3').replace(/\/+$/, '').replace(/^(https:\/\/[^/]+)$/, '$1/v3'),
+  flwWebhookHash: v('FLW_WEBHOOK_HASH') || v('FLUTTERWAVE_WEBHOOK_SECRET_HASH') || v('FLUTTERWAVE_WEBHOOK_HASH'), // the "Secret hash" you set on the webhook
   flwPlatformFee: Number(v('FLW_PLATFORM_FEE') || 0), // share ZionDesk keeps from gifts, e.g. 0.02 = 2%
   // Monthly payment-plan ids for subscriptions (create once with: npm run flw:plans)
   flwPlans: { essentials: v('FLW_PLAN_ESSENTIALS'), plus: v('FLW_PLAN_PLUS'), max: v('FLW_PLAN_MAX') } as Record<string, string>,

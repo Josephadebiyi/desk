@@ -8,11 +8,10 @@
 import { configured, env } from './env'
 import { HttpError } from './db'
 
-const BASE = 'https://api.flutterwave.com/v3'
 
 async function flw<T = Record<string, unknown>>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
   if (!configured.flutterwave) throw new HttpError(503, 'Online payments are not configured (FLW_SECRET_KEY).')
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(`${env.flwBaseUrl}${path}`, {
     method: init.method ?? (init.body ? 'POST' : 'GET'),
     headers: { Authorization: `Bearer ${env.flwSecretKey}`, 'Content-Type': 'application/json' },
     body: init.body ? JSON.stringify(init.body) : undefined,
