@@ -1,0 +1,25 @@
+import type { Dict } from '../en'
+const ov: Dict['ov'] = {
+  hello: 'Bonjour,',
+  people: 'Personnes dans votre église',
+  month_one: '+{count} ce mois-ci',
+  month_other: '+{count} ce mois-ci',
+  toFollow: 'Nouveaux venus à suivre',
+  giving: 'Dons enregistrés',
+  newcomers: 'Suivi des nouveaux venus',
+  openMembers: 'Ouvrir les membres',
+  joined: 'Arrivé le {date}',
+  noNewcomers: 'Aucun nouveau venu pour le moment.',
+  funnel: 'Parcours de discipulat',
+  journey: 'personnes sur le parcours',
+  birthdays: 'Anniversaires à venir',
+  noBirthdays: 'Aucun anniversaire dans les 30 prochains jours.',
+  comingUp: 'À venir',
+  openEvents: 'Ouvrir les événements',
+  noEvents: 'Aucun événement à venir.',
+  quick: 'Actions rapides',
+  addMember: 'Ajouter un membre',
+  browse: 'Parcourir les membres',
+  import: 'Importer depuis Excel / CSV',
+}
+export default ov

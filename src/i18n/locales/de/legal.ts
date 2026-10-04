@@ -1,0 +1,38 @@
+import type { Dict } from '../en'
+const legal: Dict['legal'] = {
+  updated: 'Zuletzt aktualisiert: {date}',
+  contact: 'Fragen? Schreib an hello@ziondesk.com',
+  privacy: {
+    title: 'Datenschutz',
+    sub: 'Wie ZionDesk mit den Daten deiner Gemeinde umgeht.',
+    h1: 'Was wir erfassen',
+    b1: 'Kontodaten (Name, E-Mail, Sprache), Gemeindedaten und die Einträge deiner Gemeinde: Mitglieder, Spenden, Veranstaltungen und Nachrichten. Wer sich über einen Gemeinde-Link anmeldet, teilt die Angaben aus diesem Formular.',
+    h2: 'Wofür wir sie nutzen',
+    b2: 'Nur um ZionDesk für deine Gemeinde zu betreiben: Daten speichern, die gewünschten E-Mails und Nachrichten senden, Spenden abwickeln und mit Ellen Fragen beantworten. Wir verkaufen nie personenbezogene Daten.',
+    h3: 'Wer sie sehen kann',
+    b3: 'Die Daten jeder Gemeinde sind von allen anderen getrennt. Innerhalb einer Gemeinde richtet sich der Zugriff nach der Rolle – z. B. sehen nur Verwaltung und Finanzen Spenden.',
+    h4: 'Dienstleister',
+    b4: 'Wir nutzen Supabase (Datenbank und Anmeldung), Resend (E-Mail), Flutterwave (Zahlungen), Render (Hosting) und, falls aktiviert, KI-Anbieter wie Anthropic. Sie verarbeiten Daten nur zur Erbringung ihres Dienstes.',
+    h5: 'Deine Wahl',
+    b5: 'Administratoren können Einträge jederzeit korrigieren oder löschen. Mitglieder können ihre Gemeinde bitten, ihre Daten zu ändern oder zu entfernen. Schreib uns, um ein Konto zu schließen.',
+    h6: 'Sicherheit',
+    b6: 'Daten werden verschlüsselt übertragen, der Zugriff ist rollenbasiert und Zahlungen wickelt Flutterwave ab – ZionDesk sieht nie Kartennummern.',
+  },
+  terms: {
+    title: 'Nutzungsbedingungen',
+    sub: 'Die Regeln für die Nutzung von ZionDesk.',
+    h1: 'Dein Konto',
+    b1: 'Du bist für deine Anmeldung und die Personen verantwortlich, die du einlädst. Administratoren entscheiden über Zugänge.',
+    h2: 'Die Daten deiner Gemeinde',
+    b2: 'Deine Gemeinde besitzt ihre Daten. Du bestätigst, dass du die eingetragenen Informationen speichern und die angeschriebenen Personen kontaktieren darfst.',
+    h3: 'Tarife und Abrechnung',
+    b3: 'Nach der Testphase werden Tarife monatlich über Flutterwave abgerechnet. Du kannst jederzeit wechseln oder kündigen.',
+    h4: 'Online-Spenden',
+    b4: 'Spenden werden von Flutterwave abgewickelt und auf das verbundene Gemeindekonto ausgezahlt. Erstattungen regelt die empfangende Gemeinde.',
+    h5: 'Zulässige Nutzung',
+    b5: 'Nutze ZionDesk nicht für Spam, Rechtsverstöße oder den Missbrauch fremder Daten.',
+    h6: 'Änderungen',
+    b6: 'Wir können ZionDesk und diese Bedingungen aktualisieren und informieren Administratoren über wichtige Änderungen.',
+  },
+}
+export default legal

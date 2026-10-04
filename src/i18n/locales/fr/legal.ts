@@ -1,0 +1,38 @@
+import type { Dict } from '../en'
+const legal: Dict['legal'] = {
+  updated: 'Dernière mise à jour : {date}',
+  contact: 'Des questions ? Écrivez à hello@ziondesk.com',
+  privacy: {
+    title: 'Politique de confidentialité',
+    sub: 'Comment ZionDesk traite les informations de votre église.',
+    h1: 'Ce que nous collectons',
+    b1: 'Les données du compte (nom, e-mail, langue), les informations de l’église et les données ajoutées par votre église : membres, dons, événements et messages. Les personnes qui s’inscrivent via un lien de l’église partagent les informations du formulaire.',
+    h2: 'Utilisation',
+    b2: 'Uniquement pour faire fonctionner ZionDesk pour votre église : conserver les données, envoyer les e-mails et messages demandés, traiter les dons et répondre avec Ellen. Nous ne vendons jamais de données personnelles.',
+    h3: 'Qui peut les voir',
+    b3: 'Les données de chaque église sont séparées des autres. Dans une église, l’accès dépend du rôle : seuls l’administration et les finances voient les dons, par exemple.',
+    h4: 'Prestataires',
+    b4: 'Nous utilisons Supabase (base de données et connexion), Resend (e-mails), Flutterwave (paiements), Render (hébergement) et, si activés, des fournisseurs d’IA comme Anthropic. Ils ne traitent les données que pour fournir leur service.',
+    h5: 'Vos choix',
+    b5: 'Les administrateurs peuvent corriger ou supprimer des données à tout moment. Les membres peuvent demander à leur église de modifier ou supprimer leurs informations. Contactez-nous pour fermer un compte.',
+    h6: 'Sécurité',
+    b6: 'Les données sont chiffrées en transit, l’accès est contrôlé par rôle et les paiements sont gérés par Flutterwave : ZionDesk ne voit jamais les numéros de carte.',
+  },
+  terms: {
+    title: 'Conditions d’utilisation',
+    sub: 'Les règles d’utilisation de ZionDesk.',
+    h1: 'Votre compte',
+    b1: 'Vous êtes responsable de vos identifiants et des personnes que vous invitez. Les administrateurs décident des accès.',
+    h2: 'Les données de votre église',
+    b2: 'Votre église est propriétaire de ses données. Vous confirmez avoir l’autorisation de conserver les informations ajoutées et de contacter les personnes à qui vous écrivez.',
+    h3: 'Forfaits et facturation',
+    b3: 'Après l’essai gratuit, les forfaits sont facturés chaque mois via Flutterwave. Vous pouvez changer ou résilier à tout moment.',
+    h4: 'Dons en ligne',
+    b4: 'Les dons sont traités par Flutterwave et versés sur le compte bancaire connecté de l’église. Les remboursements relèvent de l’église bénéficiaire.',
+    h5: 'Usage acceptable',
+    b5: 'N’utilisez pas ZionDesk pour envoyer du spam, enfreindre la loi ou détourner les informations d’autrui.',
+    h6: 'Modifications',
+    b6: 'Nous pouvons faire évoluer ZionDesk et ces conditions. Nous informerons les administrateurs des changements importants.',
+  },
+}
+export default legal

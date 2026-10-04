@@ -1,0 +1,15 @@
+export default {
+  stage: { Newcomer: 'Newcomer', Convert: 'Convert', Member: 'Member', Worker: 'Worker' },
+  stagePlural: { Newcomer: 'Newcomers', Convert: 'Converts', Member: 'Members', Worker: 'Workers' },
+  stageHint: { Newcomer: 'First-time guests', Convert: 'New believers', Member: 'Church family', Worker: 'Serving teams' },
+  status: { Active: 'Active', Inactive: 'Inactive', Transferred: 'Transferred' },
+  gender: { Female: 'Female', Male: 'Male' },
+  channel: { Call: 'Call', SMS: 'SMS', WhatsApp: 'WhatsApp', Email: 'Email', Visit: 'Visit', Note: 'Note' },
+  mode: { 'In person': 'In person', Online: 'Online', Hybrid: 'Hybrid' },
+  method: { Transfer: 'Transfer', Card: 'Card', Cash: 'Cash', Cheque: 'Cheque' },
+  expense: { Utilities: 'Utilities', Salaries: 'Salaries', Outreach: 'Outreach', Equipment: 'Equipment', Maintenance: 'Maintenance', Missions: 'Missions', Events: 'Events', Other: 'Other' },
+  request: { Submitted: 'Submitted', 'In design': 'In design', Review: 'Review', Delivered: 'Delivered' },
+  campaign: { Queued: 'Queued', Scheduled: 'Scheduled' },
+  role: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader' },
+  plan: { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' },
+}

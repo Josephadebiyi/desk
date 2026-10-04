@@ -1,0 +1,17 @@
+export default {
+  title: 'Language & Communication',
+  appLanguage: 'App language',
+  appLanguageHint: 'The language used inside ZionDesk.',
+  commLanguage: 'Communication language',
+  commLanguageHint: 'Used for emails, notifications, invitations and messages we send you.',
+  popupTitle: 'Choose your preferred language',
+  popupSub: 'Your preferred language is saved to your account. You can change it later in Account settings → Language & Communication.',
+  savedToast: 'Language saved to your account',
+  savedToastSub: 'You can change it anytime in Account settings → Language & Communication.',
+  changeInSettings: 'Change in settings',
+  popupCommQuestion: 'What language would you like us to use when communicating with you?',
+  popupCommHint: 'We’ll use this for emails, notifications and other church communications.',
+  popupContinue: 'Continue',
+  savedNote: 'Your language preferences are saved.',
+  memberLanguage: 'Preferred communication language',
+}

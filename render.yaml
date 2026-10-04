@@ -1,0 +1,91 @@
+# Render Blueprint — Dashboard → New → Blueprint → pick this repo.
+# One web service (app + API) and two cron jobs. Secrets marked `sync: false` are entered in the Render dashboard.
+services:
+  - type: web
+    name: ziondesk
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SITE_URL # e.g. https://app.ziondesk.com (no trailing slash)
+        sync: false
+      # Browser (baked into the build)
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      # Server only
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_AUTH_HOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM # "ZionDesk <hello@yourdomain.com>" — domain verified in Resend
+        sync: false
+      - key: EMAIL_REPLY_TO
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5-5
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: FLW_SECRET_KEY
+        sync: false
+      - key: FLW_WEBHOOK_HASH
+        sync: false
+      - key: FLW_PLATFORM_FEE # share ZionDesk keeps from gifts, e.g. 0.02; 0 = none
+        value: "0"
+      - key: FLW_PLAN_ESSENTIALS
+        sync: false
+      - key: FLW_PLAN_PLUS
+        sync: false
+      - key: FLW_PLAN_MAX
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_SMS_FROM
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+
+  - type: cron
+    name: ziondesk-hourly # scheduled messages + event reminders
+    runtime: node
+    schedule: "5 * * * *"
+    buildCommand: "true"
+    startCommand: node -e "fetch(process.env.SITE_URL+'/api/cron/hourly',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(r=>r.text()).then(console.log)"
+    envVars:
+      - key: SITE_URL
+        sync: false
+      - key: CRON_SECRET
+        fromService: { type: web, name: ziondesk, envVarKey: CRON_SECRET }
+
+  - type: cron
+    name: ziondesk-daily # birthday emails
+    runtime: node
+    schedule: "0 7 * * *"
+    buildCommand: "true"
+    startCommand: node -e "fetch(process.env.SITE_URL+'/api/cron/daily',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(r=>r.text()).then(console.log)"
+    envVars:
+      - key: SITE_URL
+        sync: false
+      - key: CRON_SECRET
+        fromService: { type: web, name: ziondesk, envVarKey: CRON_SECRET }

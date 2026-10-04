@@ -1,0 +1,18 @@
+export default {
+  title: 'Reports',
+  people: 'People',
+  joined12: 'Joined in 12 months',
+  avgAttendance: 'Avg. attendance',
+  generateAi: 'Generate with Ellen',
+  newPerMonth: 'New people per month',
+  month: 'Month',
+  newPeople: 'New people',
+  stages: 'Discipleship stages',
+  attendance: 'Event attendance',
+  invited: 'Invited',
+  attended: 'Attended',
+  noAttendance: 'Record attendance on past events (Events → open an event) to see trends here.',
+  byFund: 'Giving by fund',
+  totalExpenses: 'Total expenses',
+  locked: 'Giving reports are visible to Administrators and the Finance team only.',
+}

@@ -1,0 +1,70 @@
+/* All sizes use container-query units (cqw) so a flyer scales with its box. */
+.flyer {
+  container-type: inline-size;
+  position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; isolation: isolate;
+  font-family: 'Inter Tight', 'Inter', sans-serif; color: #111;
+}
+.flyer img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.flyer .f-qr { position: absolute; right: 4cqw; bottom: 4cqw; width: 14cqw; height: 14cqw; padding: 0.8cqw; background: #fff; border-radius: 1.6cqw; z-index: 5; }
+.f-kicker { position: absolute; z-index: 2; font-size: 2.6cqw; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; }
+.f-foot { position: absolute; z-index: 2; font-size: 2.6cqw; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* 1 · Sunset minimal */
+.f-sunset { background: radial-gradient(70% 55% at 50% 40%, #ff9a4d 0%, #f26b2a 35%, #f6d2b2 72%, #f4ece2 100%); color: #3b1a07; }
+.f-sunset .f-sun { position: absolute; left: 18cqw; top: 10cqw; width: 64cqw; height: 64cqw; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.65), rgba(255,255,255,0) 60%); mix-blend-mode: soft-light; }
+.f-sunset .f-kicker { top: 7cqw; left: 0; right: 0; text-align: center; }
+.f-sunset .f-center { position: absolute; inset: 30cqw 6cqw auto; display: flex; flex-direction: column; align-items: center; gap: 1.6cqw; text-align: center; }
+.f-sunset .f-center span { font-size: 4.6cqw; font-weight: 600; letter-spacing: 0.5em; text-transform: uppercase; padding-left: 0.5em; }
+.f-sunset .f-date { position: absolute; left: 0; right: 0; bottom: 16cqw; text-align: center; font-size: 6.4cqw; font-weight: 800; letter-spacing: 0.06em; }
+.f-sunset .f-foot { left: 0; right: 0; bottom: 8cqw; text-align: center; opacity: 0.7; }
+.f-sunset .f-qr { right: auto; left: 4cqw; }
+
+/* 2 · Gold editorial */
+.f-gold { background: #f4f1ea; color: #b8901c; }
+.f-gold .f-kicker { top: 6cqw; left: 6cqw; color: #2b2b2b; font-size: 2.2cqw; }
+.f-gold .f-title { position: absolute; z-index: 2; left: 5cqw; right: 5cqw; top: 13cqw; text-align: center; font-size: 15cqw; line-height: 0.88; font-weight: 800; letter-spacing: -0.05em; text-transform: uppercase; overflow-wrap: anywhere; }
+.f-gold .f-script { position: absolute; z-index: 3; left: 0; right: 0; top: 28cqw; text-align: center; font-family: 'Great Vibes', cursive; font-size: 15cqw; color: #2b2b2b; transform: rotate(-8deg); }
+.f-gold .f-date { position: absolute; z-index: 2; left: 0; right: 0; top: 56cqw; text-align: center; font-size: 4.4cqw; font-weight: 800; color: #2b2b2b; text-transform: uppercase; }
+.f-gold .f-photo { position: absolute; left: 0; right: 0; bottom: 0; height: 58cqw; }
+.f-gold .f-photo img { filter: grayscale(1) contrast(1.1); }
+.f-gold .f-photo::before { content: ''; position: absolute; inset: 0; background: linear-gradient(#f4f1ea, transparent 40%); z-index: 1; }
+.f-gold .f-ring { position: absolute; z-index: 3; left: 10cqw; right: 10cqw; bottom: 8cqw; height: 34cqw; border: 0.5cqw solid #c9a227; border-radius: 50%; transform: rotate(-12deg); }
+
+/* 3 · Revival night */
+.f-revival { background: #fff; color: #e5251e; display: flex; flex-direction: column; }
+.f-revival .f-head { position: relative; display: flex; justify-content: space-between; gap: 3cqw; padding: 6cqw 6cqw 4cqw; }
+.f-revival .f-title { font-size: 12.5cqw; font-weight: 800; line-height: 0.86; letter-spacing: -0.05em; text-transform: uppercase; overflow-wrap: anywhere; }
+.f-revival .f-side { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 1cqw; font-size: 2.8cqw; font-weight: 700; text-transform: uppercase; max-width: 30cqw; }
+.f-revival .f-side b { font-size: 4.6cqw; line-height: 1; }
+.f-revival .f-photo { flex: 1; min-height: 0; }
+.f-revival .f-photo img { filter: grayscale(1) contrast(1.15); }
+.f-revival .f-repeat { position: absolute; left: 0; right: 0; bottom: 3cqw; display: flex; flex-wrap: wrap; justify-content: center; gap: 1cqw 5cqw; padding: 0 20cqw 0 4cqw; font-size: 2.2cqw; font-weight: 700; color: #ff3b30; text-transform: lowercase; }
+
+/* 4 · Big number (photo inside the type) */
+.f-number { background: #0b0b0d; color: #fff; }
+.f-number .f-big { position: absolute; left: -2cqw; right: -2cqw; top: 6cqw; text-align: center; font-size: 62cqw; line-height: 0.82; font-weight: 800; letter-spacing: -0.08em; background-size: cover; background-position: center; -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+.f-number .f-meta { position: absolute; right: 6cqw; top: 60cqw; display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 1cqw; max-width: 60cqw; }
+.f-number .f-meta b { font-size: 4.2cqw; text-transform: uppercase; letter-spacing: 0.06em; }
+.f-number .f-meta span { font-size: 3.4cqw; color: #c4ec62; font-weight: 700; }
+.f-number .f-star { position: absolute; left: 6cqw; bottom: 22cqw; font-size: 9cqw; color: #c4ec62; }
+.f-number .f-foot { left: 6cqw; bottom: 7cqw; color: rgba(255,255,255,0.7); }
+
+/* 5 · Duotone worship */
+.f-duotone { background: #0d4d55; color: #fff; }
+.f-duotone .f-photo { position: absolute; inset: 0; z-index: -1; }
+.f-duotone .f-photo img { filter: grayscale(1) contrast(1.15) brightness(0.9); mix-blend-mode: multiply; }
+.f-duotone .f-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,77,85,0.15), rgba(6,45,52,0.92) 78%); }
+.f-duotone .f-title { position: absolute; left: 4cqw; right: 4cqw; top: 8cqw; font-size: 18cqw; line-height: 0.82; font-weight: 800; letter-spacing: -0.06em; text-transform: uppercase; color: rgba(134, 233, 240, 0.85); mix-blend-mode: screen; overflow-wrap: anywhere; }
+.f-duotone .f-with { position: absolute; right: 8cqw; top: 44cqw; font-family: 'Great Vibes', cursive; font-size: 10cqw; color: #fff; }
+.f-duotone .f-row { position: absolute; left: 6cqw; right: 22cqw; bottom: 6cqw; display: flex; gap: 6cqw; font-size: 3.6cqw; font-weight: 700; }
+.f-duotone .f-row span { display: flex; flex-direction: column; }
+.f-duotone .f-row small { font-size: 2.4cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.7; }
+
+/* 6 · Serif gathering */
+.f-serif { background: #1f4a3d; color: #e9f1e4; }
+.f-serif .f-photo { position: absolute; right: 0; top: 0; width: 58cqw; height: 100%; }
+.f-serif .f-photo img { filter: grayscale(1) contrast(1.05); opacity: 0.85; }
+.f-serif .f-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #1f4a3d 0%, rgba(31,74,61,0.2) 55%, transparent); }
+.f-serif .f-kicker { top: 8cqw; left: 6cqw; max-width: 46cqw; font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 4.4cqw; letter-spacing: 0; text-transform: none; line-height: 1.15; }
+.f-serif .f-title { position: absolute; left: 6cqw; right: 8cqw; bottom: 22cqw; font-family: 'Ciscela', 'DM Serif Display', Georgia, serif; font-size: 14cqw; line-height: 0.92; color: #c4ec62; overflow-wrap: anywhere; }
+.f-serif .f-foot { left: 6cqw; bottom: 8cqw; opacity: 0.75; }

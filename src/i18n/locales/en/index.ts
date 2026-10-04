@@ -1,0 +1,28 @@
+import common from './common'
+import lang from './lang'
+import enums from './enums'
+import dash from './dash'
+import kit from './kit'
+import members from './members'
+import links from './links'
+import pub from './pub'
+import settings from './settings'
+import ai from './ai'
+import tpl from './tpl'
+import site from './site'
+import emailPreview from './emailPreview'
+import flyer from './flyer'
+import ov from './ov'
+import giving from './giving'
+import msg from './msg'
+import events from './events'
+import design from './design'
+import reports from './reports'
+import help from './help'
+import auth from './auth'
+import legal from './legal'
+
+const en = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal }
+
+export type Dict = typeof en
+export default en
