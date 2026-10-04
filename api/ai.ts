@@ -63,6 +63,8 @@ const PRICES: Record<string, { in: number; out: number }> = {
   'claude-opus-5-5': { in: 4, out: 20 },
   'claude-sonnet-5-5': { in: 2, out: 10 },
   'claude-haiku-4-5': { in: 1, out: 5 },
+  'gemini-3.8-flash': { in: 0.75, out: 3.75 }, // rises to 1.50 / 7.50 on 1 Jan 2027
+  'gemini-3.5-flash-lite': { in: 0.3, out: 2.5 },
 }
 const cost = (model: string, i: number, o: number) => {
   const p = PRICES[model]
@@ -125,7 +127,7 @@ async function callGemini(r: AiRequest): Promise<AiResponse> {
     systemInstruction: { parts: [{ text: r.system }] },
     contents: r.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [...imgs(m).map((i) => ({ inlineData: { mimeType: i.mediaType, data: i.data } })), { text: m.content }] })),
     tools: r.tools?.length
-      ? [{ functionDeclarations: r.tools.map((t) => ({ name: t.name, description: t.description, parameters: t.input_schema })) }]
+      ? [{ functionDeclarations: r.tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.input_schema })) }]
       : undefined,
   }
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {

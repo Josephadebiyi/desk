@@ -38,7 +38,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        sync: false
+        value: gemini-3.8-flash
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL

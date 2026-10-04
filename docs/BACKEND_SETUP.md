@@ -19,10 +19,11 @@ Until the keys are in, the app keeps running in **preview mode** (demo data in t
 1. Create a project at supabase.com (pick the region closest to your churches).
 2. **SQL Editor → New query** → paste all of `supabase/migrations/0001_init.sql` → **Run**, then do the same with `0002_flutterwave.sql`.
    This creates every table, the security rules (each church only sees its own data; giving is Admin/Finance only) and the storage buckets.
-3. **Project Settings → API** — copy:
+3. **Project Settings → API Keys** — copy:
    - Project URL → `SUPABASE_URL` and `VITE_SUPABASE_URL`
-   - `anon` public key → `VITE_SUPABASE_ANON_KEY`
-   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (secret — server only)
+   - **Publishable key** (`sb_publishable_…`) → `VITE_SUPABASE_ANON_KEY`
+   - **Secret key** (`sb_secret_…`) → `SUPABASE_SERVICE_ROLE_KEY` (server only — never in the browser)
+   - Use these new keys, not the legacy `anon` / `service_role` JWTs: Supabase retires the legacy keys by the end of 2026. The variable names stay the same.
 4. **Authentication → URL Configuration**
    - Site URL: your Render address, e.g. `https://ziondesk.onrender.com` (later your domain)
    - Redirect URLs: add `https://YOUR-DOMAIN/**` and `http://localhost:5173/**`
@@ -30,7 +31,7 @@ Until the keys are in, the app keeps running in **preview mode** (demo data in t
    (Google Cloud Console → Credentials → OAuth client → Web; authorized redirect URI = the callback URL Supabase shows).
 6. **Authentication → Hooks → Send Email hook** (do this after step 3 of Render, once you have the URL)
    - Type: HTTPS · URL: `https://YOUR-DOMAIN/api/auth/email-hook`
-   - Generate the secret → copy into `SUPABASE_AUTH_HOOK_SECRET`
+   - Generate the secret → copy the whole value (`v1,whsec_…`) into `SUPABASE_AUTH_HOOK_SECRET`
    - This makes sign-up confirmations and password resets go out through Resend **in each user's language**.
 
 ## 2. Resend (≈5 min)
@@ -63,7 +64,14 @@ How it works:
 4. Deploy. Check `https://YOUR-DOMAIN/api/health` → `"supabase":true,"email":true`.
 5. Optional: Settings → Custom Domain → `app.ziondesk.com`, then update `SITE_URL` and Supabase's Site URL.
 
-## 5. Keys checklist
+## 5. Gemini (optional, ≈3 min)
+
+1. aistudio.google.com → **Get API key** → create a key in a Google Cloud project → `GEMINI_API_KEY`.
+2. In that project, **enable billing**. On the free tier Google may use prompts to improve its products — Ellen's prompts contain member details.
+3. `GEMINI_MODEL` = `gemini-3.8-flash` (already set in `render.yaml`).
+4. Deploy, then in ZionDesk **Settings → AI** tick **Gemini** (it is off by default). Ellen uses Claude first when both are on; pick Gemini in Ellen's model menu to use it directly.
+
+## 6. Keys checklist
 
 | Variable | Where from | Required |
 |---|---|---|
@@ -77,11 +85,13 @@ How it works:
 | `FLW_SECRET_KEY`, `FLW_WEBHOOK_HASH` | Flutterwave → Settings | ✅ for online giving & billing |
 | `FLW_PLAN_*` | `npm run flw:plans` | ✅ for plan billing |
 | `FLW_PLATFORM_FEE` | your choice | optional |
-| `GEMINI_*`, `OPENAI_*` | Google AI Studio / OpenAI | optional |
+| `GEMINI_API_KEY` | aistudio.google.com → API keys (turn on billing — free-tier prompts are used by Google to improve its products) | optional |
+| `GEMINI_MODEL` | `gemini-3.8-flash` (preset in `render.yaml`) | with Gemini |
+| `OPENAI_*` | OpenAI | optional |
 | `TWILIO_*` | twilio.com | optional (SMS/WhatsApp) |
 | Google OAuth Client ID/Secret | Google Cloud Console → entered in **Supabase**, not Render | for "Continue with Google" |
 
-## 6. Run locally with the real backend
+## 7. Run locally with the real backend
 
 ```bash
 cp .env.example .env   # fill in the values
