@@ -267,9 +267,11 @@ function GivingPageSetup() {
             className="d-circle d-circle-sm"
             aria-label={t('common.copyLink')}
             onClick={() => {
-              navigator.clipboard?.writeText(link)
-              setCopied(true)
-              setTimeout(() => setCopied(false), 1500)
+              // Only confirm once the copy succeeded (it can be blocked by the browser).
+              void navigator.clipboard?.writeText(link).then(() => {
+                setCopied(true)
+                setTimeout(() => setCopied(false), 1500)
+              }, () => {})
             }}
           >
             {copied ? <Check size={13} /> : <Copy size={13} />}

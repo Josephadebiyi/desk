@@ -365,9 +365,11 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         type="button"
         aria-label={t('pub.copy', { what: label })}
         onClick={() => {
-          navigator.clipboard?.writeText(value)
-          setOk(true)
-          setTimeout(() => setOk(false), 1400)
+          // Only confirm once the copy succeeded (it can be blocked by the browser).
+          void navigator.clipboard?.writeText(value).then(() => {
+            setOk(true)
+            setTimeout(() => setOk(false), 1400)
+          }, () => {})
         }}
       >
         {ok ? <Check size={15} /> : <Copy size={15} />}
