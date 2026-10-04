@@ -49,9 +49,9 @@ const settings: Dict['settings'] = {
     switch: 'Zu {plan} wechseln',
     note: 'Abrechnung und Rechnungen werden mit dem Zahlungssystem verbunden. Ein Wechsel hier ändert die verfügbaren Funktionen.',
     points: {
-      essentials: { 0: 'Unbegrenzt Mitglieder', 1: 'Nachrichten & E-Mail', 2: 'Finanzen & Berichte', 3: 'Veranstaltungen & Meetings', 4: 'Ellen, deine KI-Assistentin' },
-      plus: { 0: 'Alles aus Essentials', 1: 'Flyer im Design-Studio', 2: 'Online-Spenden & QR-Codes', 3: 'Spendenseite im eigenen Design' },
-      max: { 0: 'Alles aus Plus', 1: 'Flyer von unserem Designteam', 2: 'Designer-Chat & KI-Briefing', 3: 'Lieferung in 48 Stunden' },
+      essentials: { 0: 'Unbegrenzt Mitglieder', 1: 'Nachrichten & E-Mail', 2: 'Finanzen & Berichte', 3: 'Veranstaltungen & Meetings', 4: 'Ellen, deine KI-Assistentin', 5: '7 KI-Flyer pro Monat' },
+      plus: { 0: 'Alles aus Essentials', 1: 'Flyer im Design-Studio', 2: 'Online-Spenden & QR-Codes', 3: 'Spendenseite im eigenen Design', 4: '12 KI-Flyer pro Monat' },
+      max: { 0: 'Alles aus Plus', 1: 'Flyer von unserem Designteam', 2: 'Designer-Chat & KI-Briefing', 3: 'Lieferung in 48 Stunden', 4: 'Unbegrenzt KI-Flyer' },
     },
   },
   ai: {

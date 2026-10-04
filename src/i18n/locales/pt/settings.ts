@@ -49,9 +49,9 @@ const settings: Dict['settings'] = {
     switch: 'Mudar para {plan}',
     note: 'A faturação liga-se ao sistema de pagamentos. Mudar aqui altera as funções disponíveis neste espaço.',
     points: {
-      essentials: { 0: 'Membros ilimitados', 1: 'Mensagens e e-mail', 2: 'Finanças e relatórios', 3: 'Eventos e reuniões', 4: 'Ellen, a sua assistente de IA' },
-      plus: { 0: 'Tudo do Essentials', 1: 'Folhetos no Estúdio de design', 2: 'Ofertas online e códigos QR', 3: 'Página de ofertas com a sua marca' },
-      max: { 0: 'Tudo do Plus', 1: 'Folhetos feitos pela nossa equipa', 2: 'Chat com designer e briefing com IA', 3: 'Entrega em 48 horas' },
+      essentials: { 0: 'Membros ilimitados', 1: 'Mensagens e e-mail', 2: 'Finanças e relatórios', 3: 'Eventos e reuniões', 4: 'Ellen, a sua assistente de IA', 5: '7 folhetos com IA por mês' },
+      plus: { 0: 'Tudo do Essentials', 1: 'Folhetos no Estúdio de design', 2: 'Ofertas online e códigos QR', 3: 'Página de ofertas com a sua marca', 4: '12 folhetos com IA por mês' },
+      max: { 0: 'Tudo do Plus', 1: 'Folhetos feitos pela nossa equipa', 2: 'Chat com designer e briefing com IA', 3: 'Entrega em 48 horas', 4: 'Folhetos com IA ilimitados' },
     },
   },
   ai: {

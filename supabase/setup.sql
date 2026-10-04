@@ -485,3 +485,6 @@ begin
 end $$;
 drop trigger if exists churches_protect_billing on churches;
 create trigger churches_protect_billing before update on churches for each row execute function protect_billing_columns();
+-- ZionDesk — AI flyers: keep the generated design with the saved flyer.
+alter table designs add column if not exists svg text;
+create index if not exists ai_usage_designs on ai_usage (church_id, feature, at);

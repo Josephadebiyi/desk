@@ -15,6 +15,7 @@ import { configured, env } from './env'
 import { runDaily, runHourly } from './jobs'
 import { appRoutes } from './routes/app'
 import { paymentRoutes } from './routes/payments'
+import { designRoutes } from './routes/design'
 import { authHookRoutes } from './routes/authHook'
 import { publicRoutes } from './routes/public'
 
@@ -76,6 +77,7 @@ app.post(
 
 app.use('/api/public', publicRoutes)
 app.use('/api', paymentRoutes)
+app.use('/api', designRoutes)
 app.use('/api', appRoutes)
 
 /* Render Cron Jobs call these with Authorization: Bearer $CRON_SECRET */

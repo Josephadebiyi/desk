@@ -93,9 +93,9 @@ const site: Dict['site'] = {
   },
   pricing: {
     kicker: 'Preise', h2: 'Einfache Preise für jede Gemeinde', sub: 'Starte mit {days} Tagen kostenlos. Tarif jederzeit wechseln.', perMonth: '/Monat', cta: 'Kostenlos testen',
-    essentials: { blurb: 'Komplette Gemeindeverwaltung', badge: '', f: 'Unbegrenzt Mitglieder|Mitglieder- & Teamverwaltung|E-Mail & SMS in 5 Sprachen|Finanzen & Berichte|Veranstaltungen & Online-Meetings|Ellen, deine KI-Assistentin|Priorisierter Support' },
-    plus: { blurb: 'Alles, plus Design & Spenden', badge: 'Am beliebtesten', f: 'Alles aus Essentials|Design-Studio – Flyer & Plakate|Online-Spenden|ZionDesk Payments oder eigene Bank|QR-Codes für Anmeldung, Spenden & Veranstaltungen|Spendenseite im eigenen Design' },
-    max: { blurb: 'Alle Funktionen + unser Designteam', badge: 'Alles inklusive', f: 'Alles aus Ministry Plus|Flyer-Anfragen an das Designteam|Direkter Chat mit deinem Designer|Ellen sammelt Details & Inspiration|Fertige Flyer in 48 Stunden' },
+    essentials: { blurb: 'Komplette Gemeindeverwaltung', badge: '', f: 'Unbegrenzt Mitglieder|7 KI-Flyer pro Monat|Mitglieder- & Teamverwaltung|E-Mail & SMS in 5 Sprachen|Finanzen & Berichte|Veranstaltungen & Online-Meetings|Ellen, deine KI-Assistentin|Priorisierter Support' },
+    plus: { blurb: 'Alles, plus Design & Spenden', badge: 'Am beliebtesten', f: 'Alles aus Essentials|12 KI-Flyer pro Monat|Design-Studio – Flyer & Plakate|Online-Spenden|ZionDesk Payments oder eigene Bank|QR-Codes für Anmeldung, Spenden & Veranstaltungen|Spendenseite im eigenen Design' },
+    max: { blurb: 'Alle Funktionen + unser Designteam', badge: 'Alles inklusive', f: 'Alles aus Ministry Plus|Unbegrenzt KI-Flyer|Flyer-Anfragen an das Designteam|Direkter Chat mit deinem Designer|Ellen sammelt Details & Inspiration|Fertige Flyer in 48 Stunden' },
   },
   faq: {
     h2: 'Fragen? Wir haben Antworten.', sub: 'Nichts gefunden? Unser Team hilft gern.',

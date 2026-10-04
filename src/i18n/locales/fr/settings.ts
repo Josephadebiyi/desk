@@ -49,9 +49,9 @@ const settings: Dict['settings'] = {
     switch: 'Passer à {plan}',
     note: 'La facturation se connecte au système de paiement. Changer ici modifie les fonctions disponibles pour cet espace.',
     points: {
-      essentials: { 0: 'Membres illimités', 1: 'Messages et e-mails', 2: 'Finances et rapports', 3: 'Événements et réunions', 4: 'Ellen, votre assistante IA' },
-      plus: { 0: 'Tout Essentials', 1: 'Flyers avec le Studio de design', 2: 'Dons en ligne et QR codes', 3: 'Page de dons à vos couleurs' },
-      max: { 0: 'Tout Plus', 1: 'Flyers réalisés par notre équipe', 2: 'Chat avec le designer et brief IA', 3: 'Livraison en 48 heures' },
+      essentials: { 0: 'Membres illimités', 1: 'Messages et e-mails', 2: 'Finances et rapports', 3: 'Événements et réunions', 4: 'Ellen, votre assistante IA', 5: '7 flyers IA par mois' },
+      plus: { 0: 'Tout Essentials', 1: 'Flyers avec le Studio de design', 2: 'Dons en ligne et QR codes', 3: 'Page de dons à vos couleurs', 4: '12 flyers IA par mois' },
+      max: { 0: 'Tout Plus', 1: 'Flyers réalisés par notre équipe', 2: 'Chat avec le designer et brief IA', 3: 'Livraison en 48 heures', 4: 'Flyers IA illimités' },
     },
   },
   ai: {

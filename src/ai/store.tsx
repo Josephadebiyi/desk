@@ -55,9 +55,10 @@ const DEFAULT_SETTINGS: AiSettings = {
   language: 'English',
   suggestions: true,
   limits: {
-    essentials: { requests: 300, designs: 10, imageEdits: 20, transcriptionHours: 0, clips: 0, storageGb: 5 },
-    plus: { requests: 1000, designs: 50, imageEdits: 100, transcriptionHours: 15, clips: 30, storageGb: 50 },
-    max: { requests: 3000, designs: 150, imageEdits: 300, transcriptionHours: 40, clips: 100, storageGb: 200 },
+    essentials: { requests: 300, designs: 7, imageEdits: 20, transcriptionHours: 0, clips: 0, storageGb: 5 },
+    plus: { requests: 1000, designs: 12, imageEdits: 100, transcriptionHours: 15, clips: 30, storageGb: 50 },
+    max: { requests: 3000, designs: 0, // 0 = unlimited
+      imageEdits: 300, transcriptionHours: 40, clips: 100, storageGb: 200 },
   },
   credits: { requests: 1, designs: 1, imageEdits: 1, transcriptionHours: 1, clips: 1, storageGb: 1 },
   messageCost: { SMS: 0.01, WhatsApp: 0.005, Email: 0 },

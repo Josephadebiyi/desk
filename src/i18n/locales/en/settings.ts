@@ -48,9 +48,9 @@ export default {
     switch: 'Switch to {plan}',
     note: 'Billing and invoices connect with the payments backend. Switching here changes which features this workspace can use.',
     points: {
-      essentials: { 0: 'Unlimited members', 1: 'Messaging & email', 2: 'Finance & reports', 3: 'Events & meetings', 4: 'Ellen, your AI assistant' },
-      plus: { 0: 'Everything in Essentials', 1: 'Design Studio flyers', 2: 'Online giving & QR codes', 3: 'Branded giving page' },
-      max: { 0: 'Everything in Plus', 1: 'Flyers by our design team', 2: 'Designer chat & AI brief', 3: '48-hour delivery' },
+      essentials: { 0: 'Unlimited members', 1: 'Messaging & email', 2: 'Finance & reports', 3: 'Events & meetings', 4: 'Ellen, your AI assistant', 5: '7 AI flyers per month' },
+      plus: { 0: 'Everything in Essentials', 1: 'Design Studio flyers', 2: 'Online giving & QR codes', 3: 'Branded giving page', 4: '12 AI flyers per month' },
+      max: { 0: 'Everything in Plus', 1: 'Flyers by our design team', 2: 'Designer chat & AI brief', 3: '48-hour delivery', 4: 'Unlimited AI flyers' },
     },
   },
   ai: {

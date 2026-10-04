@@ -49,9 +49,9 @@ const settings: Dict['settings'] = {
     switch: 'Cambiar a {plan}',
     note: 'La facturación se conecta con el sistema de pagos. Cambiar aquí modifica qué funciones puede usar este espacio.',
     points: {
-      essentials: { 0: 'Miembros ilimitados', 1: 'Mensajes y correo', 2: 'Finanzas e informes', 3: 'Eventos y reuniones', 4: 'Ellen, tu asistente de IA' },
-      plus: { 0: 'Todo lo de Essentials', 1: 'Folletos con Estudio de diseño', 2: 'Ofrendas en línea y códigos QR', 3: 'Página de ofrendas con tu marca' },
-      max: { 0: 'Todo lo de Plus', 1: 'Folletos hechos por nuestro equipo', 2: 'Chat con diseñador y brief con IA', 3: 'Entrega en 48 horas' },
+      essentials: { 0: 'Miembros ilimitados', 1: 'Mensajes y correo', 2: 'Finanzas e informes', 3: 'Eventos y reuniones', 4: 'Ellen, tu asistente de IA', 5: '7 folletos con IA al mes' },
+      plus: { 0: 'Todo lo de Essentials', 1: 'Folletos con Estudio de diseño', 2: 'Ofrendas en línea y códigos QR', 3: 'Página de ofrendas con tu marca', 4: '12 folletos con IA al mes' },
+      max: { 0: 'Todo lo de Plus', 1: 'Folletos hechos por nuestro equipo', 2: 'Chat con diseñador y brief con IA', 3: 'Entrega en 48 horas', 4: 'Folletos con IA ilimitados' },
     },
   },
   ai: {

@@ -278,9 +278,9 @@ function Team() {
 }
 
 const PLANS: { id: PlanId; price: number; points: number }[] = [
-  { id: 'essentials', price: 8, points: 5 },
-  { id: 'plus', price: 19.99, points: 4 },
-  { id: 'max', price: 39.99, points: 4 },
+  { id: 'essentials', price: 8, points: 6 },
+  { id: 'plus', price: 19.99, points: 5 },
+  { id: 'max', price: 39.99, points: 5 },
 ]
 
 function Plan() {

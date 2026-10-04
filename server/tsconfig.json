@@ -11,5 +11,5 @@
     "types": ["node"],
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["./**/*.ts", "../scripts/*.ts", "../api/*.ts", "../src/emails/*.ts", "../src/i18n/locales/**/*.ts"]
+  "include": ["../src/lib/plans.ts", "./**/*.ts", "../scripts/*.ts", "../api/*.ts", "../src/emails/*.ts", "../src/i18n/locales/**/*.ts"]
 }

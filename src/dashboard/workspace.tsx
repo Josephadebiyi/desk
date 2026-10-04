@@ -135,6 +135,8 @@ export interface SavedDesign {
   title: string
   when: string
   createdAt: string
+  /** AI-designed flyer (SVG). */
+  svg?: string
 }
 
 export interface RequestMessage {

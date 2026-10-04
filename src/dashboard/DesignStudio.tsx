@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Flyer, flyerName, flyerSample, FLYER_TEMPLATES, type FlyerId } from '../components/Flyers'
 import { tr, useT } from '../i18n'
+import { AiFlyer } from './AiFlyer'
 import { AskAI, fmtDate, Kpi, PageHead, PlanGate, Tabs } from './kit'
 import { useWorkspace, type DesignRequest } from './workspace'
 
@@ -146,7 +147,7 @@ function MyDesigns({ onOpen }: { onOpen: () => void }) {
     <div className="ds-saved">
       {designs.map((d) => (
         <figure key={d.id} className="ds-saved-item">
-          <Flyer template={d.template as FlyerId} title={d.title} when={d.when} church={settings.churchName} />
+          {d.svg ? <img className="ds-saved-ai" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(d.svg)}`} alt={d.title} /> : <Flyer template={d.template as FlyerId} title={d.title} when={d.when} church={settings.churchName} />}
           <figcaption>
             <span>
               <b>{d.title}</b>
@@ -544,7 +545,7 @@ function DesignTeam() {
 export default function DesignStudio() {
   const { designs, requests } = useWorkspace()
   const [params] = useSearchParams()
-  const [tab, setTab] = useState<'create' | 'saved' | 'team'>(params.get('tab') === 'team' ? 'team' : 'create')
+  const [tab, setTab] = useState<'ai' | 'create' | 'saved' | 'team'>(params.get('tab') === 'team' ? 'team' : params.get('title') ? 'create' : 'ai')
   const activeReqs = useMemo(() => requests.filter((r) => r.status !== 'Delivered').length, [requests])
   const { t } = useT()
 
@@ -559,6 +560,7 @@ export default function DesignStudio() {
           value={tab}
           onChange={setTab}
           tabs={[
+            { id: 'ai', label: t('design.tabs.ai') },
             { id: 'create', label: t('design.tabs.create') },
             { id: 'saved', label: `${t('design.tabs.saved')}${designs.length ? ` (${designs.length})` : ''}` },
             { id: 'team', label: t('design.tabs.team') },
@@ -571,11 +573,8 @@ export default function DesignStudio() {
           <Creator />
         </PlanGate>
       )}
-      {tab === 'saved' && (
-        <PlanGate need="plus" feature={t('dash.nav.design')}>
-          <MyDesigns onOpen={() => setTab('create')} />
-        </PlanGate>
-      )}
+      {tab === 'ai' && <AiFlyer />}
+      {tab === 'saved' && <MyDesigns onOpen={() => setTab('ai')} />}
       {tab === 'team' && (
         <PlanGate need="max" feature={t('design.teamFeature')}>
           <DesignTeam />

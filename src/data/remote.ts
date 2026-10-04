@@ -239,7 +239,7 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
     })),
     expenses: ok(exp, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({ id: x.id as string, date: x.date as string, category: x.category as string, amount: Number(x.amount), note: x.note as string })),
     anonGifts: ok(gifts, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({ id: x.id as string, date: x.date as string, amount: Number(x.amount), fund: x.fund as string, method: x.method as string, donor: x.donor as string })),
-    designs: ok(des, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({ id: x.id as string, template: x.template as string, title: x.title as string, when: x.when_text as string, createdAt: x.created_at as string })),
+    designs: ok(des, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({ id: x.id as string, template: x.template as string, title: x.title as string, when: x.when_text as string, createdAt: x.created_at as string, svg: (x.svg as string | null) ?? undefined })),
     requests: ok(reqs, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({
       id: x.id as string,
       title: x.title as string,
@@ -324,7 +324,7 @@ export const ws = {
   addExpense: (churchId: string, x: Expense) => bg(sb().from('expenses').insert({ ...x, church_id: churchId }), 'add expense'),
   removeExpense: (churchId: string, id: string) => bg(sb().from('expenses').delete().eq('id', id).eq('church_id', churchId), 'delete expense'),
   addAnonGift: (churchId: string, g: AnonGift) => bg(sb().from('gifts').insert({ id: g.id, church_id: churchId, member_id: null, donor: g.donor, date: g.date, amount: g.amount, fund: g.fund, method: g.method }), 'record gift'),
-  addDesign: (churchId: string, d: SavedDesign) => bg(sb().from('designs').insert({ id: d.id, church_id: churchId, template: d.template, title: d.title, when_text: d.when }), 'save design'),
+  addDesign: (churchId: string, d: SavedDesign) => bg(sb().from('designs').insert({ id: d.id, church_id: churchId, template: d.template, title: d.title, when_text: d.when, ...(d.svg ? { svg: d.svg } : {}) }), 'save design'),
   removeDesign: (churchId: string, id: string) => bg(sb().from('designs').delete().eq('id', id).eq('church_id', churchId), 'delete design'),
   addRequest: (churchId: string, r: DesignRequest) => {
     bg(sb().from('design_requests').insert({ id: r.id, church_id: churchId, title: r.title, brief: r.brief, formats: r.formats, inspiration: r.inspiration, status: r.status, due_at: r.dueAt }), 'design request')

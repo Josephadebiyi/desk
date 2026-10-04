@@ -93,9 +93,9 @@ const site: Dict['site'] = {
   },
   pricing: {
     kicker: 'Preços', h2: 'Preços simples para cada igreja', sub: 'Comece com uma avaliação gratuita de {days} dias. Mude de plano quando quiser.', perMonth: '/mês', cta: 'Começar avaliação gratuita',
-    essentials: { blurb: 'Gestão completa da igreja', badge: '', f: 'Membros ilimitados|Gestão de membros e equipas|E-mail e SMS em 5 idiomas|Controlo financeiro e relatórios|Eventos e reuniões online|Ellen, a sua assistente de IA|Apoio prioritário' },
-    plus: { blurb: 'Tudo, mais design e ofertas', badge: 'Mais popular', f: 'Tudo do Essentials|Estúdio de design — folhetos e cartazes|Ofertas e doações online|ZionDesk Payments ou o seu banco|Códigos QR para registo, ofertas e eventos|Página de ofertas com a sua marca' },
-    max: { blurb: 'Todas as funções + a nossa equipa de design', badge: 'Tudo incluído', f: 'Tudo do Ministry Plus|Pedidos de folhetos à equipa de design|Chat direto com o seu designer|A Ellen recolhe detalhes e inspiração|Folhetos prontos em 48 horas' },
+    essentials: { blurb: 'Gestão completa da igreja', badge: '', f: 'Membros ilimitados|7 folhetos com IA por mês|Gestão de membros e equipas|E-mail e SMS em 5 idiomas|Controlo financeiro e relatórios|Eventos e reuniões online|Ellen, a sua assistente de IA|Apoio prioritário' },
+    plus: { blurb: 'Tudo, mais design e ofertas', badge: 'Mais popular', f: 'Tudo do Essentials|12 folhetos com IA por mês|Estúdio de design — folhetos e cartazes|Ofertas e doações online|ZionDesk Payments ou o seu banco|Códigos QR para registo, ofertas e eventos|Página de ofertas com a sua marca' },
+    max: { blurb: 'Todas as funções + a nossa equipa de design', badge: 'Tudo incluído', f: 'Tudo do Ministry Plus|Folhetos com IA ilimitados|Pedidos de folhetos à equipa de design|Chat direto com o seu designer|A Ellen recolhe detalhes e inspiração|Folhetos prontos em 48 horas' },
   },
   faq: {
     h2: 'Perguntas? Temos respostas.', sub: 'Não encontra o que procura? A nossa equipa ajuda com todo o gosto.',

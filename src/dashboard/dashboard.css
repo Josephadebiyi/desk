@@ -881,3 +881,15 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .tm-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 12px; background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; }
 .tm-row:hover { background: var(--d-row); }
 .tm-row svg { color: var(--muted); }
+/* AI flyer */
+.ai-flyer-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-flyer-chips .d-pill { cursor: pointer; }
+.ai-flyer-chips .d-pill.is-on { background: var(--ink); color: #fff; border-color: transparent; }
+[data-theme='dark'] .ai-flyer-chips .d-pill.is-on { background: var(--lime); color: var(--lime-ink); }
+.ai-flyer-art { width: min(420px, 100%); margin: 0 auto; border-radius: 22px; overflow: hidden; background: var(--d-row); border: 1px solid var(--d-border); display: grid; place-items: center; box-shadow: 0 30px 60px -30px rgba(40,20,90,0.45); }
+.ai-flyer-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ai-flyer-art.is-busy { animation: ai-pulse 1.6s ease-in-out infinite; }
+@keyframes ai-pulse { 50% { opacity: 0.7; } }
+.ai-flyer-empty { display: grid; justify-items: center; gap: 10px; padding: 24px; color: var(--muted); text-align: center; font-size: 13px; }
+.ai-flyer-limit { flex-direction: column; align-items: flex-start; gap: 10px; }
+.ds-saved-ai { width: 100%; border-radius: 14px; display: block; }
