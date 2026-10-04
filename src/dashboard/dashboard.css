@@ -59,6 +59,7 @@
 .d-circle-ink { background: var(--ink); color: #fff; border-color: transparent; }
 .d-dot { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: #ff5a5f; }
 .d-me { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--purple); color: #fff; font-family: var(--grotesk); font-weight: 700; font-size: 13px; }
+.d-me { overflow: hidden; } .d-me img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .d-menu-btn { display: none; }
 
 /* Body + floating rail */
@@ -893,3 +894,18 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .ai-flyer-empty { display: grid; justify-items: center; gap: 10px; padding: 24px; color: var(--muted); text-align: center; font-size: 13px; }
 .ai-flyer-limit { flex-direction: column; align-items: flex-start; gap: 10px; }
 .ds-saved-ai { width: 100%; border-radius: 14px; display: block; }
+.d-trial.is-warn { background: #b42318; }
+.d-trial.is-warn .d-trial-cta { color: #fff; }
+.d-paywall { max-width: 560px; margin: 48px auto; text-align: center; display: grid; gap: 14px; justify-items: center; padding: 40px 28px; }
+.d-paywall h1 { font-family: var(--grotesk); font-size: 26px; margin: 0; }
+.d-paywall p { margin: 0; color: var(--muted); line-height: 1.55; }
+.st-photo { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.st-photo > div { display: grid; gap: 4px; }
+.st-photo small { color: var(--muted); font-size: 12.5px; }
+.st-photo-img { width: 72px; height: 72px; flex-shrink: 0; border-radius: 16px; overflow: hidden; display: grid; place-items: center; background: var(--purple); color: #fff; font-family: var(--grotesk); font-weight: 700; font-size: 26px; }
+.st-photo-img.is-round { border-radius: 50%; }
+.st-photo-img img { width: 100%; height: 100%; object-fit: cover; }
+.st-photo-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.st-danger { display: grid; gap: 6px; justify-items: start; margin-top: 18px; padding: 16px; border-radius: 16px; border: 1px solid color-mix(in srgb, #d92d20 35%, transparent); background: color-mix(in srgb, #d92d20 6%, var(--d-panel)); }
+.st-danger small { color: var(--muted); line-height: 1.5; }
+.st-left { justify-content: flex-start; }

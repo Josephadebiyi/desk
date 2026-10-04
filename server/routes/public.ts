@@ -5,6 +5,7 @@
  *   POST /api/public/give-claim       "I've sent my gift" bank-transfer notice
  * Everything is validated here; the database is written with the service role.
  */
+import { chargeCurrency } from '../../src/lib/currency'
 import { Router, type Request } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, route } from '../db'
@@ -46,6 +47,8 @@ publicRoutes.get(
       slug: c.slug,
       location: c.location,
       currency: c.currency,
+      // Online card/mobile-money gifts are collected in this currency (USD when Flutterwave can't collect the church's).
+      onlineCurrency: chargeCurrency(c.currency),
       branches: c.branches,
       departments: c.departments,
       funds: c.funds,

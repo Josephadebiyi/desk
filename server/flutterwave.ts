@@ -33,6 +33,8 @@ export interface CheckoutInput {
   meta: Record<string, string>
   subaccountId?: string | null
   paymentPlan?: string
+  /** e.g. 'card' — subscriptions must be card so Flutterwave can charge again each month. */
+  paymentOptions?: string
 }
 
 /** Creates a hosted checkout and returns the URL to send the payer to. */
@@ -48,6 +50,7 @@ export async function createCheckout(i: CheckoutInput): Promise<string> {
       meta: i.meta,
       ...(i.subaccountId ? { subaccounts: [{ id: i.subaccountId }] } : {}),
       ...(i.paymentPlan ? { payment_plan: i.paymentPlan } : {}),
+      ...(i.paymentOptions ? { payment_options: i.paymentOptions } : {}),
     },
   })
   return data.link
@@ -60,6 +63,9 @@ export interface VerifiedTx {
   amount: number
   currency: string
   customer?: { email?: string; name?: string }
+  /** Payment-plan id on subscription charges (first and renewals). */
+  plan?: number | string | null
+  payment_plan?: number | string | null
 }
 
 export const verifyTransaction = (id: string | number) => flw<VerifiedTx>(`/transactions/${encodeURIComponent(String(id))}/verify`)
@@ -103,3 +109,13 @@ export async function ensurePaymentPlan(name: string, amount: number, currency: 
   planCache.set(key, id)
   return id
 }
+
+export interface FlwSubscription {
+  id: number
+  status: string
+  plan: number
+  customer?: { customer_email?: string }
+}
+/** Subscriptions for a payer email (Flutterwave keys subscriptions by customer email). */
+export const listSubscriptions = (email: string) => flw<FlwSubscription[]>(`/subscriptions?email=${encodeURIComponent(email)}`).catch(() => [] as FlwSubscription[])
+export const cancelSubscription = (id: number) => flw(`/subscriptions/${id}/cancel`, { method: 'PUT', body: {} })

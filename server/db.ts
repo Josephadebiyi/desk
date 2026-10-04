@@ -71,3 +71,19 @@ export const route =
   (fn: (req: Request, res: Response) => Promise<unknown>) =>
   (req: Request, res: Response, next: NextFunction) =>
     fn(req, res).catch(next)
+
+/** Signed-in user only (no church needed) — for personal account actions. */
+export function requireUser() {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const token = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
+      if (!token) throw new HttpError(401, 'Please sign in.')
+      const { data, error } = await db().auth.getUser(token)
+      if (error || !data.user) throw new HttpError(401, 'Your session has expired. Please sign in again.')
+      req.caller = { userId: data.user.id, email: data.user.email ?? '', name: String(data.user.user_metadata?.full_name ?? ''), churchId: '', role: 'leader' }
+      next()
+    } catch (e) {
+      next(e)
+    }
+  }
+}

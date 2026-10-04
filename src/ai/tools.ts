@@ -49,7 +49,7 @@ export function tpl(key: string, vars?: Record<string, string>, lang?: Lang) {
   }
   return translate(l, `tpl.${key}`, v)
 }
-export const reminderVars = (e: { title: string; date: string; start: string }) => ({ event: e.title, isoDate: e.date, isoTime: e.start })
+export const reminderVars = (e: { title: string; date: string; start: string; meetLink?: string }) => ({ event: e.title, isoDate: e.date, isoTime: e.start, ...(e.meetLink ? { link: e.meetLink } : {}) })
 
 /* ───────── helpers ───────── */
 

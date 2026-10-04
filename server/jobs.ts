@@ -57,7 +57,8 @@ export async function runHourly() {
 }
 
 export async function runDaily() {
-  if (!configured.email) return { birthdays: 0 }
+  const billing = await runBilling().catch((e) => (console.error('[billing]', e), null))
+  if (!configured.email) return { birthdays: 0, billing }
   const today = new Date()
   const mmdd = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   const stamp = `birthday:${today.toISOString().slice(0, 10)}`
@@ -74,5 +75,55 @@ export async function runDaily() {
     await sendEmails(list.map((m) => compose('birthday', m.language, m.email, { church: name(m.church_id), name: m.full_name.split(' ')[0] })))
     await db().from('deliveries').insert(list.map((m) => ({ church_id: m.church_id, member_id: m.id, channel: 'Email', language: asEmailLang(m.language), to_address: m.email, status: 'sent', provider_id: stamp })))
   }
-  return { birthdays: list.length }
+  return { birthdays: list.length, billing }
+}
+
+/* ───────── billing lifecycle (runs daily) ─────────
+ * trial → reminder 3 days before → expired when it ends without a plan
+ * active → past_due 3 days after a missed renewal → expired after 10 days
+ * cancelled → expired when the paid month ends
+ * Expired churches keep all data; the dashboard asks them to choose a plan.
+ */
+const PLAN_LABEL: Record<string, string> = { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' }
+
+async function tellAdmins(churchId: string, churchName: string, kind: 'trialEnding' | 'paymentFailed' | 'planExpired', extra: Record<string, string | number> = {}) {
+  if (!configured.email) return
+  const { data: team } = await db().from('church_users').select('user_id').eq('church_id', churchId).eq('role', 'admin')
+  const ids = (team ?? []).map((t) => t.user_id)
+  if (!ids.length) return
+  const { data: people } = await db().from('profiles').select('email, full_name, comm_language').in('id', ids)
+  const mails = (people ?? []).filter((p) => p.email).map((p) => compose(kind, p.comm_language, p.email, { church: churchName, name: (p.full_name || p.email).split(' ')[0], ...extra }, `${process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || ''}/dashboard/settings?tab=plan`))
+  if (mails.length) await sendEmails(mails)
+}
+
+export async function runBilling() {
+  const now = Date.now()
+  const day = 864e5
+  const { data: churches } = await db().from('churches').select('id, name, plan, plan_status, plan_renews_at, trial_ends_at')
+  const counts = { reminders: 0, pastDue: 0, expired: 0 }
+  for (const c of churches ?? []) {
+    const renews = c.plan_renews_at ? new Date(c.plan_renews_at).getTime() : null
+    const trialEnd = c.trial_ends_at ? new Date(c.trial_ends_at).getTime() : null
+    if (c.plan_status === 'trial' && trialEnd) {
+      const daysLeft = Math.ceil((trialEnd - now) / day)
+      if (daysLeft === 3) {
+        await tellAdmins(c.id, c.name, 'trialEnding', { days: 3 })
+        counts.reminders++
+      }
+      if (trialEnd < now) {
+        await db().from('churches').update({ plan_status: 'expired' }).eq('id', c.id)
+        await tellAdmins(c.id, c.name, 'planExpired')
+        counts.expired++
+      }
+    } else if (c.plan_status === 'active' && renews && renews + 3 * day < now) {
+      await db().from('churches').update({ plan_status: 'past_due' }).eq('id', c.id)
+      await tellAdmins(c.id, c.name, 'paymentFailed', { plan: PLAN_LABEL[c.plan] ?? c.plan })
+      counts.pastDue++
+    } else if ((c.plan_status === 'past_due' && renews && renews + 10 * day < now) || (c.plan_status === 'cancelled' && renews && renews < now)) {
+      await db().from('churches').update({ plan_status: 'expired' }).eq('id', c.id)
+      await tellAdmins(c.id, c.name, 'planExpired')
+      counts.expired++
+    }
+  }
+  return counts
 }

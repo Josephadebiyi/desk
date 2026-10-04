@@ -156,6 +156,7 @@ export const settingsFromRow = (c: ChurchRow): Settings => ({
   onlineGiving: Boolean(c.flw_subaccount_id),
   planStatus: c.plan_status,
   planRenewsAt: c.plan_renews_at ?? null,
+  logoUrl: c.logo_url,
 })
 
 const settingsToRow = (p: Partial<Settings>) => {
@@ -164,6 +165,7 @@ const settingsToRow = (p: Partial<Settings>) => {
   // plan / billing / payout-account fields are changed by the server only.
   for (const k of ['location', 'phone', 'email', 'denomination', 'currency', 'branches', 'departments', 'funds', 'payout'] as const) if (p[k] !== undefined) r[k] = p[k]
   if (p.givingSlug !== undefined) r.slug = p.givingSlug
+  if (p.logoUrl !== undefined) r.logo_url = p.logoUrl
   return r
 }
 
@@ -219,6 +221,7 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
       mode: e.mode as ChurchEvent['mode'],
       location: e.location as string,
       googleMeet: e.google_meet as boolean,
+      meetLink: (e.meet_link as string | null) ?? '',
       audience: e.audience as ChurchEvent['audience'],
       invited: e.invited as number,
       attendance: (e.attendance as number | null) ?? null,
@@ -286,6 +289,7 @@ const eventToRow = (churchId: string, e: ChurchEvent) => ({
   mode: e.mode,
   location: e.location,
   google_meet: e.googleMeet,
+  meet_link: e.meetLink?.trim() || null,
   audience: e.audience,
   invited: e.invited,
   attendance: e.attendance,

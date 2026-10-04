@@ -24,6 +24,9 @@ interface SessionApi {
   userId: string | null
   name: string
   email: string
+  avatarUrl: string
+  /** Saves the person's name and/or a new profile picture (stored in the "avatars" bucket). */
+  updateProfile: (p: { name?: string; avatar?: File | null }) => Promise<void>
   churches: ChurchLink[]
   church: ChurchLink | null
   role: Role | null
@@ -75,7 +78,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const { applyRemote } = useT()
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(remote)
-  const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null)
+  const [profile, setProfile] = useState<{ full_name: string; email: string; avatar_url?: string | null } | null>(null)
   const [churches, setChurches] = useState<ChurchLink[]>([])
   const [churchId, setChurchId] = useState<string>(() => {
     try {
@@ -95,11 +98,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       const uid = s.user.id
       const [{ data: prof }, { data: links }] = await Promise.all([
-        supabase.from('profiles').select('full_name, email, ui_language, comm_language, language_chosen').eq('id', uid).maybeSingle(),
+        supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),
         supabase.from('church_users').select('role, churches(id, name, slug)').eq('user_id', uid),
       ])
       if (prof) {
-        setProfile({ full_name: prof.full_name, email: prof.email })
+        setProfile({ full_name: prof.full_name, email: prof.email, avatar_url: prof.avatar_url ?? null })
         if (isLang(prof.ui_language) && isLang(prof.comm_language)) applyRemote(prof.ui_language, prof.comm_language, prof.language_chosen)
       }
       let list: ChurchLink[] = (links ?? []).flatMap((l) => {
@@ -164,6 +167,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       userId: session?.user.id ?? null,
       name: profile?.full_name || String(session?.user.user_metadata?.full_name ?? session?.user.user_metadata?.name ?? ''),
       email: profile?.email || session?.user.email || '',
+      avatarUrl: profile?.avatar_url || String(session?.user.user_metadata?.avatar_url ?? session?.user.user_metadata?.picture ?? ''),
+      updateProfile: async ({ name, avatar }) => {
+        if (!supabase || !session) return
+        const uid = session.user.id
+        const patch: Record<string, string | null> = {}
+        if (name !== undefined) patch.full_name = name.trim()
+        if (avatar === null) patch.avatar_url = null
+        if (avatar) {
+          if (!/^image\/(png|jpe?g|webp|gif)$/.test(avatar.type)) throw new Error('IMAGE_TYPE')
+          if (avatar.size > 3 * 1024 * 1024) throw new Error('IMAGE_SIZE')
+          const path = `${uid}/avatar-${Date.now()}.${(avatar.name.split('.').pop() || 'png').toLowerCase()}`
+          const { error } = await supabase.storage.from('avatars').upload(path, avatar, { upsert: true, contentType: avatar.type })
+          if (error) throw error
+          patch.avatar_url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+        }
+        const { error } = await supabase.from('profiles').update(patch).eq('id', uid)
+        if (error) throw error
+        if (name !== undefined) await supabase.auth.updateUser({ data: { full_name: name.trim() } })
+        setProfile((p) => (p ? { ...p, ...(patch as object) } : p))
+      },
       churches,
       church,
       role: church?.role ?? null,

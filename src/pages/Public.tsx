@@ -12,6 +12,7 @@ import { LANGS, useT, type Lang } from '../i18n'
 import { Flag, LangMenu } from '../i18n/Flags'
 import { ThemeToggle, useTheme } from '../theme'
 import './public.css'
+import { giftPresets } from '../lib/currency'
 
 /**
  * Public, no-login pages opened from shared links and QR codes:
@@ -28,7 +29,7 @@ const JOIN_ICON: Record<JoinType, typeof Users> = { member: Users, newcomer: Use
 
 /* ───────── data source: local preview stores, or the API when connected ───────── */
 
-type PubSettings = Pick<Settings, 'churchName' | 'location' | 'branches' | 'departments' | 'funds' | 'currency' | 'payout' | 'givingSlug' | 'onlineGiving'>
+type PubSettings = Pick<Settings, 'churchName' | 'location' | 'branches' | 'departments' | 'funds' | 'currency' | 'payout' | 'givingSlug' | 'onlineGiving'> & { onlineCurrency?: string }
 interface Pub {
   settings: PubSettings
   register: (m: MemberInput, type: JoinType) => Promise<void>
@@ -66,7 +67,7 @@ function RemotePub({ slug, children }: { slug: string; children: ReactNode }) {
   useEffect(() => {
     fetch(`/api/public/church/${encodeURIComponent(slug)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((c) => setSettings({ churchName: c.name, location: c.location, branches: c.branches, departments: c.departments, funds: c.funds, currency: c.currency, payout: c.payout, givingSlug: c.slug, onlineGiving: c.onlineGiving }))
+      .then((c) => setSettings({ churchName: c.name, location: c.location, branches: c.branches, departments: c.departments, funds: c.funds, currency: c.currency, onlineCurrency: c.onlineCurrency, payout: c.payout, givingSlug: c.slug, onlineGiving: c.onlineGiving }))
       .catch(() => setSettings('missing'))
   }, [slug])
   if (settings === null) return <div className="pub-loading" role="status" />
@@ -423,6 +424,8 @@ function GiveForm() {
   if (paidParam === '1') return <Done title={t('pub.give.paidTitle')} body={t('pub.give.paidBody', { church: settings.churchName })} />
   if (done === 'online') return <Done title={t('pub.give.onlineSoon')} body={t('pub.give.onlineSoonBody')} />
 
+  // Card / mobile-money gifts are collected in a currency Flutterwave supports (USD fallback); bank transfers use the church's own.
+  const cur = method === 'online' ? settings.onlineCurrency ?? settings.currency : settings.currency
   return (
     <motion.div className="pub-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <span className="pub-badge is-giving">
@@ -432,9 +435,9 @@ function GiveForm() {
       <p className="pub-sub">{t('pub.give.sub')}</p>
 
       <div className="pub-amounts" role="radiogroup" aria-label={t('common.amount')}>
-        {[10, 25, 50, 100].map((a) => (
+        {giftPresets(cur).map((a) => (
           <button key={a} type="button" role="radio" aria-checked={amount === String(a)} className={amount === String(a) ? 'is-on' : ''} onClick={() => setAmount(String(a))}>
-            {money(a, settings.currency)}
+            {money(a, cur)}
           </button>
         ))}
         <label className="pub-amount-other">
@@ -499,7 +502,7 @@ function GiveForm() {
             </label>
           </div>
           <button type="submit" className="pub-go" disabled={sending}>
-            <Heart size={17} /> {t('pub.give.giveAmount', { amount: n > 0 ? money(n, settings.currency, n % 1 ? 2 : 0) : '' })}
+            <Heart size={17} /> {t('pub.give.giveAmount', { amount: n > 0 ? money(n, cur, n % 1 ? 2 : 0) : '' })}
           </button>
           <small className="pub-note pub-secure">{t('pub.give.secure')}</small>
         </form>

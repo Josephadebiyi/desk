@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link, Navigate, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationsMenu, ProfileMenu } from './TopMenus'
 import { useSession } from '../lib/session'
 import { useWorkspace, WorkspaceProvider } from './workspace'
@@ -68,7 +68,7 @@ function useTrial() {
   }, [params, trial])
   if (live) {
     // Live: the trial clock comes from the church record.
-    if (!trialEndsAt) return null
+    if (!trialEndsAt || settings.planStatus !== 'trial') return null
     const leftLive = Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 864e5))
     return leftLive > 0 ? { email: settings.email, started: 0, left: leftLive } : null
   }
@@ -79,8 +79,19 @@ function useTrial() {
 
 function TrialBanner() {
   const trial = useTrial()
+  const { live, settings } = useWorkspace()
   const { t } = useT()
   const [hidden, setHidden] = useState(false)
+  if (live && settings.planStatus === 'past_due')
+    return (
+      <div className="d-trial is-warn">
+        <span className="d-trial-tag">{t('dash.billing.tag')}</span>
+        <span>{t('dash.billing.pastDue')}</span>
+        <Link to="/dashboard/settings?tab=plan" className="d-trial-cta">
+          {t('dash.billing.fix')}
+        </Link>
+      </div>
+    )
   if (!trial || hidden) return null
   return (
     <div className="d-trial">
@@ -88,8 +99,8 @@ function TrialBanner() {
       <span>
         <b>{t('dash.trial.left', { count: trial.left })}</b> {t('dash.trial.rest')}
       </span>
-      <Link to={`/register?trial=1&email=${encodeURIComponent(trial.email)}`} className="d-trial-cta">
-        {t('dash.trial.finish')}
+      <Link to={live ? '/dashboard/settings?tab=plan' : `/register?trial=1&email=${encodeURIComponent(trial.email)}`} className="d-trial-cta">
+        {live ? t('dash.billing.choose') : t('dash.trial.finish')}
       </Link>
       <button type="button" aria-label={t('dash.trial.hide')} onClick={() => setHidden(true)}>
         <X size={14} />
@@ -211,8 +222,33 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
   )
 }
 
+/** Live: when the trial or paid plan has ended, only Settings (plan, account, data export) and Help stay open. */
+function Paywall() {
+  const { t } = useT()
+  const { role } = useMembers()
+  return (
+    <div className="d-page">
+      <section className="d-panel d-paywall">
+        <h1>{t('dash.billing.expiredTitle')}</h1>
+        <p>{t('dash.billing.expiredText')}</p>
+        {role === 'admin' ? (
+          <Link to="/dashboard/settings?tab=plan" className="d-btn d-btn-ink">
+            {t('dash.billing.choose')}
+          </Link>
+        ) : (
+          <p className="d-muted">{t('dash.billing.askAdmin')}</p>
+        )}
+        <Link to="/dashboard/settings?tab=account" className="d-link">
+          {t('dash.billing.export')}
+        </Link>
+      </section>
+    </div>
+  )
+}
+
 function Shell() {
-  const { loading } = useWorkspace()
+  const { loading, live, settings } = useWorkspace()
+  const { pathname } = useLocation()
   const { t } = useT()
   if (loading)
     return (
@@ -222,7 +258,7 @@ function Shell() {
     )
   return (
     <DashboardFrame>
-      <Outlet />
+      {live && settings.planStatus === 'expired' && !/\/dashboard\/(settings|help)/.test(pathname) ? <Paywall /> : <Outlet />}
     </DashboardFrame>
   )
 }

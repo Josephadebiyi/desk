@@ -2,6 +2,16 @@ import type { Dict } from '../en'
 const dash: Dict['dash'] = {
   nav: { overview: 'Visão geral', ai: 'Pergunte à Ellen', members: 'Membros', giving: 'Ofertas', messaging: 'Mensagens', events: 'Eventos', design: 'Estúdio de design', reports: 'Relatórios', settings: 'Definições', links: 'Ligações e códigos QR', help: 'Ajuda' },
   rail: { label: 'Ações rápidas', search: 'Pesquisar membros', addMember: 'Adicionar membro', import: 'Importar membros' },
+  billing: {
+    tag: "Pagamento",
+    pastDue: "O seu último pagamento não foi concluído. Atualize o cartão para manter o plano ativo.",
+    fix: "Resolver pagamento",
+    choose: "Escolher um plano",
+    expiredTitle: "O seu plano terminou",
+    expiredText: "O seu período experimental ou subscrição terminou. Todos os dados da sua igreja estão seguros — escolha um plano para continuar onde parou.",
+    askAdmin: "Peça ao Administrador da sua igreja para escolher um plano.",
+    export: "Descarregar os seus dados",
+  },
   trial: { tag: 'Teste', left_one: 'Falta {count} dia', left_other: 'Faltam {count} dias', rest: 'do seu teste gratuito · Funcionalidades Essentials ativas', finish: 'Concluir registo', hide: 'Ocultar' },
   viewingAs: 'A ver como',
   viewingAsHint: 'Veja o que cada função da equipa consegue ver',

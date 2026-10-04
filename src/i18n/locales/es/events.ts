@@ -1,5 +1,10 @@
 import type { Dict } from '../en'
 const events: Dict['events'] = {
+  meetLink: "Enlace de la reunión",
+  meetLinkHint: "Pega un enlace de Google Meet (o Zoom).",
+  createMeet: "Crear un Google Meet",
+  join: "Unirse a la reunión",
+  errLink: "Introduce un enlace completo que empiece por https://",
   title: 'Eventos',
   upcoming: 'Próximos eventos',
   new: 'Nuevo evento',
@@ -11,7 +16,7 @@ const events: Dict['events'] = {
   location: 'Lugar',
   locationPh: 'p. ej. Auditorio principal',
   addMeet: 'Añadir videollamada de Google Meet',
-  addMeetSub: 'Se crea un enlace de Meet y se envía con las invitaciones.',
+  addMeetSub: "Añade el enlace de la reunión: se envía con las invitaciones y los recordatorios.",
   invite: 'Invitar',
   notesPh: 'Agenda, lectura bíblica, qué traer…',
   save: 'Guardar evento',
@@ -20,7 +25,7 @@ const events: Dict['events'] = {
   errTime: 'La hora de fin debe ser posterior al inicio',
   invited_one: '{count} invitado',
   invited_other: '{count} invitados',
-  meetNote: 'El enlace se genera y se envía por correo a los invitados al conectar Google (Configuración → Integraciones).',
+  meetNote: "Aún no hay enlace: edita el evento para añadirlo.",
   attendance: 'Asistencia',
   attendancePh: '¿Cuántos asistieron?',
   flyer: 'Crear folleto',

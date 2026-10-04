@@ -21,6 +21,9 @@ export type EmailKind =
   | 'eventReminder'
   | 'meetingInvite'
   | 'message'
+  | 'trialEnding'
+  | 'paymentFailed'
+  | 'planExpired'
 
 export interface EmailCopy {
   subject: string
@@ -127,6 +130,9 @@ const en: Catalog = {
     body: ['{text}'],
     note: 'You’re receiving this because you’re part of {church}.',
   },
+  trialEnding: { subject: 'Your ZionDesk trial ends in {days} days', eyebrow: 'Free trial', title: 'Keep {church} running smoothly', body: ['Hi {name},', 'Your free trial ends in <b>{days} days</b>. Choose a plan to keep your members, giving records and messages — nothing is lost.'], cta: 'Choose a plan' },
+  paymentFailed: { subject: 'Action needed: your ZionDesk payment didn’t go through', eyebrow: 'Billing', title: 'We couldn’t renew your plan', body: ['Hi {name},', 'Flutterwave couldn’t charge your card for <b>{church}</b>’s {plan} plan. Please update your payment to avoid interruption.'], cta: 'Update payment' },
+  planExpired: { subject: 'Your ZionDesk plan has ended', eyebrow: 'Billing', title: 'Your plan for {church} has ended', body: ['Hi {name},', 'Your data is safe. Choose a plan to unlock your dashboard again — everything will be exactly where you left it.'], cta: 'Choose a plan' },
 }
 
 const es: Catalog = {
@@ -143,6 +149,9 @@ const es: Catalog = {
   eventReminder: { subject: 'Recordatorio: {event} — {date}', eyebrow: '{church}', title: '{event}', body: ['Hola, {name}:', 'Te recordamos que <b>{event}</b> es el <b>{date}</b> a las <b>{time}</b>.', '¡Te esperamos!'] },
   meetingInvite: { subject: 'Estás invitado: {event} — {date}', eyebrow: '{church}', title: 'Estás invitado a {event}', body: ['Hola, {name}:', '<b>{event}</b> será el <b>{date}</b> a las <b>{time}</b>.', 'Únete en línea con el botón de abajo.'], cta: 'Unirme a la reunión' },
   message: { subject: '{subject}', eyebrow: '{church}', title: '{subject}', body: ['{text}'], note: 'Recibes este correo porque formas parte de {church}.' },
+  trialEnding: { subject: 'Tu prueba de ZionDesk termina en {days} días', eyebrow: 'Prueba gratis', title: 'Mantén {church} en marcha', body: ['Hola, {name}:', 'Tu prueba gratis termina en <b>{days} días</b>. Elige un plan para conservar tus miembros, ofrendas y mensajes: no se pierde nada.'], cta: 'Elegir un plan' },
+  paymentFailed: { subject: 'Acción necesaria: tu pago de ZionDesk no se completó', eyebrow: 'Facturación', title: 'No pudimos renovar tu plan', body: ['Hola, {name}:', 'Flutterwave no pudo cobrar tu tarjeta por el plan {plan} de <b>{church}</b>. Actualiza tu pago para evitar interrupciones.'], cta: 'Actualizar pago' },
+  planExpired: { subject: 'Tu plan de ZionDesk ha terminado', eyebrow: 'Facturación', title: 'El plan de {church} ha terminado', body: ['Hola, {name}:', 'Tus datos están a salvo. Elige un plan para volver a abrir tu panel: todo estará tal como lo dejaste.'], cta: 'Elegir un plan' },
 }
 
 const fr: Catalog = {
@@ -159,6 +168,9 @@ const fr: Catalog = {
   eventReminder: { subject: 'Rappel : {event} — {date}', eyebrow: '{church}', title: '{event}', body: ['Bonjour {name},', 'Petit rappel : <b>{event}</b> a lieu le <b>{date}</b> à <b>{time}</b>.', 'Au plaisir de vous voir !'] },
   meetingInvite: { subject: 'Invitation : {event} — {date}', eyebrow: '{church}', title: 'Vous êtes invité à {event}', body: ['Bonjour {name},', '<b>{event}</b> a lieu le <b>{date}</b> à <b>{time}</b>.', 'Rejoignez-nous en ligne avec le bouton ci-dessous.'], cta: 'Rejoindre la réunion' },
   message: { subject: '{subject}', eyebrow: '{church}', title: '{subject}', body: ['{text}'], note: 'Vous recevez cet e-mail car vous faites partie de {church}.' },
+  trialEnding: { subject: 'Votre essai ZionDesk se termine dans {days} jours', eyebrow: 'Essai gratuit', title: 'Gardez {church} sur les rails', body: ['Bonjour {name},', 'Votre essai gratuit se termine dans <b>{days} jours</b>. Choisissez un forfait pour conserver vos membres, dons et messages — rien n’est perdu.'], cta: 'Choisir un forfait' },
+  paymentFailed: { subject: 'Action requise : votre paiement ZionDesk a échoué', eyebrow: 'Facturation', title: 'Nous n’avons pas pu renouveler votre forfait', body: ['Bonjour {name},', 'Flutterwave n’a pas pu débiter votre carte pour le forfait {plan} de <b>{church}</b>. Mettez à jour votre paiement pour éviter une interruption.'], cta: 'Mettre à jour le paiement' },
+  planExpired: { subject: 'Votre forfait ZionDesk est terminé', eyebrow: 'Facturation', title: 'Le forfait de {church} est terminé', body: ['Bonjour {name},', 'Vos données sont en sécurité. Choisissez un forfait pour rouvrir votre tableau de bord — tout sera comme vous l’avez laissé.'], cta: 'Choisir un forfait' },
 }
 
 const de: Catalog = {
@@ -175,6 +187,9 @@ const de: Catalog = {
   eventReminder: { subject: 'Erinnerung: {event} — {date}', eyebrow: '{church}', title: '{event}', body: ['Hallo {name},', 'Eine kurze Erinnerung: <b>{event}</b> ist am <b>{date}</b> um <b>{time}</b>.', 'Wir freuen uns auf dich!'] },
   meetingInvite: { subject: 'Einladung: {event} — {date}', eyebrow: '{church}', title: 'Du bist zu {event} eingeladen', body: ['Hallo {name},', '<b>{event}</b> findet am <b>{date}</b> um <b>{time}</b> statt.', 'Nimm online über den Button unten teil.'], cta: 'Am Meeting teilnehmen' },
   message: { subject: '{subject}', eyebrow: '{church}', title: '{subject}', body: ['{text}'], note: 'Du erhältst diese E-Mail, weil du zu {church} gehörst.' },
+  trialEnding: { subject: 'Deine ZionDesk-Testphase endet in {days} Tagen', eyebrow: 'Testphase', title: 'Damit {church} reibungslos weiterläuft', body: ['Hallo {name},', 'Deine kostenlose Testphase endet in <b>{days} Tagen</b>. Wähle einen Tarif, um Mitglieder, Spenden und Nachrichten zu behalten – nichts geht verloren.'], cta: 'Tarif wählen' },
+  paymentFailed: { subject: 'Handlung nötig: Deine ZionDesk-Zahlung ist fehlgeschlagen', eyebrow: 'Abrechnung', title: 'Wir konnten deinen Tarif nicht verlängern', body: ['Hallo {name},', 'Flutterwave konnte deine Karte für den Tarif {plan} von <b>{church}</b> nicht belasten. Bitte aktualisiere deine Zahlung, um eine Unterbrechung zu vermeiden.'], cta: 'Zahlung aktualisieren' },
+  planExpired: { subject: 'Dein ZionDesk-Tarif ist abgelaufen', eyebrow: 'Abrechnung', title: 'Der Tarif von {church} ist abgelaufen', body: ['Hallo {name},', 'Deine Daten sind sicher. Wähle einen Tarif, um dein Dashboard wieder zu öffnen – alles ist genau so, wie du es verlassen hast.'], cta: 'Tarif wählen' },
 }
 
 const pt: Catalog = {
@@ -191,6 +206,9 @@ const pt: Catalog = {
   eventReminder: { subject: 'Lembrete: {event} — {date}', eyebrow: '{church}', title: '{event}', body: ['Olá {name},', 'Um lembrete: <b>{event}</b> é a <b>{date}</b> às <b>{time}</b>.', 'Esperamos por si!'] },
   meetingInvite: { subject: 'Está convidado: {event} — {date}', eyebrow: '{church}', title: 'Está convidado para {event}', body: ['Olá {name},', '<b>{event}</b> decorre a <b>{date}</b> às <b>{time}</b>.', 'Participe online com o botão abaixo.'], cta: 'Entrar na reunião' },
   message: { subject: '{subject}', eyebrow: '{church}', title: '{subject}', body: ['{text}'], note: 'Recebe este e-mail porque faz parte de {church}.' },
+  trialEnding: { subject: 'A sua avaliação do ZionDesk termina em {days} dias', eyebrow: 'Avaliação gratuita', title: 'Mantenha {church} a funcionar', body: ['Olá {name},', 'A sua avaliação gratuita termina em <b>{days} dias</b>. Escolha um plano para manter membros, ofertas e mensagens — nada se perde.'], cta: 'Escolher um plano' },
+  paymentFailed: { subject: 'Ação necessária: o seu pagamento ZionDesk falhou', eyebrow: 'Faturação', title: 'Não conseguimos renovar o seu plano', body: ['Olá {name},', 'A Flutterwave não conseguiu cobrar o seu cartão pelo plano {plan} de <b>{church}</b>. Atualize o pagamento para evitar interrupções.'], cta: 'Atualizar pagamento' },
+  planExpired: { subject: 'O seu plano ZionDesk terminou', eyebrow: 'Faturação', title: 'O plano de {church} terminou', body: ['Olá {name},', 'Os seus dados estão seguros. Escolha um plano para voltar a abrir o painel — tudo estará como deixou.'], cta: 'Escolher um plano' },
 }
 
 export const CATALOG: Record<EmailLang, Catalog> = { en, es, fr, de, pt }

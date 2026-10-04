@@ -26,6 +26,7 @@ function EventForm({ initial, date, onClose }: { initial?: ChurchEvent; date?: s
       mode: 'In person',
       location: '',
       googleMeet: false,
+      meetLink: '',
       audience: { type: 'all', value: '' },
       notes: '',
     },
@@ -37,11 +38,13 @@ function EventForm({ initial, date, onClose }: { initial?: ChurchEvent; date?: s
     e.preventDefault()
     if (!f.title.trim()) return setError(t('events.errTitle'))
     if (f.end <= f.start) return setError(t('events.errTime'))
+    if (online && f.googleMeet && f.meetLink && !/^https:\/\/\S+$/.test(f.meetLink.trim())) return setError(t('events.errLink'))
     saveEvent({
       ...f,
       id: initial?.id,
       title: f.title.trim(),
       googleMeet: online && f.googleMeet,
+      meetLink: online && f.googleMeet ? f.meetLink?.trim() ?? '' : '',
       invited: audienceMembers(members, f.audience).length,
       attendance: initial?.attendance ?? null,
     })
@@ -95,6 +98,18 @@ function EventForm({ initial, date, onClose }: { initial?: ChurchEvent; date?: s
             <i className="ev-switch" aria-hidden="true" />
           </label>
         )}
+        {online && f.googleMeet && (
+          <label className="d-field">
+            <span>{t('events.meetLink')}</span>
+            <input type="url" inputMode="url" value={f.meetLink ?? ''} onChange={(e) => setF({ ...f, meetLink: e.target.value })} placeholder="https://meet.google.com/abc-defg-hij" />
+            <small className="d-muted">
+              {t('events.meetLinkHint')}{' '}
+              <a href="https://meet.google.com/new" target="_blank" rel="noreferrer" className="d-link">
+                {t('events.createMeet')}
+              </a>
+            </small>
+          </label>
+        )}
         <fieldset>
           <legend>{t('events.invite')}</legend>
           <AudiencePicker value={f.audience} onChange={(audience) => setF({ ...f, audience })} />
@@ -145,7 +160,13 @@ function EventDetail({ ev, onClose, onEdit }: { ev: ChurchEvent; onClose: () => 
             <GoogleMeetLogo size={24} />
             <div>
               <b>Google Meet</b>
-              <small>{t('events.meetNote')}</small>
+              {ev.meetLink ? (
+                <a href={ev.meetLink} target="_blank" rel="noreferrer" className="d-link">
+                  {t('events.join')}
+                </a>
+              ) : (
+                <small>{t('events.meetNote')}</small>
+              )}
             </div>
           </div>
         )}

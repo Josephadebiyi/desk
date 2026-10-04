@@ -25,7 +25,8 @@ const site: Dict['site'] = {
     chat2: 'Offrande du dimanche : <b>{amount}</b> reçus. Reçus envoyés à 96 donateurs ✓',
   },
   metaTitle: 'ZionDesk — La gestion d’église, simplement',
-  trust: 'Plus de 500 églises gèrent leur ministère avec ZionDesk',
+  trust: "Conçu pour les églises de toutes tailles et de toutes traditions",
+  trustTypes: "Pentecôtistes|Baptistes|Anglicanes|Paroisses catholiques|Méthodistes|Non confessionnelles|Églises de maison",
   timeline: {
     h2a: 'Un logiciel d’église qui', h2b: 'grandit avec vous',
     sub: 'ZionDesk relie vos membres, vos dons et vos rassemblements — chaque dimanche facilite le suivant.',
@@ -87,9 +88,10 @@ const site: Dict['site'] = {
     note: 'Lien d’exemple — chaque église a sa propre page de dons et ses QR codes.',
   },
   quotes: {
-    h2: 'Apprécié des pasteurs et des équipes d’église', stat: 'langues, pour que chaque membre vous lise dans la sienne', join: 'Rejoignez-les aujourd’hui',
-    q1: 'Un service excellent du début à la fin. Une communication claire et rapide, et un résultat au-delà de nos attentes.', r1: 'Pasteur principal',
-    q2: 'Travailler avec cette équipe a été un vrai plaisir. Professionnelle, réactive et ponctuelle, avec une qualité exceptionnelle.', r2: 'Administratrice d’église',
+    h2: "Ce qui change quand votre équipe utilise ZionDesk", stat: 'langues, pour que chaque membre vous lise dans la sienne', join: "Commencer l’essai gratuit",
+    q1: "Chaque membre, famille et nouveau venu au même endroit — avec un suivi où personne n’est oublié.", r1: "Pour les pasteurs",
+    q2: "Inscriptions, événements et messages en cinq langues, sans tableurs ni cinq applis différentes.", r2: "Pour les administrateurs d’église",
+    q3: "Dîmes, offrandes et dépenses saisies une seule fois, avec reçus et rapports prêts pour votre conseil.", r3: "Pour les équipes financières"
   },
   pricing: {
     kicker: 'Tarifs', h2: 'Des tarifs simples pour chaque église', sub: 'Commencez par un essai gratuit de {days} jours. Changez de forfait à tout moment.', perMonth: '/mois', cta: 'Commencer l’essai gratuit',
@@ -113,7 +115,7 @@ const site: Dict['site'] = {
     platform: 'Plateforme', ministries: 'Ministères', company: 'Entreprise',
     hub: 'Tout-en-un', design: 'Studio de design', giving: 'Dons en ligne', pricing: 'Tarifs',
     pastors: 'Pasteurs', admins: 'Administrateurs', finance: 'Équipes finances',
-    stories: 'Témoignages', faq: 'FAQ', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation',
+    stories: 'Témoignages', faq: 'FAQ', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation', cookies: 'Politique de cookies', legal: 'Mentions légales et conformité',
     help: 'Comment pouvons-nous vous aider ?', contact: 'Nous contacter', rights: '© {year} ZionDesk. Tous droits réservés.', photos: 'Photos de',
   },
 }

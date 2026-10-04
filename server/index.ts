@@ -14,6 +14,7 @@ import { admin, db, HttpError, requireCaller, route } from './db'
 import { configured, env } from './env'
 import { runDaily, runHourly } from './jobs'
 import { appRoutes } from './routes/app'
+import { accountRoutes } from './routes/account'
 import { paymentRoutes } from './routes/payments'
 import { designRoutes } from './routes/design'
 import { authHookRoutes } from './routes/authHook'
@@ -89,6 +90,7 @@ app.use('/api/public', publicRoutes)
 app.use('/api', paymentRoutes)
 app.use('/api', designRoutes)
 app.use('/api', appRoutes)
+app.use('/api', accountRoutes)
 
 /* Render Cron Jobs call these with Authorization: Bearer $CRON_SECRET */
 const cron = (fn: () => Promise<unknown>) =>

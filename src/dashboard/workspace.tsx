@@ -42,7 +42,9 @@ export interface Settings {
   /** Live: online card/transfer giving is ready. */
   onlineGiving?: boolean
   /** Live: subscription state. */
-  planStatus?: 'trial' | 'active' | 'past_due' | 'cancelled'
+  planStatus?: 'trial' | 'active' | 'past_due' | 'cancelled' | 'expired'
+  /** Live: church logo (Supabase storage). */
+  logoUrl?: string | null
   planRenewsAt?: string | null
 }
 
@@ -106,6 +108,8 @@ export interface ChurchEvent {
   mode: 'In person' | 'Online' | 'Hybrid'
   location: string
   googleMeet: boolean
+  /** Online meeting link (Google Meet, Zoom…) pasted by the organiser; sent in invitations and reminders. */
+  meetLink?: string
   audience: Audience
   invited: number
   attendance: number | null

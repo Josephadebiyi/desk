@@ -37,8 +37,14 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/email-preview" element={<EmailPreview />} />
+        <Route path="/legal" element={<Legal page="hub" />} />
         <Route path="/privacy" element={<Legal page="privacy" />} />
         <Route path="/terms" element={<Legal page="terms" />} />
+        <Route path="/cookies" element={<Legal page="cookies" />} />
+        <Route path="/dpa" element={<Legal page="dpa" />} />
+        <Route path="/subprocessors" element={<Legal page="subprocessors" />} />
+        <Route path="/refunds" element={<Legal page="refunds" />} />
+        <Route path="/acceptable-use" element={<Legal page="aup" />} />
         <Route path="/join/:slug" element={<JoinPage />} />
         <Route path="/give/:slug" element={<GivePage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>

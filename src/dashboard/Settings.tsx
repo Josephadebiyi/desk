@@ -1,7 +1,10 @@
-import { Check, CreditCard, Database, Languages, Mail, MessageCircle, MessageSquareText, Plus, RotateCcw, Trash2, X } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { api } from '../lib/api'
+import { Camera, Check, CreditCard, Database, Download, Languages, Mail, MessageCircle, MessageSquareText, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { api, apiChurch } from '../lib/api'
+import { updatePassword, uploadLogo } from '../lib/auth'
+import { useSession } from '../lib/session'
+import { supabase } from '../lib/supabase'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
 import { PageHead, Tabs, planName, tEnum } from './kit'
 import { useMembers } from './store'
@@ -11,12 +14,13 @@ import { useAi } from '../ai/store'
 import { PROVIDERS } from '../ai/providers'
 import { USAGE_LABEL, type ProviderPref, type UsageFeature } from '../ai/types'
 import { LANGS, useT } from '../i18n'
+import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, planPrice } from '../lib/currency'
 import { Flag, LangCards } from '../i18n/Flags'
 
 const ROLES: Role[] = ['admin', 'finance', 'leader']
 
-type Tab = 'language' | 'profile' | 'structure' | 'team' | 'plan' | 'ai' | 'integrations' | 'data'
-const CURRENCIES = ['USD', 'NGN', 'GBP', 'EUR', 'CAD', 'GHS', 'KES', 'ZAR']
+type Tab = 'account' | 'language' | 'profile' | 'structure' | 'team' | 'plan' | 'ai' | 'integrations' | 'data'
+const CURRENCIES: readonly string[] = CHURCH_CURRENCIES
 
 function Saved({ show }: { show: boolean }) {
   const { t } = useT()
@@ -84,11 +88,183 @@ function LanguageSettings() {
   )
 }
 
+/** Downloads a JSON export from the API (signed-in). */
+async function download(path: string, name: string) {
+  const token = supabase ? (await supabase.auth.getSession()).data.session?.access_token : undefined
+  const res = await fetch(`/api${path}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(path.startsWith('/church') ? { 'x-church-id': apiChurch() } : {}) } })
+  if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Request failed (${res.status})`)
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${name}-${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Picture + preview used for profile photos and church logos. */
+function PhotoPicker({ url, fallback, label, round, onPick, onRemove, busy }: { url?: string | null; fallback: string; label: string; round?: boolean; onPick: (f: File) => void; onRemove?: () => void; busy?: boolean }) {
+  const { t } = useT()
+  const input = useRef<HTMLInputElement>(null)
+  return (
+    <div className="st-photo">
+      <span className={`st-photo-img ${round ? 'is-round' : ''}`}>{url ? <img src={url} alt="" /> : fallback}</span>
+      <div>
+        <b>{label}</b>
+        <small>{t('settings.account.photoHint')}</small>
+        <span className="st-photo-btns">
+          <button type="button" className="d-btn" disabled={busy} onClick={() => input.current?.click()}>
+            <Camera size={15} /> {busy ? t('common.loading') : url ? t('settings.account.photoChange') : t('settings.account.photoUpload')}
+          </button>
+          {url && onRemove && (
+            <button type="button" className="d-btn d-danger" disabled={busy} onClick={onRemove}>
+              <Trash2 size={15} /> {t('settings.account.photoRemove')}
+            </button>
+          )}
+        </span>
+      </div>
+      <input
+        ref={input}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ''
+          if (f) onPick(f)
+        }}
+      />
+    </div>
+  )
+}
+
+/** Personal account: name, photo, password, and data-protection rights (export / erase). */
+function Account() {
+  const session = useSession()
+  const { t } = useT()
+  const navigate = useNavigate()
+  const [name, setName] = useState(session.name)
+  const [pw, setPw] = useState('')
+  const [busy, setBusy] = useState('')
+  const [ok, setOk] = useState('')
+  const [error, setError] = useState('')
+  const run = async (key: string, fn: () => Promise<unknown>) => {
+    setError('')
+    setBusy(key)
+    try {
+      await fn()
+      setOk(key)
+      setTimeout(() => setOk(''), 2500)
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e)
+      setError(m === 'IMAGE_TYPE' ? t('settings.account.imageType') : m === 'IMAGE_SIZE' ? t('settings.account.imageSize') : m === 'SOLE_ADMIN' ? t('settings.account.soleAdmin') : m)
+    } finally {
+      setBusy('')
+    }
+  }
+  if (!session.remote) return <p className="d-hint-box">{t('settings.account.preview')}</p>
+  const google = (session.session?.user.app_metadata?.providers as string[] | undefined)?.includes('google')
+  return (
+    <div className="d-two">
+      <section className="d-panel d-form">
+        <div className="d-panel-head">
+          <h2>{t('settings.account.title')}</h2>
+          <Saved show={ok === 'name' || ok === 'photo'} />
+        </div>
+        <PhotoPicker
+          round
+          url={session.avatarUrl}
+          fallback={(session.name || session.email).slice(0, 1).toUpperCase()}
+          label={t('settings.account.photo')}
+          busy={busy === 'photo'}
+          onPick={(f) => run('photo', () => session.updateProfile({ avatar: f }))}
+          onRemove={() => run('photo', () => session.updateProfile({ avatar: null }))}
+        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (name.trim()) run('name', () => session.updateProfile({ name }))
+          }}
+        >
+          <label className="d-field">
+            <span>{t('settings.account.name')}</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} />
+          </label>
+          <label className="d-field">
+            <span>{t('settings.account.email')}</span>
+            <input value={session.email} disabled />
+          </label>
+          <div className="d-form-actions">
+            <button type="submit" className="d-btn d-btn-ink" disabled={busy !== ''}>
+              <Check size={15} /> {t('settings.profile.save')}
+            </button>
+          </div>
+        </form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (pw.length >= 8) run('pw', () => updatePassword(pw).then(() => setPw('')))
+          }}
+        >
+          <label className="d-field">
+            <span>{google ? t('settings.account.setPassword') : t('settings.account.newPassword')}</span>
+            <input type="password" autoComplete="new-password" minLength={8} value={pw} onChange={(e) => setPw(e.target.value)} placeholder={t('settings.account.passwordHint')} />
+          </label>
+          <div className="d-form-actions">
+            {ok === 'pw' && <Saved show />}
+            <button type="submit" className="d-btn" disabled={busy !== '' || pw.length < 8}>
+              {t('settings.account.updatePassword')}
+            </button>
+          </div>
+        </form>
+        {error && <p className="d-errors">{error}</p>}
+      </section>
+      <section className="d-panel d-form">
+        <div className="d-panel-head">
+          <h2>
+            <Database size={17} /> {t('settings.account.privacyTitle')}
+          </h2>
+        </div>
+        <p className="d-notes">{t('settings.account.privacyText')}</p>
+        <div className="d-form-actions st-left">
+          <button type="button" className="d-btn" disabled={busy !== ''} onClick={() => run('export', () => download('/account/export', 'ziondesk-my-data'))}>
+            <Download size={15} /> {busy === 'export' ? t('common.loading') : t('settings.account.export')}
+          </button>
+        </div>
+        <p className="d-notes">
+          {t('settings.account.rightsMore')} <Link to="/legal" className="d-link">{t('settings.account.legalLink')}</Link>
+        </p>
+        <div className="st-danger">
+          <b>{t('settings.account.deleteTitle')}</b>
+          <small>{t('settings.account.deleteText')}</small>
+          <button
+            type="button"
+            className="d-btn d-danger"
+            disabled={busy !== ''}
+            onClick={() => {
+              if (!window.confirm(t('settings.account.deleteConfirm'))) return
+              run('delete', async () => {
+                await api('/account/delete', {})
+                await session.signOut()
+                navigate('/')
+              })
+            }}
+          >
+            <Trash2 size={15} /> {busy === 'delete' ? t('common.loading') : t('settings.account.delete')}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function Profile() {
-  const { settings, updateSettings } = useWorkspace()
+  const { settings, updateSettings, live } = useWorkspace()
+  const session = useSession()
   const { t } = useT()
   const [f, setF] = useState(settings)
   const [ok, setOk] = useState(false)
+  const [logoBusy, setLogoBusy] = useState(false)
+  const [logoError, setLogoError] = useState('')
   const field = (k: keyof S, label: string, type = 'text') => (
     <label className="d-field">
       <span>{label}</span>
@@ -110,6 +286,29 @@ function Profile() {
         <h2>{t('settings.profile.title')}</h2>
         <Saved show={ok} />
       </div>
+      {live && session.church && (
+        <PhotoPicker
+          url={settings.logoUrl}
+          fallback={settings.churchName.slice(0, 1).toUpperCase()}
+          label={t('settings.profile.logo')}
+          busy={logoBusy}
+          onPick={async (file) => {
+            setLogoError('')
+            if (!/^image\//.test(file.type) || file.size > 3 * 1024 * 1024) return setLogoError(t('settings.account.imageSize'))
+            setLogoBusy(true)
+            try {
+              const url = await uploadLogo(session.church!.id, file)
+              updateSettings({ logoUrl: url })
+            } catch (e) {
+              setLogoError(e instanceof Error ? e.message : String(e))
+            } finally {
+              setLogoBusy(false)
+            }
+          }}
+          onRemove={() => updateSettings({ logoUrl: null })}
+        />
+      )}
+      {logoError && <p className="d-errors">{logoError}</p>}
       <div className="d-grid">
         {field('churchName', t('settings.profile.churchName'))}
         {field('location', t('settings.profile.location'))}
@@ -123,6 +322,7 @@ function Profile() {
               <option key={c}>{c}</option>
             ))}
           </select>
+          {chargeCurrency(f.currency) !== f.currency && <small className="d-muted">{t('settings.profile.currencyFallback', { currency: f.currency })}</small>}
         </label>
       </div>
       <div className="d-form-actions">
@@ -290,6 +490,20 @@ function Plan() {
   const billing = params.get('billing')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
+  const fmt = (d: string) => new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+  const cancel = async () => {
+    if (!window.confirm(t('settings.plan.cancelConfirm', { date: settings.planRenewsAt ? fmt(settings.planRenewsAt) : '' }))) return
+    setError('')
+    setBusy('cancel')
+    try {
+      await api('/billing/cancel', {})
+      updateSettings({ planStatus: 'cancelled' })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy('')
+    }
+  }
   // Live: plans are paid monthly through Flutterwave; the plan switches when payment is confirmed.
   const choose = async (plan: PlanId) => {
     if (!live) return updateSettings({ plan })
@@ -310,7 +524,8 @@ function Plan() {
       {live && settings.planStatus && (
         <p className="d-muted st-plan-status">
           {t(`settings.plan.status.${settings.planStatus}`)}
-          {settings.planRenewsAt ? ` · ${t('settings.plan.renews', { date: new Date(settings.planRenewsAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}` : ''}
+          {settings.planRenewsAt && settings.planStatus === 'active' ? ` · ${t('settings.plan.renews', { date: fmt(settings.planRenewsAt) })}` : ''}
+          {settings.planRenewsAt && settings.planStatus === 'cancelled' ? ` · ${t('settings.plan.accessUntil', { date: fmt(settings.planRenewsAt) })}` : ''}
         </p>
       )}
       {error && <p className="d-errors">{error}</p>}
@@ -324,7 +539,7 @@ function Plan() {
                 {current && <span className="d-pill d-pill-lime">{t('settings.plan.current')}</span>}
               </div>
               <b className="st-price">
-                {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD', minimumFractionDigits: p.price % 1 ? 2 : 0 }).format(p.price)}
+                {formatMoney(planPrice(p.id, settings.currency).amount, planPrice(p.id, settings.currency).currency, locale)}
                 <small>{t('common.perMonth')}</small>
               </b>
               <ul>
@@ -342,11 +557,27 @@ function Plan() {
         })}
       </div>
       <p className="d-hint-box">{live ? t('settings.plan.noteLive') : t('settings.plan.note')}</p>
+      <p className="d-notes">
+        {billingCurrency(settings.currency) === settings.currency ? t('settings.plan.billedIn', { currency: settings.currency }) : t('settings.plan.usdFallback', { currency: settings.currency })}
+      </p>
+      {live && (settings.planStatus === 'active' || settings.planStatus === 'past_due') && (
+        <div className="st-danger">
+          <b>{t('settings.plan.cancelTitle')}</b>
+          <small>{t('settings.plan.cancelText')}</small>
+          <button type="button" className="d-btn d-danger" disabled={busy !== ''} onClick={cancel}>
+            {busy === 'cancel' ? t('common.loading') : t('settings.plan.cancel')}
+          </button>
+        </div>
+      )}
+      <p className="d-notes">
+        <Link to="/refunds" className="d-link">{t('settings.plan.refundLink')}</Link>
+      </p>
     </>
   )
 }
 
 function ChurchAiSettings() {
+  const { live } = useWorkspace()
   const ai = useAi()
   const { t } = useT()
   const s = ai.settings
@@ -416,6 +647,8 @@ function ChurchAiSettings() {
         </div>
       </section>
 
+      {/* Plan limits are set by ZionDesk; churches can't raise their own (live). */}
+      {!live && (
       <section className="d-panel d-span-2">
         <div className="d-panel-head">
           <h2>{t('settings.ai.limits')}</h2>
@@ -455,6 +688,7 @@ function ChurchAiSettings() {
           {t('settings.ai.limitsNote')}
         </p>
       </section>
+      )}
     </div>
   )
 }
@@ -501,6 +735,82 @@ function Integrations() {
   )
 }
 
+/** Live: church-wide export and deletion (admins). */
+function ChurchData() {
+  const { settings } = useWorkspace()
+  const session = useSession()
+  const { t } = useT()
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState('')
+  const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState('')
+  return (
+    <div className="d-two">
+      <section className="d-panel d-form">
+        <div className="d-panel-head">
+          <h2>
+            <Download size={17} /> {t('settings.data.exportTitle')}
+          </h2>
+        </div>
+        <p className="d-notes">{t('settings.data.exportText')}</p>
+        <div className="d-form-actions st-left">
+          <button
+            type="button"
+            className="d-btn d-btn-ink"
+            disabled={busy !== ''}
+            onClick={async () => {
+              setError('')
+              setBusy('export')
+              await download('/church/export', 'ziondesk-church-data').catch((e) => setError(e.message))
+              setBusy('')
+            }}
+          >
+            <Download size={15} /> {busy === 'export' ? t('common.loading') : t('settings.data.export')}
+          </button>
+        </div>
+        <p className="d-notes">
+          <Link to="/dpa" className="d-link">{t('settings.data.dpaLink')}</Link>
+        </p>
+      </section>
+      <section className="d-panel d-form">
+        <div className="d-panel-head">
+          <h2>
+            <Trash2 size={17} /> {t('settings.data.deleteTitle')}
+          </h2>
+        </div>
+        <p className="d-notes">{t('settings.data.deleteText')}</p>
+        <label className="d-field">
+          <span>{t('settings.data.typeName', { name: settings.churchName })}</span>
+          <input value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        </label>
+        {error && <p className="d-errors">{error}</p>}
+        <div className="d-form-actions">
+          <button
+            type="button"
+            className="d-btn d-danger"
+            disabled={busy !== '' || confirm.trim().toLowerCase() !== settings.churchName.trim().toLowerCase()}
+            onClick={async () => {
+              setError('')
+              setBusy('delete')
+              try {
+                await api('/church/delete', { confirm })
+                await session.refresh()
+                navigate('/dashboard')
+              } catch (e) {
+                setError(e instanceof Error ? e.message : String(e))
+              } finally {
+                setBusy('')
+              }
+            }}
+          >
+            <Trash2 size={15} /> {busy === 'delete' ? t('common.loading') : t('settings.data.delete')}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function Data() {
   const { resetDemo } = useMembers()
   const { resetWorkspace } = useWorkspace()
@@ -543,9 +853,10 @@ export default function Settings() {
   const { live } = useWorkspace()
   const admin = role === 'admin'
   // Language & Communication is personal, so every role can open it; the rest is admin-only.
-  const requested = (params.get('tab') as Tab) || (admin ? 'profile' : 'language')
-  const tab: Tab = admin ? requested : 'language'
+  const requested = (params.get('tab') as Tab) || (admin ? 'profile' : 'account')
+  const tab: Tab = admin || requested === 'language' ? requested : 'account'
   const tabs: { id: Tab; label: string }[] = [
+    { id: 'account', label: t('settings.account.title') },
     { id: 'language', label: t('lang.title') },
     ...(admin
       ? ([
@@ -555,7 +866,7 @@ export default function Settings() {
           { id: 'plan', label: t('settings.tabs.plan') },
           { id: 'ai', label: t('settings.tabs.ai') },
           { id: 'integrations', label: t('settings.tabs.integrations') },
-          ...(live ? [] : [{ id: 'data' as Tab, label: t('settings.tabs.data') }]),
+          { id: 'data' as Tab, label: live ? t('settings.data.privacyTab') : t('settings.tabs.data') },
         ] as { id: Tab; label: string }[])
       : []),
   ]
@@ -565,7 +876,8 @@ export default function Settings() {
       <div className="d-toolrow">
         <Tabs value={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} tabs={tabs} />
       </div>
-      {!admin && <p className="d-hint-box">{t('settings.adminOnly')}</p>}
+      {!admin && tab === 'language' && <p className="d-hint-box">{t('settings.adminOnly')}</p>}
+      {tab === 'account' && <Account />}
       {tab === 'language' && <LanguageSettings />}
       {tab === 'profile' && <Profile />}
       {tab === 'structure' && <Structure />}
@@ -573,7 +885,7 @@ export default function Settings() {
       {tab === 'plan' && <Plan />}
       {tab === 'ai' && <ChurchAiSettings />}
       {tab === 'integrations' && <Integrations />}
-      {tab === 'data' && !live && <Data />}
+      {tab === 'data' && (live ? <ChurchData /> : <Data />)}
     </div>
   )
 }

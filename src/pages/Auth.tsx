@@ -31,6 +31,7 @@ import {
 } from '../lib/auth'
 import './auth.css'
 import { tr, useT } from '../i18n'
+import { CHURCH_CURRENCIES, formatMoney, guessCurrency, planPrice } from '../lib/currency'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -389,7 +390,7 @@ const PLANS: { id: PlanId; name: string; price: number }[] = [
 ]
 const SIZES = ['s50', 's200', 's500', 's1000', 's5000', 'sMore']
 const ROLES = ['senior', 'pastor', 'admin', 'finance', 'leader', 'volunteer', 'other']
-const CURRENCIES = ['USD', 'NGN', 'GBP', 'EUR', 'CAD', 'GHS', 'KES', 'ZAR']
+const CURRENCIES: readonly string[] = CHURCH_CURRENCIES
 /** "USD — US dollar" in the current language. */
 const currencyLabel = (c: string, locale: string) => {
   try {
@@ -469,7 +470,7 @@ export function Register() {
     noDenominations: false,
     churchSize: '',
     role: '',
-    currency: CURRENCIES[0],
+    currency: guessCurrency(),
   })
   const [logo, setLogo] = useState<File | null>(null)
   const [plan, setPlan] = useState<PlanId>(initialPlan)
@@ -750,7 +751,10 @@ export function Register() {
                         <small>{t(`auth.planBlurb.${p.id}`)}</small>
                       </span>
                       <span className="auth-plan-price">
-                        {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD', minimumFractionDigits: p.price % 1 ? 2 : 0 }).format(p.price)}
+                        {(() => {
+                          const lp = planPrice(p.id, org.currency)
+                          return formatMoney(lp.amount, lp.currency, locale)
+                        })()}
                         <small>{t('auth.perMo')}</small>
                       </span>
                     </button>

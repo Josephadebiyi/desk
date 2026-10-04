@@ -1,4 +1,4 @@
-import { Bell, Check, HelpCircle, Languages, LogOut, Settings as SettingsIcon, Sparkles, X } from 'lucide-react'
+import { Bell, Check, HelpCircle, Languages, LogOut, Settings as SettingsIcon, Sparkles, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { buildInbox } from '../ai/inbox'
@@ -167,17 +167,18 @@ export function ProfileMenu() {
   const name = session.remote ? session.name || session.email : 'Pastor Mike'
   const email = session.remote ? session.email : settings.email
   const close = () => setOpen(false)
+  const face = session.avatarUrl ? <img src={session.avatarUrl} alt="" /> : initials(name) || '•'
 
   return (
     <div className="tm" ref={ref}>
       <button type="button" className="d-me" aria-haspopup="menu" aria-expanded={open} aria-label={t('dash.signedInAs', { name })} title={name} onClick={() => setOpen((o) => !o)}>
-        {initials(name) || '•'}
+        {face}
       </button>
       {open && (
         <div className="tm-pop tm-profile" role="menu">
           <div className="tm-who">
             <span className="d-me is-lg" aria-hidden="true">
-              {initials(name) || '•'}
+              {face}
             </span>
             <span>
               <b>{name}</b>
@@ -188,6 +189,9 @@ export function ProfileMenu() {
             </span>
           </div>
           {!session.remote && <p className="tm-note">{t('dash.profile.preview')}</p>}
+          <Row to="/dashboard/settings?tab=account" icon={<UserRound size={16} />} onClick={close}>
+            {t('settings.account.title')}
+          </Row>
           <Row to="/dashboard/settings?tab=language" icon={<Languages size={16} />} onClick={close}>
             {t('lang.title')}
           </Row>

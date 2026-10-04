@@ -4,6 +4,7 @@
  * Auth; otherwise they reject with NotConnectedError so the preview shows an honest message.
  * Google sign-in uses Supabase's Google provider (Supabase → Authentication → Providers → Google).
  */
+import { TERMS_VERSION } from './company'
 import { createChurch, type PendingChurch } from './session'
 import { supabase } from './supabase'
 
@@ -87,7 +88,7 @@ export async function register(input: RegisterInput): Promise<'ready' | 'confirm
       password: input.password ?? '',
       options: {
         emailRedirectTo: `${site()}/dashboard`,
-        data: { full_name: input.fullName, ui_language: input.uiLanguage, comm_language: input.communicationLanguage, pending_church: pending },
+        data: { full_name: input.fullName, ui_language: input.uiLanguage, comm_language: input.communicationLanguage, pending_church: pending, terms_version: TERMS_VERSION },
       },
     })
     if (error) throw new Error(error.message)
@@ -95,6 +96,8 @@ export async function register(input: RegisterInput): Promise<'ready' | 'confirm
     s = { session: data.session }
   }
   const churchId = await createChurch(pending)
+  // Proof of consent (who accepted which version of the Terms and Privacy Policy, and when).
+  if (s.session) await sb.from('profiles').update({ terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString() }).eq('id', s.session.user.id)
   await sb.auth.updateUser({ data: { pending_church: null, full_name: input.fullName } })
   if (input.logo) await uploadLogo(churchId, input.logo).catch((e) => console.error('[logo]', e))
   return 'ready'

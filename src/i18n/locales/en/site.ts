@@ -24,7 +24,8 @@ export default {
     chat2: 'Sunday offering: <b>{amount}</b> received. Receipts sent to 96 givers ✓',
   },
   metaTitle: 'ZionDesk — Church management made simple',
-  trust: 'More than 500 churches run their ministry on ZionDesk',
+  trust: "Built for churches of every size and tradition",
+  trustTypes: "Pentecostal|Baptist|Anglican|Catholic parishes|Methodist|Non-denominational|House fellowships",
   timeline: {
     h2a: 'Church software that', h2b: 'grows with you',
     sub: 'ZionDesk connects your people, your giving and your gatherings — every Sunday makes the next one easier.',
@@ -86,9 +87,10 @@ export default {
     note: 'Example link shown — every church gets its own giving page and QR codes.',
   },
   quotes: {
-    h2: 'Loved by pastors and church teams', stat: 'languages, so every member hears from you in theirs', join: 'Join them today',
-    q1: 'Excellent service from start to finish. Communication was clear and timely, and the final result exceeded all our expectations.', r1: 'Senior Pastor',
-    q2: 'Working with this team has been an absolute pleasure. Professional, responsive, and delivered on time with exceptional quality.', r2: 'Church Administrator',
+    h2: "What changes when your team uses ZionDesk", stat: 'languages, so every member hears from you in theirs', join: "Start your free trial",
+    q1: "Every member, family and newcomer in one place — with follow-ups that don’t slip through the cracks.", r1: "For pastors",
+    q2: "Registrations, events and messages in five languages, without spreadsheets or five separate apps.", r2: "For church administrators",
+    q3: "Tithes, offerings and expenses recorded once, with receipts and reports ready for your board.", r3: "For finance teams"
   },
   pricing: {
     kicker: 'Pricing', h2: 'Simple pricing for every church', sub: 'Start with a {days}-day free trial. Change plans anytime.', perMonth: '/month', cta: 'Start free trial',
@@ -112,7 +114,7 @@ export default {
     platform: 'Platform', ministries: 'Ministries', company: 'Company',
     hub: 'All-in-one hub', design: 'Design Studio', giving: 'Online giving', pricing: 'Pricing',
     pastors: 'Pastors', admins: 'Church admins', finance: 'Finance teams',
-    stories: 'Stories', faq: 'FAQ', privacy: 'Privacy policy', terms: 'Terms of use',
+    stories: 'Stories', faq: 'FAQ', privacy: 'Privacy policy', terms: 'Terms of use', cookies: 'Cookie policy', legal: 'Legal & compliance',
     help: 'How can we help?', contact: 'Contact us', rights: '© {year} ZionDesk. All rights reserved.', photos: 'Photos from',
   },
 }

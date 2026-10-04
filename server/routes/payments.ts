@@ -14,16 +14,18 @@ import { Router, type Request } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
-import { createCheckout, createSubaccount, ensurePaymentPlan, listBanks, resolveAccount, verifyByReference, verifyTransaction } from '../flutterwave'
+import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan, listBanks, listSubscriptions, resolveAccount, verifyByReference, verifyTransaction, type VerifiedTx } from '../flutterwave'
 import { compose, sendEmail } from '../mail'
+import { billingCurrency, chargeCurrency, PLAN_PRICES, planPrice, type FlwCurrency } from '../../src/lib/currency'
+import type { PlanKey } from '../../src/lib/plans'
 
 export const paymentRoutes = Router()
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const str = (v: unknown, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
-/** Monthly plan prices (USD) — keep in sync with the pricing page. */
-export const PLAN_PRICE: Record<string, number> = { essentials: 8, plus: 19.99, max: 39.99 }
+/** Monthly plan prices in USD (local prices: src/lib/currency.ts) — keep in sync with the pricing page. */
+export const PLAN_PRICE: Record<string, number> = PLAN_PRICES.USD!
 const PLAN_NAME: Record<string, string> = { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' }
 
 const hits = new Map<string, number[]>()
@@ -55,13 +57,15 @@ paymentRoutes.post(
     const fund = (church.funds as string[]).includes(str(b.fund)) ? str(b.fund) : (church.funds as string[])[0] ?? 'Offering'
     const language = asEmailLang(b.language)
     const txRef = `zd-gift-${randomUUID()}`
+    // Collected in the church's currency when Flutterwave supports it, else USD.
+    const currency = chargeCurrency(church.currency)
 
-    const { error } = await db().from('online_payments').insert({ church_id: church.id, kind: 'gift', tx_ref: txRef, amount, currency: church.currency, fund, name, email, phone: str(b.phone, 40), language })
+    const { error } = await db().from('online_payments').insert({ church_id: church.id, kind: 'gift', tx_ref: txRef, amount, currency, fund, name, email, phone: str(b.phone, 40), language })
     if (error) throw error
     const link = await createCheckout({
       txRef,
       amount,
-      currency: church.currency,
+      currency,
       redirectUrl: `${env.siteUrl}/api/payments/return`,
       customer: { email, name, phone: str(b.phone, 40) },
       title: church.name,
@@ -76,10 +80,50 @@ paymentRoutes.post(
 
 /* ───────── completing a payment (redirect + webhook share this) ───────── */
 
+/** Flutterwave monthly payment plan for a plan in a currency (created on demand, e.g. "ZionDesk Essentials NGN"). */
+async function flwPlanId(plan: PlanKey, currency: FlwCurrency) {
+  if (currency === 'USD' && env.flwPlans[plan]) return env.flwPlans[plan]
+  const amount = PLAN_PRICES[currency]![plan]
+  return ensurePaymentPlan(`ZionDesk ${PLAN_NAME[plan]}${currency === 'USD' ? '' : ` ${currency}`}`, amount, currency)
+}
+
+/** Flutterwave payment-plan id → our plan key (plans are created on demand, so resolve by id). */
+async function planKeyFor(planId: string | number | null | undefined, currency: string): Promise<PlanKey | null> {
+  if (!planId) return null
+  const cur = billingCurrency(currency)
+  for (const key of Object.keys(PLAN_PRICE) as PlanKey[]) {
+    const id = await flwPlanId(key, cur).catch(() => '')
+    if (String(id) === String(planId)) return key
+  }
+  return null
+}
+
+const nextMonth = (from: Date) => {
+  const d = new Date(from)
+  d.setMonth(d.getMonth() + 1)
+  return d
+}
+
+/** Automatic monthly charge from Flutterwave: new reference, so match the church by plan + payer email. */
+async function recordRenewal(tx: VerifiedTx) {
+  const email = (tx.customer?.email ?? '').toLowerCase()
+  const plan = await planKeyFor(tx.plan ?? tx.payment_plan, tx.currency)
+  if (tx.status !== 'successful' || !email || !plan) throw new HttpError(404, 'Unknown payment')
+  const price = PLAN_PRICES[tx.currency as FlwCurrency]?.[plan]
+  if (!price || Number(tx.amount) < price) throw new HttpError(400, 'Renewal amount mismatch')
+  const { data: church } = await db().from('churches').select('id, plan_renews_at').eq('flw_subscription_email', email).maybeSingle()
+  if (!church) throw new HttpError(404, 'No church for this subscription')
+  const { error } = await db().from('online_payments').insert({ church_id: church.id, kind: 'subscription', tx_ref: tx.tx_ref, flw_transaction_id: tx.id, amount: tx.amount, currency: tx.currency, plan, email, status: 'successful', completed_at: new Date().toISOString() })
+  if (error) return { status: 'successful' } // already recorded (webhook retries)
+  const base = church.plan_renews_at && new Date(church.plan_renews_at) > new Date() ? new Date(church.plan_renews_at) : new Date()
+  await db().from('churches').update({ plan, plan_status: 'active', plan_renews_at: nextMonth(base).toISOString() }).eq('id', church.id)
+  return { status: 'successful' }
+}
+
 async function complete(ref: { id?: string; txRef?: string }) {
   const tx = ref.id ? await verifyTransaction(ref.id) : await verifyByReference(ref.txRef!)
   const { data: p } = await db().from('online_payments').select('*').eq('tx_ref', tx.tx_ref).maybeSingle()
-  if (!p) throw new HttpError(404, 'Unknown payment')
+  if (!p) return recordRenewal(tx)
   if (p.status === 'successful') return p // already processed (webhook and redirect both arrive)
   const paid = tx.status === 'successful' && tx.currency === p.currency && Number(tx.amount) >= Number(p.amount)
   if (!paid) {
@@ -112,9 +156,15 @@ async function complete(ref: { id?: string; txRef?: string }) {
       ).catch((e) => console.error('[receipt]', e))
     }
   } else {
-    const renews = new Date()
-    renews.setMonth(renews.getMonth() + 1)
-    await db().from('churches').update({ plan: p.plan, plan_status: 'active', plan_renews_at: renews.toISOString(), trial_ends_at: null, flw_subscription_email: p.email }).eq('id', p.church_id)
+    await db()
+      .from('churches')
+      .update({ plan: p.plan, plan_status: 'active', plan_renews_at: nextMonth(new Date()).toISOString(), trial_ends_at: null, flw_subscription_email: p.email.toLowerCase() })
+      .eq('id', p.church_id)
+    // Upgrade / downgrade: stop any older subscription so the church is never billed twice.
+    const newPlanId = String(tx.plan ?? tx.payment_plan ?? '')
+    for (const s of await listSubscriptions(p.email)) {
+      if (s.status === 'active' && String(s.plan) !== newPlanId) await cancelSubscription(s.id).catch((e) => console.error('[cancel old sub]', e))
+    }
   }
   return { ...p, status: 'successful', slug: church?.slug }
 }
@@ -200,24 +250,42 @@ paymentRoutes.post(
   '/billing/checkout',
   requireCaller(['admin']),
   route(async (req, res) => {
-    const plan = str(req.body?.plan) as keyof typeof PLAN_PRICE
+    const plan = str(req.body?.plan) as PlanKey
     if (!PLAN_PRICE[plan]) throw new HttpError(400, 'Unknown plan')
-    const planId = env.flwPlans[plan] || (await ensurePaymentPlan(`ZionDesk ${PLAN_NAME[plan]}`, PLAN_PRICE[plan], 'USD'))
-    const { data: church } = await db().from('churches').select('id, name, logo_url').eq('id', req.caller!.churchId).single()
+    const { data: church } = await db().from('churches').select('id, name, logo_url, currency').eq('id', req.caller!.churchId).single()
+    // Billed in the church's currency when we have a local price for it; otherwise USD.
+    const { currency, amount } = planPrice(plan, church?.currency)
+    const planId = await flwPlanId(plan, currency)
     const { data: prof } = await db().from('profiles').select('full_name, comm_language').eq('id', req.caller!.userId).maybeSingle()
     const txRef = `zd-sub-${randomUUID()}`
-    await db().from('online_payments').insert({ church_id: church!.id, kind: 'subscription', tx_ref: txRef, amount: PLAN_PRICE[plan], currency: 'USD', plan, name: prof?.full_name ?? '', email: req.caller!.email, language: prof?.comm_language ?? 'en' })
+    await db().from('online_payments').insert({ church_id: church!.id, kind: 'subscription', tx_ref: txRef, amount, currency, plan, name: prof?.full_name ?? '', email: req.caller!.email, language: prof?.comm_language ?? 'en' })
     const link = await createCheckout({
       txRef,
-      amount: PLAN_PRICE[plan],
-      currency: 'USD',
+      amount,
+      currency,
       redirectUrl: `${env.siteUrl}/api/payments/return`,
       customer: { email: req.caller!.email, name: prof?.full_name || church!.name },
       title: `ZionDesk ${PLAN_NAME[plan]}`,
       description: church!.name,
       meta: { kind: 'subscription', church: church!.id, plan },
       paymentPlan: planId,
+      paymentOptions: 'card', // recurring billing needs a card Flutterwave can charge monthly
     })
     res.json({ link })
+  }),
+)
+
+/* Cancel: stops future monthly charges; the plan stays active until the paid month ends. */
+paymentRoutes.post(
+  '/billing/cancel',
+  requireCaller(['admin']),
+  route(async (req, res) => {
+    const { data: church } = await db().from('churches').select('id, flw_subscription_email, plan_renews_at').eq('id', req.caller!.churchId).single()
+    if (!church?.flw_subscription_email) throw new HttpError(409, 'There is no active subscription to cancel.')
+    for (const s of await listSubscriptions(church.flw_subscription_email)) {
+      if (s.status === 'active') await cancelSubscription(s.id)
+    }
+    await db().from('churches').update({ plan_status: 'cancelled' }).eq('id', church.id)
+    res.json({ ok: true, accessUntil: church.plan_renews_at })
   }),
 )

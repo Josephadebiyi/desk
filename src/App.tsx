@@ -22,7 +22,6 @@ import {
   Search,
   Send,
   Sparkles,
-  Star,
   UserPlus,
   Users,
 } from 'lucide-react'
@@ -37,6 +36,8 @@ import { Icon3D, IconCanvas, type IconName } from './components/Icons3D'
 import { Flyer, flyerName, flyerSample, FLYER_TEMPLATES, type FlyerId } from './components/Flyers'
 import { Reveal } from './components/ui'
 import { getLocale, useT } from './i18n'
+import { guessCurrency, planPrice } from './lib/currency'
+import type { PlanKey } from './lib/plans'
 
 /** Escape user text before putting it into a translated HTML string. */
 const esc = (v: string) => v.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
@@ -358,7 +359,8 @@ function PhotoBanner() {
 
 function Trust() {
   const { t } = useT()
-  const names = ['Grace Chapel', 'Hope City', 'Faith Tabernacle', 'Unity Church', 'Zion Assembly', 'Bethel House', 'Shiloh Ministries']
+  // Church traditions ZionDesk is built for (no customer logos are shown without written permission).
+  const names = t('site.trustTypes').split('|')
   return (
     <section className="trust container">
       <p>{t('site.trust')}</p>
@@ -1170,8 +1172,9 @@ function Giving() {
 /* ───────────────────────── Testimonials (reference #1 circles) ───────────────────────── */
 
 const QUOTES = [
-  { q: 'q1', n: 'Pastor Johnson', r: 'r1' },
-  { q: 'q2', n: 'Sarah Collins', r: 'r2' },
+  { q: 'q1', r: 'r1' },
+  { q: 'q2', r: 'r2' },
+  { q: 'q3', r: 'r3' },
 ]
 
 function Testimonials() {
@@ -1207,14 +1210,9 @@ function Testimonials() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.35 }}
             >
-              <span className="stars">
-                {Array.from({ length: 5 }).map((_, k) => (
-                  <Star key={k} size={14} fill="currentColor" />
-                ))}
-              </span>
-              <p>&ldquo;{t(`site.quotes.${q.q}`)}&rdquo;</p>
+              <p>{t(`site.quotes.${q.q}`)}</p>
               <footer>
-                <b>{q.n}</b> · {t(`site.quotes.${q.r}`)}
+                <b>{t(`site.quotes.${q.r}`)}</b>
               </footer>
             </motion.blockquote>
           </AnimatePresence>
@@ -1237,7 +1235,14 @@ const PLANS = [
 
 function Pricing() {
   const { t, locale } = useT()
-  const dec = new Intl.NumberFormat(locale).formatToParts(1.5).find((x) => x.type === 'decimal')?.value ?? '.'
+  // Prices in the visitor's currency when we bill in it (e.g. ₦ in Nigeria), otherwise USD.
+  const [visitorCurrency] = useState(guessCurrency)
+  const priceParts = (id: PlanKey) => {
+    const { amount, currency } = planPrice(id, visitorCurrency)
+    const parts = new Intl.NumberFormat(locale, { style: 'currency', currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: amount % 1 ? 2 : 0 }).formatToParts(amount)
+    const pick = (types: string[]) => parts.filter((x) => types.includes(x.type)).map((x) => x.value).join('')
+    return { symbol: pick(['currency']), whole: pick(['integer', 'group']), cents: amount % 1 ? pick(['decimal', 'fraction']) : '' }
+  }
   return (
     <section className="pricing-band" id="pricing">
       <div className="container">
@@ -1257,10 +1262,10 @@ function Pricing() {
                   </div>
                   {t(`site.pricing.${p.id}.badge`) && <span className="pill plan-badge">{t(`site.pricing.${p.id}.badge`)}</span>}
                 </div>
-                <div className="plan-price">
-                  <sup>$</sup>
-                  <b>{p.price}</b>
-                  {p.cents && <em>{dec + p.cents}</em>}
+                <div className={`plan-price ${priceParts(p.id).whole.length > 4 ? 'is-long' : ''}`}>
+                  <sup>{priceParts(p.id).symbol}</sup>
+                  <b>{priceParts(p.id).whole}</b>
+                  {priceParts(p.id).cents && <em>{priceParts(p.id).cents}</em>}
                   <span>{t('site.pricing.perMonth')}</span>
                 </div>
                 <ul>
@@ -1354,7 +1359,7 @@ function Footer() {
   const cols = [
     { h: 'platform', links: [['hub', '#bento'], ['design', '#design'], ['giving', '#giving'], ['pricing', '#pricing']] },
     { h: 'ministries', links: [['pastors', '#ministries'], ['admins', '#ministries'], ['finance', '#ministries']] },
-    { h: 'company', links: [['stories', '#stories'], ['faq', '#faq'], ['privacy', '/privacy'], ['terms', '/terms']] },
+    { h: 'company', links: [['stories', '#stories'], ['faq', '#faq'], ['privacy', '/privacy'], ['terms', '/terms'], ['cookies', '/cookies'], ['legal', '/legal']] },
   ]
   return (
     <footer className="footer">

@@ -25,7 +25,8 @@ const site: Dict['site'] = {
     chat2: 'Oferta de domingo: <b>{amount}</b> recebidos. Recibos enviados a 96 doadores ✓',
   },
   metaTitle: 'ZionDesk — Gestão da igreja simplificada',
-  trust: 'Mais de 500 igrejas gerem o seu ministério com o ZionDesk',
+  trust: "Feito para igrejas de todos os tamanhos e tradições",
+  trustTypes: "Pentecostais|Batistas|Anglicanas|Paróquias católicas|Metodistas|Não denominacionais|Igrejas em casa",
   timeline: {
     h2a: 'Software para igrejas que', h2b: 'cresce consigo',
     sub: 'O ZionDesk liga as suas pessoas, ofertas e encontros — cada domingo torna o seguinte mais fácil.',
@@ -87,9 +88,10 @@ const site: Dict['site'] = {
     note: 'Link de exemplo — cada igreja tem a sua própria página de ofertas e códigos QR.',
   },
   quotes: {
-    h2: 'Apreciado por pastores e equipas de igreja', stat: 'idiomas, para que cada membro o leia no seu', join: 'Junte-se a elas hoje',
-    q1: 'Serviço excelente do início ao fim. Comunicação clara e atempada, e um resultado que superou todas as expectativas.', r1: 'Pastor sénior',
-    q2: 'Trabalhar com esta equipa foi um prazer. Profissional, atenta e pontual, com uma qualidade excecional.', r2: 'Administradora da igreja',
+    h2: "O que muda quando a sua equipa usa o ZionDesk", stat: 'idiomas, para que cada membro o leia no seu', join: "Comece o teste gratuito",
+    q1: "Cada membro, família e recém-chegado num só lugar — com acompanhamento em que ninguém fica esquecido.", r1: "Para pastores",
+    q2: "Inscrições, eventos e mensagens em cinco idiomas, sem folhas de cálculo nem cinco apps diferentes.", r2: "Para administradores da igreja",
+    q3: "Dízimos, ofertas e despesas registados uma vez, com recibos e relatórios prontos para a direção.", r3: "Para equipas financeiras"
   },
   pricing: {
     kicker: 'Preços', h2: 'Preços simples para cada igreja', sub: 'Comece com uma avaliação gratuita de {days} dias. Mude de plano quando quiser.', perMonth: '/mês', cta: 'Começar avaliação gratuita',
@@ -113,7 +115,7 @@ const site: Dict['site'] = {
     platform: 'Plataforma', ministries: 'Ministérios', company: 'Empresa',
     hub: 'Tudo num só', design: 'Estúdio de design', giving: 'Ofertas online', pricing: 'Preços',
     pastors: 'Pastores', admins: 'Administradores', finance: 'Equipas de finanças',
-    stories: 'Testemunhos', faq: 'Perguntas frequentes', privacy: 'Política de privacidade', terms: 'Termos de utilização',
+    stories: 'Testemunhos', faq: 'Perguntas frequentes', privacy: 'Política de privacidade', terms: 'Termos de utilização', cookies: 'Política de cookies', legal: 'Legal e conformidade',
     help: 'Como podemos ajudar?', contact: 'Contacte-nos', rights: '© {year} ZionDesk. Todos os direitos reservados.', photos: 'Fotos de',
   },
 }

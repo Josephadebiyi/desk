@@ -18,6 +18,16 @@ export default {
     addMember: 'Add member',
     import: 'Import members',
   },
+  billing: {
+    tag: "Billing",
+    pastDue: "Your last payment didn’t go through. Update your card to keep your plan active.",
+    fix: "Fix payment",
+    choose: "Choose a plan",
+    expiredTitle: "Your plan has ended",
+    expiredText: "Your free trial or subscription has ended. All your church data is safe — choose a plan to pick up where you left off.",
+    askAdmin: "Ask your church Administrator to choose a plan.",
+    export: "Download your data",
+  },
   trial: {
     tag: 'Trial',
     left_one: '{count} day left',
