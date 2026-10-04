@@ -358,17 +358,19 @@ function PhotoBanner() {
 
 function Trust() {
   const { t } = useT()
-  const names = ['Grace Chapel', 'Hope City', 'Faith Tabernacle', 'Unity Church', 'Zion Assembly', 'Bethel House', 'Shiloh Ministries']
+  // Churches that agreed to be shown. Logo files live in /public/partners.
+  const [logoOk, setLogoOk] = useState(true)
   return (
     <section className="trust container">
       <p>{t('site.trust')}</p>
       <div className="trust-row">
-        {names.map((n, i) => (
-          <span key={n} className="trust-logo">
-            <i className={`tl tl-${i % 3}`} />
-            {n}
+        <span className="trust-logo trust-partner">
+          {logoOk && <img src="/partners/rccg.png" alt="" onError={() => setLogoOk(false)} />}
+          <span>
+            RCCG
+            <small>The Redeemed Christian Church of God</small>
           </span>
-        ))}
+        </span>
       </div>
     </section>
   )
@@ -533,13 +535,13 @@ function Stats() {
       <div className="stats">
         <div className="stat">
           <b>
-            <Counter to={500} suffix="+" />
+            <Counter to={5} />
           </b>
           <span>{t('site.stats.churches')}</span>
         </div>
         <div className="stat">
           <b>
-            <Counter to={5} decimals={1} />
+            <Counter to={48} suffix="h" />
           </b>
           <span>{t('site.stats.rating')}</span>
         </div>
@@ -1196,7 +1198,7 @@ function Testimonials() {
         <Reveal delay={0.1} className="people-copy">
           <h2>{t('site.quotes.h2')}</h2>
           <div className="people-stat">
-            <span className="stat-pill">500+</span>
+            <span className="stat-pill">5</span>
             <span>{t('site.quotes.stat')}</span>
           </div>
           <AnimatePresence mode="wait">

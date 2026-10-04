@@ -701,3 +701,7 @@ img { max-width: 100%; display: block; }
 .lang-toast a { justify-self: start; margin-top: 4px; color: #fff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .lang-toast button { position: absolute; top: 8px; right: 10px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(255,255,255,0.1); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; }
 @keyframes lang-toast-in { from { opacity: 0; transform: translate(-50%, 14px); } }
+.trust-partner { opacity: 1; gap: 14px; }
+.trust-partner img { height: 56px; width: auto; }
+.trust-partner > span { display: grid; line-height: 1.1; text-align: left; }
+.trust-partner small { font-family: var(--ui); font-weight: 500; font-size: 13px; letter-spacing: 0; color: var(--muted); }

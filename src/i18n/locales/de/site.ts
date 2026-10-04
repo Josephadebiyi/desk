@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Sonntagskollekte: <b>{amount}</b> eingegangen. Quittungen an 96 Spender gesendet ✓',
   },
   metaTitle: 'ZionDesk — Gemeindeverwaltung leicht gemacht',
-  trust: 'Über 500 Gemeinden organisieren ihre Arbeit mit ZionDesk',
+  trust: 'Gemeinden, die mit ZionDesk wachsen',
   timeline: {
     h2a: 'Gemeindesoftware, die', h2b: 'mit dir wächst',
     sub: 'ZionDesk verbindet deine Menschen, deine Spenden und deine Treffen – jeder Sonntag macht den nächsten leichter.',
@@ -37,7 +37,7 @@ const site: Dict['site'] = {
     offering: 'Sonntagskollekte', receipts: '96 Quittungen gesendet', vsLast: '+12 % ggü. Vormonat',
     meetWhen: 'Google Meet · Mi. 19:00', study: 'Bibelstunde unter der Woche', invited: '+43 eingeladen', invites: 'Einladungen gesendet',
   },
-  stats: { h2: 'Treue Gemeinden. Echte Ergebnisse.', churches: 'Gemeinden auf ZionDesk', rating: 'Durchschnittliche Bewertung', trial: 'Tage kostenlos testen, inkl. Essentials', perMonth: 'Pro Monat für den Einstieg' },
+  stats: { h2: 'Für jede Gemeinde gemacht – vom ersten Tag an.', churches: 'Sprachen – jedes Mitglied wird in seiner erreicht', rating: 'Flyer-Lieferung durch unser Designteam (Ministry Max)', trial: 'Tage kostenlos testen, inkl. Essentials', perMonth: 'Pro Monat für den Einstieg' },
   bento: {
     h2a: 'Alles, was deine Gemeinde braucht,', pill: 'an einem Ort',
     sub: 'Ersetze Tabellen, Gruppenchats und fünf verschiedene Apps. Ein Login für dein ganzes Team.',
@@ -87,7 +87,7 @@ const site: Dict['site'] = {
     note: 'Beispiellink – jede Gemeinde erhält ihre eigene Spendenseite und QR-Codes.',
   },
   quotes: {
-    h2: 'Geschätzt von Pastoren und Gemeindeteams', stat: 'Gemeinden arbeiten mit ZionDesk', join: 'Jetzt dazukommen',
+    h2: 'Geschätzt von Pastoren und Gemeindeteams', stat: 'Sprachen, damit jedes Mitglied dich in seiner liest', join: 'Jetzt dazukommen',
     q1: 'Hervorragender Service von Anfang bis Ende. Klare, schnelle Kommunikation und ein Ergebnis, das alle Erwartungen übertroffen hat.', r1: 'Leitender Pastor',
     q2: 'Die Zusammenarbeit mit diesem Team war eine Freude. Professionell, schnell und pünktlich – in außergewöhnlicher Qualität.', r2: 'Gemeindeverwaltung',
   },

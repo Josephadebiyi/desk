@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Oferta de domingo: <b>{amount}</b> recebidos. Recibos enviados a 96 doadores ✓',
   },
   metaTitle: 'ZionDesk — Gestão da igreja simplificada',
-  trust: 'Mais de 500 igrejas gerem o seu ministério com o ZionDesk',
+  trust: 'Igrejas que crescem com o ZionDesk',
   timeline: {
     h2a: 'Software para igrejas que', h2b: 'cresce consigo',
     sub: 'O ZionDesk liga as suas pessoas, ofertas e encontros — cada domingo torna o seguinte mais fácil.',
@@ -37,7 +37,7 @@ const site: Dict['site'] = {
     offering: 'Oferta de domingo', receipts: '96 recibos enviados', vsLast: '+12% face ao mês passado',
     meetWhen: 'Google Meet · qua. 19:00', study: 'Estudo bíblico semanal', invited: '+43 convidados', invites: 'Convites enviados',
   },
-  stats: { h2: 'Igrejas fiéis. Resultados reais.', churches: 'Igrejas no ZionDesk', rating: 'Avaliação média das equipas', trial: 'Dias de avaliação gratuita com Essentials', perMonth: 'Por mês para começar' },
+  stats: { h2: 'Feito para cada igreja, desde o primeiro dia.', churches: 'Idiomas — cada membro recebe tudo no seu', rating: 'Entrega de folhetos pela nossa equipa de design (Ministry Max)', trial: 'Dias de avaliação gratuita com Essentials', perMonth: 'Por mês para começar' },
   bento: {
     h2a: 'Tudo o que a sua igreja precisa,', pill: 'num só lugar',
     sub: 'Substitua folhas de cálculo, grupos de conversa e cinco aplicações diferentes. Um só acesso para toda a equipa.',
@@ -87,7 +87,7 @@ const site: Dict['site'] = {
     note: 'Link de exemplo — cada igreja tem a sua própria página de ofertas e códigos QR.',
   },
   quotes: {
-    h2: 'Apreciado por pastores e equipas de igreja', stat: 'igrejas a servir com o ZionDesk', join: 'Junte-se a elas hoje',
+    h2: 'Apreciado por pastores e equipas de igreja', stat: 'idiomas, para que cada membro o leia no seu', join: 'Junte-se a elas hoje',
     q1: 'Serviço excelente do início ao fim. Comunicação clara e atempada, e um resultado que superou todas as expectativas.', r1: 'Pastor sénior',
     q2: 'Trabalhar com esta equipa foi um prazer. Profissional, atenta e pontual, com uma qualidade excecional.', r2: 'Administradora da igreja',
   },

@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Offrande du dimanche : <b>{amount}</b> reçus. Reçus envoyés à 96 donateurs ✓',
   },
   metaTitle: 'ZionDesk — La gestion d’église, simplement',
-  trust: 'Plus de 500 églises gèrent leur ministère avec ZionDesk',
+  trust: 'Des églises qui grandissent avec ZionDesk',
   timeline: {
     h2a: 'Un logiciel d’église qui', h2b: 'grandit avec vous',
     sub: 'ZionDesk relie vos membres, vos dons et vos rassemblements — chaque dimanche facilite le suivant.',
@@ -37,7 +37,7 @@ const site: Dict['site'] = {
     offering: 'Offrande du dimanche', receipts: '96 reçus envoyés', vsLast: '+12 % vs le mois dernier',
     meetWhen: 'Google Meet · mer. 19 h', study: 'Étude biblique de semaine', invited: '+43 invités', invites: 'Invitations envoyées',
   },
-  stats: { h2: 'Des églises fidèles. Des résultats concrets.', churches: 'Églises sur ZionDesk', rating: 'Note moyenne des équipes', trial: 'Jours d’essai gratuit avec Essentials', perMonth: 'Par mois pour commencer' },
+  stats: { h2: 'Pensé pour chaque église, dès le premier jour.', churches: 'Langues — chaque membre est contacté dans la sienne', rating: 'Livraison de flyers par notre équipe design (Ministry Max)', trial: 'Jours d’essai gratuit avec Essentials', perMonth: 'Par mois pour commencer' },
   bento: {
     h2a: 'Tout ce dont votre église a besoin,', pill: 'au même endroit',
     sub: 'Remplacez tableurs, groupes de discussion et cinq applications séparées. Un seul accès pour toute votre équipe.',
@@ -87,7 +87,7 @@ const site: Dict['site'] = {
     note: 'Lien d’exemple — chaque église a sa propre page de dons et ses QR codes.',
   },
   quotes: {
-    h2: 'Apprécié des pasteurs et des équipes d’église', stat: 'églises servent avec ZionDesk', join: 'Rejoignez-les aujourd’hui',
+    h2: 'Apprécié des pasteurs et des équipes d’église', stat: 'langues, pour que chaque membre vous lise dans la sienne', join: 'Rejoignez-les aujourd’hui',
     q1: 'Un service excellent du début à la fin. Une communication claire et rapide, et un résultat au-delà de nos attentes.', r1: 'Pasteur principal',
     q2: 'Travailler avec cette équipe a été un vrai plaisir. Professionnelle, réactive et ponctuelle, avec une qualité exceptionnelle.', r2: 'Administratrice d’église',
   },

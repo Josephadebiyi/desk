@@ -24,7 +24,7 @@ export default {
     chat2: 'Sunday offering: <b>{amount}</b> received. Receipts sent to 96 givers ✓',
   },
   metaTitle: 'ZionDesk — Church management made simple',
-  trust: 'More than 500 churches run their ministry on ZionDesk',
+  trust: 'Churches growing with ZionDesk',
   timeline: {
     h2a: 'Church software that', h2b: 'grows with you',
     sub: 'ZionDesk connects your people, your giving and your gatherings — every Sunday makes the next one easier.',
@@ -36,7 +36,7 @@ export default {
     offering: 'Sunday offering', receipts: '96 receipts sent', vsLast: '+12% vs last month',
     meetWhen: 'Google Meet · Wed 7:00 PM', study: 'Midweek Bible Study', invited: '+43 invited', invites: 'Invites sent',
   },
-  stats: { h2: 'Faithful churches. Real results.', churches: 'Churches on ZionDesk', rating: 'Average rating from church teams', trial: 'Day free trial, Essentials included', perMonth: 'Per month to get started' },
+  stats: { h2: 'Made for every church, from day one.', churches: 'Languages — every member reached in their own', rating: 'Flyer delivery by our design team (Ministry Max)', trial: 'Day free trial, Essentials included', perMonth: 'Per month to get started' },
   bento: {
     h2a: 'Everything your church needs,', pill: 'all in one',
     sub: 'Replace the spreadsheets, group chats and five separate apps. One login for your whole ministry team.',
@@ -86,7 +86,7 @@ export default {
     note: 'Example link shown — every church gets its own giving page and QR codes.',
   },
   quotes: {
-    h2: 'Loved by pastors and church teams', stat: 'churches ministering with ZionDesk', join: 'Join them today',
+    h2: 'Loved by pastors and church teams', stat: 'languages, so every member hears from you in theirs', join: 'Join them today',
     q1: 'Excellent service from start to finish. Communication was clear and timely, and the final result exceeded all our expectations.', r1: 'Senior Pastor',
     q2: 'Working with this team has been an absolute pleasure. Professional, responsive, and delivered on time with exceptional quality.', r2: 'Church Administrator',
   },

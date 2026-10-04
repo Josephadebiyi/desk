@@ -25,7 +25,7 @@ const site: Dict['site'] = {
     chat2: 'Ofrenda del domingo: <b>{amount}</b> recibidos. Recibos enviados a 96 donantes ✓',
   },
   metaTitle: 'ZionDesk — La gestión de tu iglesia, simplificada',
-  trust: 'Más de 500 iglesias gestionan su ministerio con ZionDesk',
+  trust: 'Iglesias que crecen con ZionDesk',
   timeline: {
     h2a: 'Software para iglesias que', h2b: 'crece contigo',
     sub: 'ZionDesk conecta a tu gente, tus ofrendas y tus reuniones: cada domingo facilita el siguiente.',
@@ -37,7 +37,7 @@ const site: Dict['site'] = {
     offering: 'Ofrenda del domingo', receipts: '96 recibos enviados', vsLast: '+12 % frente al mes pasado',
     meetWhen: 'Google Meet · mié 19:00', study: 'Estudio bíblico de mitad de semana', invited: '+43 invitados', invites: 'Invitaciones enviadas',
   },
-  stats: { h2: 'Iglesias fieles. Resultados reales.', churches: 'Iglesias en ZionDesk', rating: 'Valoración media de los equipos', trial: 'Días de prueba gratis con Essentials', perMonth: 'Al mes para empezar' },
+  stats: { h2: 'Hecho para cada iglesia desde el primer día.', churches: 'Idiomas: cada miembro recibe todo en el suyo', rating: 'Entrega de folletos por nuestro equipo de diseño (Ministry Max)', trial: 'Días de prueba gratis con Essentials', perMonth: 'Al mes para empezar' },
   bento: {
     h2a: 'Todo lo que tu iglesia necesita,', pill: 'en un solo lugar',
     sub: 'Sustituye las hojas de cálculo, los grupos de chat y cinco aplicaciones distintas. Un solo acceso para todo tu equipo.',
@@ -87,7 +87,7 @@ const site: Dict['site'] = {
     note: 'Enlace de ejemplo: cada iglesia tiene su propia página de ofrendas y sus códigos QR.',
   },
   quotes: {
-    h2: 'Apreciado por pastores y equipos de iglesia', stat: 'iglesias sirviendo con ZionDesk', join: 'Únete a ellas hoy',
+    h2: 'Apreciado por pastores y equipos de iglesia', stat: 'idiomas, para que cada miembro te lea en el suyo', join: 'Únete a ellas hoy',
     q1: 'Un servicio excelente de principio a fin. La comunicación fue clara y puntual, y el resultado superó todas nuestras expectativas.', r1: 'Pastor principal',
     q2: 'Trabajar con este equipo ha sido un placer. Profesionales, atentos y puntuales, con una calidad excepcional.', r2: 'Administradora de la iglesia',
   },

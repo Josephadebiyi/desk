@@ -27,7 +27,17 @@ app.disable('x-powered-by')
 app.use('/api/auth', authHookRoutes)
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, ...configured }))
+// Which settings are present (names only — never values), plus the deployed commit.
+const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'ANTHROPIC_API_KEY', 'CRON_SECRET']
+app.get('/api/health', (_req, res) =>
+  res.json({
+    ok: true,
+    ...configured,
+    commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7),
+    env: Object.fromEntries(ENV_NAMES.map((k) => [k, Boolean(process.env[k]?.trim())])),
+    unknownKeys: Object.keys(process.env).filter((k) => /SUPABASE|FLW|FLUTTER|ANTHROPIC|RESEND/i.test(k) && !ENV_NAMES.includes(k)),
+  }),
+)
 
 /* AI — signed-in users only; usage is recorded server-side. */
 app.get('/api/ai', (req, res) => aiHandler(req, res))
