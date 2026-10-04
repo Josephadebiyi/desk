@@ -34,6 +34,8 @@ app.post(
   '/api/ai',
   ...(admin ? [requireCaller()] : []), // without a database (local preview) the proxy stays open for testing
   route(async (req, res) => {
+    // Never run an open AI proxy in production — it would let anyone spend the provider key.
+    if (!admin && (process.env.RENDER || process.env.NODE_ENV === 'production')) throw new HttpError(503, 'AI is unavailable until sign-in is configured.')
     let captured: unknown
     const proxy = {
       status(code: number) {
@@ -56,9 +58,15 @@ app.post(
 )
 
 /* Marketing-site trial form: store the lead, send the welcome email in the visitor's language. */
+const trialHits = new Map<string, number[]>()
 app.post(
   '/api/start-trial',
   route(async (req, res) => {
+    // Per-IP limit so the form can't be used to spam inboxes from our sending domain.
+    const now = Date.now()
+    const recent = (trialHits.get(req.ip ?? '') ?? []).filter((t) => now - t < 10 * 60_000)
+    if (recent.length >= 5) throw new HttpError(429, 'Too many requests — please try again later.')
+    trialHits.set(req.ip ?? '', [...recent, now])
     if (admin && typeof req.body?.email === 'string') {
       await admin.from('trial_leads').insert({ email: req.body.email.trim().toLowerCase().slice(0, 200), language: asEmailLang(req.body.lang) })
     }
