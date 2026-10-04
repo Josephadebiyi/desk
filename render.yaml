@@ -11,14 +11,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: SITE_URL # e.g. https://app.ziondesk.com (no trailing slash)
+      - key: SITE_URL
         sync: false
-      # Browser (baked into the build)
       - key: VITE_SUPABASE_URL
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
         sync: false
-      # Server only
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -27,41 +25,19 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
-      - key: EMAIL_FROM # "ZionDesk <hello@yourdomain.com>" — domain verified in Resend
-        sync: false
-      - key: EMAIL_REPLY_TO
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: ANTHROPIC_MODEL
-        value: claude-opus-5-5
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: GEMINI_MODEL
-        value: gemini-3.8-flash
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_MODEL
+      - key: EMAIL_FROM
         sync: false
       - key: FLW_SECRET_KEY
         sync: false
       - key: FLW_WEBHOOK_HASH
         sync: false
-      - key: FLW_PLATFORM_FEE # share ZionDesk keeps from gifts, e.g. 0.02; 0 = none
-        value: "0"
       - key: FLW_PLAN_ESSENTIALS
         sync: false
       - key: FLW_PLAN_PLUS
         sync: false
       - key: FLW_PLAN_MAX
         sync: false
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_SMS_FROM
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: CRON_SECRET
         generateValue: true
