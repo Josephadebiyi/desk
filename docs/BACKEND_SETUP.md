@@ -68,7 +68,7 @@ How it works:
 
 1. aistudio.google.com → **Get API key** → create a key in a Google Cloud project → `GEMINI_API_KEY`.
 2. In that project, **enable billing**. On the free tier Google may use prompts to improve its products — Ellen's prompts contain member details.
-3. `GEMINI_MODEL` = `gemini-3.8-flash` (already set in `render.yaml`).
+3. Add `GEMINI_API_KEY` in Render → Environment. The model defaults to `gemini-3.8-flash` (override with `GEMINI_MODEL` if needed).
 4. Deploy, then in ZionDesk **Settings → AI** tick **Gemini** (it is off by default). Ellen uses Claude first when both are on; pick Gemini in Ellen's model menu to use it directly.
 
 ## 6. Keys checklist
@@ -86,7 +86,7 @@ How it works:
 | `FLW_PLAN_*` | `npm run flw:plans` | ✅ for plan billing |
 | `FLW_PLATFORM_FEE` | your choice | optional |
 | `GEMINI_API_KEY` | aistudio.google.com → API keys (turn on billing — free-tier prompts are used by Google to improve its products) | optional |
-| `GEMINI_MODEL` | `gemini-3.8-flash` (preset in `render.yaml`) | with Gemini |
+| `GEMINI_MODEL` | defaults to `gemini-3.8-flash` | optional override |
 | `OPENAI_*` | OpenAI | optional |
 | `TWILIO_*` | twilio.com | optional (SMS/WhatsApp) |
 | Google OAuth Client ID/Secret | Google Cloud Console → entered in **Supabase**, not Render | for "Continue with Google" |

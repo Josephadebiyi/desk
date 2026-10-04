@@ -12,7 +12,7 @@
  * Environment variables (configure only the providers you use):
  *   ANTHROPIC_API_KEY            Claude (official SDK)
  *   ANTHROPIC_MODEL              default claude-opus-5-5
- *   GEMINI_API_KEY, GEMINI_MODEL Gemini (REST generateContent) — set GEMINI_MODEL explicitly
+ *   GEMINI_API_KEY, GEMINI_MODEL Gemini (REST generateContent) — GEMINI_MODEL defaults to gemini-3.8-flash
  *   OPENAI_API_KEY, OPENAI_MODEL OpenAI (REST chat completions) — set OPENAI_MODEL explicitly
  */
 import Anthropic from '@anthropic-ai/sdk'
@@ -121,8 +121,8 @@ async function callClaude(r: AiRequest): Promise<AiResponse> {
 
 async function callGemini(r: AiRequest): Promise<AiResponse> {
   const key = process.env.GEMINI_API_KEY
-  const model = process.env.GEMINI_MODEL
-  if (!key || !model) throw new Error('Gemini is not configured (GEMINI_API_KEY / GEMINI_MODEL).')
+  const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash'
+  if (!key) throw new Error('Gemini is not configured (GEMINI_API_KEY).')
   const body = {
     systemInstruction: { parts: [{ text: r.system }] },
     contents: r.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [...imgs(m).map((i) => ({ inlineData: { mimeType: i.mediaType, data: i.data } })), { text: m.content }] })),
@@ -195,7 +195,7 @@ function usageOf(provider: string, model: string, inputTokens: number, outputTok
 function configured() {
   return {
     claude: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
-    gemini: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_MODEL),
+    gemini: Boolean(process.env.GEMINI_API_KEY),
     openai: Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL),
   }
 }
