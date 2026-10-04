@@ -38,7 +38,7 @@ async function createTrialAccount(email: string) {
 
 async function sendEmail(to: string, subject: string, html: string) {
   const key = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM
+  const from = process.env.EMAIL_FROM || 'ZionDesk <hello@ziondesk.com>'
   if (!key || !from) throw new Error('Email provider is not configured (RESEND_API_KEY / EMAIL_FROM).')
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -55,7 +55,7 @@ export default async function handler(req: Req, res: Res) {
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' })
 
   const lang = asEmailLang(body?.lang)
-  const site = process.env.SITE_URL ?? 'https://ziondesk.com'
+  const site = (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173').replace(/\/$/, '')
   const app = process.env.APP_URL ?? site
   try {
     const trial = await createTrialAccount(email)

@@ -9,15 +9,9 @@ services:
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
-      - key: NODE_VERSION
-        value: "22"
-      - key: SITE_URL
-        sync: false
       - key: VITE_SUPABASE_URL
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
@@ -25,21 +19,13 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
-      - key: EMAIL_FROM
-        sync: false
       - key: FLW_SECRET_KEY
         sync: false
       - key: FLW_WEBHOOK_HASH
         sync: false
-      - key: FLW_PLAN_ESSENTIALS
-        sync: false
-      - key: FLW_PLAN_PLUS
-        sync: false
-      - key: FLW_PLAN_MAX
-        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: CRON_SECRET
+      - key: CRON_SECRET # created automatically
         generateValue: true
 
   - type: cron
@@ -47,10 +33,10 @@ services:
     runtime: node
     schedule: "5 * * * *"
     buildCommand: "true"
-    startCommand: node -e "fetch(process.env.SITE_URL+'/api/cron/hourly',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(r=>r.text()).then(console.log)"
+    startCommand: node -e "fetch('http://'+process.env.APP_HOSTPORT+'/api/cron/hourly',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(r=>r.text()).then(console.log)"
     envVars:
-      - key: SITE_URL
-        sync: false
+      - key: APP_HOSTPORT # private network address of the web service
+        fromService: { type: web, name: ziondesk, property: hostport }
       - key: CRON_SECRET
         fromService: { type: web, name: ziondesk, envVarKey: CRON_SECRET }
 
@@ -59,9 +45,9 @@ services:
     runtime: node
     schedule: "0 7 * * *"
     buildCommand: "true"
-    startCommand: node -e "fetch(process.env.SITE_URL+'/api/cron/daily',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(r=>r.text()).then(console.log)"
+    startCommand: node -e "fetch('http://'+process.env.APP_HOSTPORT+'/api/cron/daily',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(r=>r.text()).then(console.log)"
     envVars:
-      - key: SITE_URL
-        sync: false
+      - key: APP_HOSTPORT # private network address of the web service
+        fromService: { type: web, name: ziondesk, property: hostport }
       - key: CRON_SECRET
         fromService: { type: web, name: ziondesk, envVarKey: CRON_SECRET }

@@ -14,7 +14,7 @@ import { Router, type Request } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
-import { createCheckout, createSubaccount, listBanks, resolveAccount, verifyByReference, verifyTransaction } from '../flutterwave'
+import { createCheckout, createSubaccount, ensurePaymentPlan, listBanks, resolveAccount, verifyByReference, verifyTransaction } from '../flutterwave'
 import { compose, sendEmail } from '../mail'
 
 export const paymentRoutes = Router()
@@ -202,8 +202,7 @@ paymentRoutes.post(
   route(async (req, res) => {
     const plan = str(req.body?.plan) as keyof typeof PLAN_PRICE
     if (!PLAN_PRICE[plan]) throw new HttpError(400, 'Unknown plan')
-    const planId = env.flwPlans[plan]
-    if (!planId) throw new HttpError(503, `Billing for ${PLAN_NAME[plan]} is not set up (FLW_PLAN_${plan.toUpperCase()}).`)
+    const planId = env.flwPlans[plan] || (await ensurePaymentPlan(`ZionDesk ${PLAN_NAME[plan]}`, PLAN_PRICE[plan], 'USD'))
     const { data: church } = await db().from('churches').select('id, name, logo_url').eq('id', req.caller!.churchId).single()
     const { data: prof } = await db().from('profiles').select('full_name, comm_language').eq('id', req.caller!.userId).maybeSingle()
     const txRef = `zd-sub-${randomUUID()}`

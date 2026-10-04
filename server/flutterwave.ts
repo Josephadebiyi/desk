@@ -89,3 +89,18 @@ export async function createSubaccount(i: { bankCode: string; accountNumber: str
 
 export const createPaymentPlan = (name: string, amount: number, currency: string) =>
   flw<{ id: number }>('/payment-plans', { body: { name, amount, currency, interval: 'monthly' } })
+
+/** Finds the monthly plan by name (creating it the first time), so no plan IDs need configuring. */
+const planCache = new Map<string, string>()
+export async function ensurePaymentPlan(name: string, amount: number, currency: string): Promise<string> {
+  const key = `${name}|${amount}|${currency}`
+  const cached = planCache.get(key)
+  if (cached) return cached
+  const list = await flw<{ id: number; name: string; amount: number; currency: string; interval: string; status: string }[]>(
+    `/payment-plans?interval=monthly&currency=${currency}&status=active`,
+  ).catch(() => [])
+  const found = list.find((p) => p.name === name && Number(p.amount) === amount)
+  const id = String(found?.id ?? (await createPaymentPlan(name, amount, currency)).id)
+  planCache.set(key, id)
+  return id
+}

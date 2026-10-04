@@ -13,7 +13,8 @@ const v = (k: string) => process.env[k]?.trim() || ''
 
 export const env = {
   port: Number(v('PORT') || 8787),
-  siteUrl: (v('SITE_URL') || 'http://localhost:5173').replace(/\/$/, ''),
+  // Render sets RENDER_EXTERNAL_URL automatically; SITE_URL only needed for a custom domain.
+  siteUrl: (v('SITE_URL') || v('RENDER_EXTERNAL_URL') || 'http://localhost:5173').replace(/\/$/, ''),
 
   // Supabase (Project Settings → API)
   supabaseUrl: v('SUPABASE_URL') || v('VITE_SUPABASE_URL'),
@@ -23,7 +24,7 @@ export const env = {
 
   // Resend (resend.com → API Keys); EMAIL_FROM must use a domain verified in Resend
   resendKey: v('RESEND_API_KEY'),
-  emailFrom: v('EMAIL_FROM') || 'ZionDesk <onboarding@resend.dev>',
+  emailFrom: v('EMAIL_FROM') || 'ZionDesk <hello@ziondesk.com>',
   emailReplyTo: v('EMAIL_REPLY_TO'),
 
   // Optional SMS / WhatsApp (Twilio). Leave empty to keep those channels in "queued" state.
