@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useSession } from '../lib/session'
+import { useGoogleEnabled } from '../lib/providers'
 import { ThemeToggle } from '../theme'
 import { LangMenu } from '../i18n/Flags'
 import {
@@ -313,6 +314,7 @@ export function Login() {
   const { t } = useT()
   const navigate = useNavigate()
   const session = useSession()
+  const google = useGoogleEnabled()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -371,8 +373,8 @@ export function Login() {
         <p className="auth-switch">
           {t('auth.noAccount')} <Link to="/register">{t('auth.signUp')}</Link>
         </p>
-        <Or />
-        <GoogleButton label={t('auth.continueGoogle')} returnTo="/dashboard" onProfile={() => setNotice(notConnected(new NotConnectedError()))} onError={setNotice} />
+        {google && <Or />}
+        {google && <GoogleButton label={t('auth.continueGoogle')} returnTo="/dashboard" onProfile={() => setNotice(notConnected(new NotConnectedError()))} onError={setNotice} />}
       </form>
     </AuthLayout>
   )
@@ -477,6 +479,7 @@ export function Register() {
   const [notice, setNotice] = useState<string | null>(null)
   const [done, setDone] = useState<false | 'ready' | 'confirm-email'>(false)
   const session = useSession()
+  const googleOn = useGoogleEnabled()
 
   // Back from Google (or already signed in without a church): continue with the church details.
   useEffect(() => {
@@ -588,17 +591,21 @@ export function Register() {
               <h2 className="auth-title">{t('auth.reg.join')}</h2>
               <form className="auth-form" onSubmit={submitAccount} noValidate>
                 <Notice message={notice} onClose={() => setNotice(null)} />
-                <GoogleButton
-                  label={t('auth.signUpGoogle')}
-                  returnTo="/register?step=church"
-                  onProfile={(p) => {
-                    setGoogle(p)
-                    setAcct((a) => ({ ...a, fullName: p.name, email: p.email }))
-                    go(1)
-                  }}
-                  onError={setNotice}
-                />
-                <Or />
+                {googleOn && (
+                  <>
+                    <GoogleButton
+                      label={t('auth.signUpGoogle')}
+                      returnTo="/register?step=church"
+                      onProfile={(p) => {
+                        setGoogle(p)
+                        setAcct((a) => ({ ...a, fullName: p.name, email: p.email }))
+                        go(1)
+                      }}
+                      onError={setNotice}
+                    />
+                    <Or />
+                  </>
+                )}
                 <Field
                   label={t('members.fullName')}
                   name="fullName"

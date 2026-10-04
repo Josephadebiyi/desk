@@ -10,6 +10,7 @@ import { HttpError } from './db'
 
 export interface Outgoing {
   to: string
+  replyTo?: string
   subject: string
   html: string
   text: string
@@ -38,7 +39,7 @@ const payload = (m: Outgoing) => ({
   subject: m.subject,
   html: m.html,
   text: m.text,
-  ...(env.emailReplyTo ? { reply_to: env.emailReplyTo } : {}),
+  ...(m.replyTo ? { reply_to: m.replyTo } : env.emailReplyTo ? { reply_to: env.emailReplyTo } : {}),
 })
 
 export async function sendEmail(m: Outgoing): Promise<string | undefined> {

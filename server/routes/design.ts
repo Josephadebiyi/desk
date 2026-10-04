@@ -10,6 +10,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { Router } from 'express'
 import { FLYER_SIZE, flyerLimit, type FlyerFormat } from '../../src/lib/plans'
 import { admin, db, HttpError, requireCaller, route } from '../db'
+import { configured, env } from '../env'
+import { sendEmail } from '../mail'
 
 export const designRoutes = Router()
 
@@ -120,5 +122,34 @@ designRoutes.post(
       limit = u.limit
     }
     res.json({ svg, width: w, height: h, used, limit })
+  }),
+)
+
+/* ───────── Ministry Max: tell the design team about requests and messages ───────── */
+
+const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+
+designRoutes.post(
+  '/design/requests/:id/notify',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    const { data: r } = await db().from('design_requests').select('*').eq('id', req.params.id).maybeSingle()
+    if (!r || r.church_id !== req.caller!.churchId) throw new HttpError(404, 'Request not found')
+    const { data: church } = await db().from('churches').select('name, email, phone, plan').eq('id', r.church_id).single()
+    if (church?.plan !== 'max') throw new HttpError(403, 'Design-team requests are part of Ministry Max.')
+    if (!configured.email) return res.json({ ok: false })
+    const message = typeof req.body?.message === 'string' ? req.body.message.slice(0, 4000) : ''
+    const brief = Object.entries((r.brief ?? {}) as Record<string, string>)
+      .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#666">${esc(k)}</td><td>${esc(v)}</td></tr>`)
+      .join('')
+    const subject = message ? `New message on "${r.title}" — ${church?.name}` : `New flyer request: "${r.title}" — ${church?.name} (due ${new Date(r.due_at).toUTCString()})`
+    const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#111">
+<h2 style="margin:0 0 8px">${esc(subject)}</h2>
+<p><b>Church:</b> ${esc(church?.name)} · ${esc(church?.email)} · ${esc(church?.phone)}<br/><b>Requested by:</b> ${esc(req.caller!.name)} &lt;${esc(req.caller!.email)}&gt;</p>
+${message ? `<p style="padding:12px;background:#f4f4f4;border-radius:8px">${esc(message).replace(/\n/g, '<br/>')}</p>` : `<table>${brief}<tr><td style="padding:4px 12px 4px 0;color:#666">Formats</td><td>${esc((r.formats ?? []).join(', '))}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#666">Inspiration</td><td>${(r.inspiration ?? []).length} image(s) attached in ZionDesk</td></tr></table>`}
+<p style="color:#666">Reply to this email to answer the church directly. Request ID: ${esc(r.id)}</p></div>`
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+    await sendEmail({ to: env.designTeamEmail, subject, html, text, replyTo: req.caller!.email })
+    res.json({ ok: true })
   }),
 )

@@ -87,6 +87,7 @@ export default {
     email: 'Newsletters, receipts and trial emails.',
     payments: 'Accept cards and transfers on your giving page.',
     needs: { meet: 'Requires: Google OAuth', sms: 'Requires: SMS provider', whatsapp: 'Requires: WhatsApp Business API', email: 'Requires: email provider (Resend)', payments: 'Requires: Flutterwave keys' },
+    connected: 'Connected',
     notConnected: 'Not connected',
     note: 'These connect during backend setup — the features already work in the dashboard and start delivering once connected.',
   },

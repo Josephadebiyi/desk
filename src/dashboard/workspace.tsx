@@ -450,13 +450,18 @@ export function WorkspaceProvider({ children, demo = false }: { children: ReactN
         if (live) {
           db.addRequest(churchId, created)
           db.postRequestMessage(churchId, created.id, uid(), '__received__')
+          // Let the ZionDesk design team know (by email). Small delay so the row exists first.
+          setTimeout(() => callApi(`/design/requests/${created.id}/notify`, {}).catch((e) => console.error('[design notify]', e)), 1500)
         }
         return created
       },
       postRequestMessage: (id, text) => {
         const mid = uid()
         setRequests((all) => all.map((r) => (r.id === id ? { ...r, messages: [...r.messages, { id: mid, from: 'you', text, at: now() }] } : r)))
-        if (live) db.postRequestMessage(churchId, id, mid, text)
+        if (live) {
+          db.postRequestMessage(churchId, id, mid, text)
+          callApi(`/design/requests/${id}/notify`, { message: text }).catch((e) => console.error('[design notify]', e))
+        }
       },
       team,
       inviteTeam: (t) => {

@@ -1,5 +1,5 @@
 import { Check, CreditCard, Database, Languages, Mail, MessageCircle, MessageSquareText, Plus, RotateCcw, Trash2, X } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
@@ -461,6 +461,16 @@ function ChurchAiSettings() {
 
 function Integrations() {
   const { t } = useT()
+  const { live } = useWorkspace()
+  // Live: real status from the server (which services have their keys set).
+  const [status, setStatus] = useState<Record<string, boolean> | null>(null)
+  useEffect(() => {
+    if (!live) return
+    fetch('/api/health')
+      .then((r) => r.json())
+      .then((h) => setStatus({ meet: false, sms: !!h.sms, whatsapp: !!h.whatsapp, email: !!h.email, payments: !!h.flutterwave }))
+      .catch(() => {})
+  }, [live])
   const items = [
     { icon: <GoogleMeetLogo size={26} />, id: 'meet', name: 'Google Meet' },
     { icon: <MessageSquareText size={22} />, id: 'sms', name: 'SMS' },
@@ -477,12 +487,16 @@ function Integrations() {
             <b>{i.name}</b>
             <p>{t(`settings.int.${i.id}`)}</p>
           </div>
-          <span className="d-pill" title={t(`settings.int.needs.${i.id}`)}>
-            {t('settings.int.notConnected')}
-          </span>
+          {status?.[i.id] ? (
+            <span className="d-pill d-pill-lime">{t('settings.int.connected')}</span>
+          ) : (
+            <span className="d-pill" title={t(`settings.int.needs.${i.id}`)}>
+              {t('settings.int.notConnected')}
+            </span>
+          )}
         </section>
       ))}
-      <p className="d-hint-box">{t('settings.int.note')}</p>
+      {!live && <p className="d-hint-box">{t('settings.int.note')}</p>}
     </div>
   )
 }
@@ -526,6 +540,7 @@ export default function Settings() {
   const { role } = useMembers()
   const [params, setParams] = useSearchParams()
   const { t } = useT()
+  const { live } = useWorkspace()
   const admin = role === 'admin'
   // Language & Communication is personal, so every role can open it; the rest is admin-only.
   const requested = (params.get('tab') as Tab) || (admin ? 'profile' : 'language')
@@ -540,7 +555,7 @@ export default function Settings() {
           { id: 'plan', label: t('settings.tabs.plan') },
           { id: 'ai', label: t('settings.tabs.ai') },
           { id: 'integrations', label: t('settings.tabs.integrations') },
-          { id: 'data', label: t('settings.tabs.data') },
+          ...(live ? [] : [{ id: 'data' as Tab, label: t('settings.tabs.data') }]),
         ] as { id: Tab; label: string }[])
       : []),
   ]
@@ -558,7 +573,7 @@ export default function Settings() {
       {tab === 'plan' && <Plan />}
       {tab === 'ai' && <ChurchAiSettings />}
       {tab === 'integrations' && <Integrations />}
-      {tab === 'data' && <Data />}
+      {tab === 'data' && !live && <Data />}
     </div>
   )
 }

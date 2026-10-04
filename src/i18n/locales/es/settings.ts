@@ -88,6 +88,7 @@ const settings: Dict['settings'] = {
     email: 'Boletines, recibos y correos de prueba.',
     payments: 'Acepta tarjetas y transferencias en tu página de ofrendas.',
     needs: { meet: 'Requiere: Google OAuth', sms: 'Requiere: proveedor de SMS', whatsapp: 'Requiere: API de WhatsApp Business', email: 'Requiere: proveedor de correo (Resend)', payments: 'Requiere: claves de Flutterwave' },
+    connected: 'Conectado',
     notConnected: 'No conectado',
     note: 'Se conectan durante la configuración del servidor: las funciones ya están en el panel y empiezan a enviar al conectarse.',
   },

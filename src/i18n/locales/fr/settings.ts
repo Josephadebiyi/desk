@@ -88,6 +88,7 @@ const settings: Dict['settings'] = {
     email: 'Newsletters, reçus et e-mails d’essai.',
     payments: 'Acceptez cartes et virements sur votre page de dons.',
     needs: { meet: 'Requiert : Google OAuth', sms: 'Requiert : fournisseur SMS', whatsapp: 'Requiert : API WhatsApp Business', email: 'Requiert : fournisseur e-mail (Resend)', payments: 'Requiert : clés Flutterwave' },
+    connected: 'Connecté',
     notConnected: 'Non connecté',
     note: 'Ces services se connectent lors de la mise en place du serveur ; les fonctions marchent déjà et commenceront à envoyer une fois connectées.',
   },

@@ -26,6 +26,8 @@ export const env = {
   resendKey: v('RESEND_API_KEY'),
   emailFrom: v('EMAIL_FROM') || 'ZionDesk <hello@ziondesk.com>',
   emailReplyTo: v('EMAIL_REPLY_TO'),
+  // Where Ministry Max flyer requests go (your design team inbox).
+  designTeamEmail: v('DESIGN_TEAM_EMAIL') || 'hello@ziondesk.com',
 
   // Optional SMS / WhatsApp (Twilio). Leave empty to keep those channels in "queued" state.
   twilioSid: v('TWILIO_ACCOUNT_SID'),

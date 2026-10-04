@@ -2,6 +2,7 @@ import { ArrowUpRight, Cake, CalendarDays, HandHeart, Plus, QrCode, Sparkles, Up
 import { GoogleMeetLogo } from '../components/GoogleMeet'
 import { fmtDate, fmtTime, money, tEnum, today } from './kit'
 import { useT } from '../i18n'
+import { useSession } from '../lib/session'
 import { useWorkspace } from './workspace'
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -16,6 +17,7 @@ export default function Overview() {
   const { members, role } = useMembers()
   const { events, anonGifts, settings } = useWorkspace()
   const { t, locale } = useT()
+  const session = useSession()
   const navigate = useNavigate()
   const upcoming = events.filter((e) => e.date >= today()).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)).slice(0, 4)
   const thisMonth = new Date().toISOString().slice(0, 7)
@@ -48,7 +50,7 @@ export default function Overview() {
         <h1>
           {t('ov.hello')}
           <br />
-          Pastor Mike
+          {session.remote ? (session.name || session.email).split(' ')[0] : 'Pastor Mike'}
         </h1>
         <div className="d-kpis">
           <div className="d-kpi">
