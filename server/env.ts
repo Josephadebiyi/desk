@@ -18,7 +18,7 @@ export const env = {
 
   // Supabase (Project Settings → API)
   supabaseUrl: v('SUPABASE_URL') || v('VITE_SUPABASE_URL'),
-  supabaseServiceKey: v('SUPABASE_SERVICE_ROLE_KEY'),
+  supabaseServiceKey: v('SUPABASE_SERVICE_ROLE_KEY') || v('SUPABASE_SECRET_KEY'), // either name works
   // Supabase → Authentication → Hooks → Send Email hook secret ("v1,whsec_…")
   authHookSecret: v('SUPABASE_AUTH_HOOK_SECRET'),
 
