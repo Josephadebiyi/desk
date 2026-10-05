@@ -37,7 +37,7 @@ app.use((_req, res, next) => {
 // CORS: the website may be hosted elsewhere (e.g. Hostinger) and call this API cross-origin.
 // Auth is a Bearer token (no cookies), so only listed origins are allowed to read responses.
 const allowedOrigins = new Set(
-  [env.siteUrl, env.adminUrl, ...env.corsOrigins, 'http://localhost:5173', 'http://localhost:5181']
+  [env.siteUrl, env.adminUrl, ...env.corsOrigins, 'https://ziondesk.com', 'http://localhost:5173', 'http://localhost:5181']
     .filter(Boolean)
     .flatMap((o) => {
       try {
