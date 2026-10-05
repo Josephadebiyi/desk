@@ -29,6 +29,7 @@ const app = express()
 app.set('trust proxy', 1) // Render sits behind a proxy; needed for per-IP rate limits
 app.disable('x-powered-by')
 app.use((_req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY')
   res.setHeader('X-Content-Type-Options', 'nosniff')
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
@@ -81,17 +82,7 @@ app.use('/api/whatsapp', whatsappRoutes) // raw body for signature checks
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
 
 // Which settings are present (names only — never values), plus the deployed commit.
-const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLUTTERWAVE_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'FLUTTERWAVE_WEBHOOK_SECRET_HASH', 'FLUTTERWAVE_BASE_URL', 'ANTHROPIC_API_KEY', 'CRON_SECRET', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_MESSAGING_SERVICE_SID', 'TWILIO_SMS_FROM', 'TWILIO_WHATSAPP_FROM', 'TWILIO_WHATSAPP_CONTENT_SID', 'WHATSAPP_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_APP_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ADMIN_EMAILS', 'ADMIN_URL', 'SITE_URL', 'API_URL', 'CORS_ORIGINS']
-app.get('/api/health', (_req, res) =>
-  res.json({
-    ok: true,
-    ...configured,
-    commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7),
-    staffAccounts: env.adminEmails.length, // how many valid staff emails ADMIN_EMAILS contains (never the emails)
-    env: Object.fromEntries(ENV_NAMES.map((k) => [k, Boolean(process.env[k]?.trim())])),
-    unknownKeys: Object.keys(process.env).filter((k) => /SUPABASE|FLW|FLUTTER|ANTHROPIC|RESEND|WHATSAPP|GEMINI|GOOGLE|ADMIN/i.test(k) && !ENV_NAMES.includes(k)),
-  }),
-)
+app.get('/api/health', (_req, res) => res.json({ ok: true, ...configured, commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) }))
 
 /* AI — signed-in users only; usage is recorded server-side. */
 app.get('/api/ai', (req, res) => aiHandler(req, res))

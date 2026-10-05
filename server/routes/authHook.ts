@@ -23,7 +23,7 @@ function verify(raw: string, headers: Record<string, string | string[] | undefin
   const id = String(headers['webhook-id'] ?? '')
   const ts = String(headers['webhook-timestamp'] ?? '')
   const sigs = String(headers['webhook-signature'] ?? '').split(' ')
-  if (!id || !ts || Math.abs(Date.now() / 1000 - Number(ts)) > 300) throw new HttpError(401, 'Invalid webhook timestamp')
+  if (!id || !ts || !Number.isFinite(Number(ts)) || Math.abs(Date.now() / 1000 - Number(ts)) > 300) throw new HttpError(401, 'Invalid webhook timestamp')
   const secret = Buffer.from(env.authHookSecret.replace(/^v1,/, '').replace(/^whsec_/, ''), 'base64')
   const expected = createHmac('sha256', secret).update(`${id}.${ts}.${raw}`).digest()
   const ok = sigs.some((s) => {

@@ -311,7 +311,10 @@ export const ws = {
     const { api } = await import('../lib/api')
     return api<{ link: string | null }>(`/events/${e.id}/meet`, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
       .then((r) => r.link)
-      .catch(() => null) // Google not connected: the organiser can paste a link instead
+      .catch((error: unknown) => {
+        window.dispatchEvent(new CustomEvent('ziondesk:meet-error', { detail: error instanceof Error ? error.message : 'Google Meet could not be created.' }))
+        return null
+      })
   },
   removeEvent: (churchId: string, id: string) => bg(sb().from('events').delete().eq('id', id).eq('church_id', churchId), 'delete event'),
   /** Saves the campaign, then asks the server to send it (each member in their own language). */

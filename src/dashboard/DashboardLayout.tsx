@@ -81,6 +81,16 @@ function useTrial() {
 }
 
 /** Platform announcement set by ZionDesk staff in /admin → Settings (dismissible per message). */
+function MeetErrorNotice() {
+  const [error, setError] = useState('')
+  useEffect(() => {
+    const onError = (event: Event) => setError(String((event as CustomEvent).detail))
+    window.addEventListener('ziondesk:meet-error', onError)
+    return () => window.removeEventListener('ziondesk:meet-error', onError)
+  }, [])
+  return error ? <div className="d-errors" role="alert">{error} <button type="button" onClick={() => setError('')}>×</button></div> : null
+}
+
 function AnnouncementBar() {
   const [a, setA] = useState<{ text: string; tone: string; link: string; at?: string } | null>(null)
   const [hidden, setHidden] = useState(false)
@@ -218,7 +228,7 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
   const [menu, setMenu] = useState(false)
   return (
     <div className={`dash ${preview ? 'is-preview' : ''}`}>
-      {!preview && <AnnouncementBar />}
+      {!preview && <><AnnouncementBar /><MeetErrorNotice /></>}
       {!preview && <TrialBanner />}
       {!preview && <LanguagePopup />}
       <header className="d-top">

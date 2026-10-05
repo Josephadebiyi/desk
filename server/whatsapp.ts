@@ -41,7 +41,7 @@ export async function sendWhatsApp(to: string, text: string, lang = 'en', opts: 
 
 /** X-Hub-Signature-256 check for webhooks (only when WHATSAPP_APP_SECRET is set). */
 export function validSignature(raw: Buffer, header: string | undefined) {
-  if (!env.waAppSecret) return true
+  if (!env.waAppSecret) return false
   if (!header?.startsWith('sha256=')) return false
   const want = Buffer.from(createHmac('sha256', env.waAppSecret).update(raw).digest('hex'))
   const got = Buffer.from(header.slice(7))

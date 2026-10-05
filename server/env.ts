@@ -64,7 +64,7 @@ export const env = {
   // people who haven't written to you in the last 24 hours (WhatsApp rule). e.g. church_update
   waTemplate: v('WHATSAPP_TEMPLATE'),
   waVerifyToken: v('WHATSAPP_VERIFY_TOKEN'), // any string; paste the same one in Meta → Webhooks
-  waAppSecret: v('WHATSAPP_APP_SECRET'), // optional: verifies webhook signatures
+  waAppSecret: v('WHATSAPP_APP_SECRET'), // required to accept Meta webhook signatures
 
   // Google Meet: OAuth client (Google Cloud → Credentials). Can be the same client used for Google sign-in.
   googleClientId: v('GOOGLE_CLIENT_ID'),
