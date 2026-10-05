@@ -3,7 +3,8 @@
  *
  * - A church picks its currency at sign-up (pre-selected from the visitor's region).
  * - Giving is charged in the church's currency when Flutterwave can collect it, else USD.
- * - Plans are billed in the church's currency at the fixed local prices below, else USD.
+ * - ZionDesk's prices are set in EUR (€8 · €19.99 · €39.99). Churches are billed in their own
+ *   currency at the fixed local prices below (≈ the euro price), else in EUR.
  *   Local prices are set by hand (not live exchange rates) so a church's monthly bill never
  *   moves with the exchange rate. Review them a few times a year.
  */
@@ -21,27 +22,37 @@ export const isFlwCurrency = (c: unknown): c is FlwCurrency => FLW_CURRENCIES.in
 /** The currency money is actually collected in. */
 export const chargeCurrency = (c: unknown): FlwCurrency => (isFlwCurrency(c) ? c : 'USD')
 
-/** Monthly plan prices per billing currency (rounded local prices). */
+/** The currency ZionDesk's prices are set in. */
+export const BASE_CURRENCY = 'EUR' as const
+
+/** Monthly plan prices per billing currency: EUR is the main price; the others are rounded local equivalents. */
 export const PLAN_PRICES: Partial<Record<FlwCurrency, Record<PlanId, number>>> = {
-  USD: { essentials: 8, plus: 19.99, max: 39.99 },
-  EUR: { essentials: 7.99, plus: 18.99, max: 36.99 },
-  GBP: { essentials: 6.99, plus: 15.99, max: 31.99 },
-  NGN: { essentials: 12000, plus: 29000, max: 59000 },
-  GHS: { essentials: 120, plus: 290, max: 590 },
-  KES: { essentials: 1000, plus: 2500, max: 5000 },
-  ZAR: { essentials: 149, plus: 359, max: 719 },
-  UGX: { essentials: 29000, plus: 72000, max: 145000 },
-  TZS: { essentials: 20000, plus: 50000, max: 100000 },
-  RWF: { essentials: 10000, plus: 26000, max: 52000 },
-  XOF: { essentials: 4900, plus: 11900, max: 23900 },
-  XAF: { essentials: 4900, plus: 11900, max: 23900 },
-  ZMW: { essentials: 199, plus: 499, max: 999 },
+  EUR: { essentials: 8, plus: 19.99, max: 39.99 },
+  USD: { essentials: 8.99, plus: 21.99, max: 43.99 },
+  GBP: { essentials: 6.99, plus: 16.99, max: 34.99 },
+  NGN: { essentials: 13000, plus: 33000, max: 66000 },
+  GHS: { essentials: 129, plus: 319, max: 639 },
+  KES: { essentials: 1150, plus: 2850, max: 5690 },
+  ZAR: { essentials: 159, plus: 399, max: 799 },
+  UGX: { essentials: 32000, plus: 80000, max: 160000 },
+  TZS: { essentials: 23000, plus: 58000, max: 116000 },
+  RWF: { essentials: 12500, plus: 31000, max: 62000 },
+  XOF: { essentials: 5200, plus: 13100, max: 26200 },
+  XAF: { essentials: 5200, plus: 13100, max: 26200 },
+  ZMW: { essentials: 229, plus: 579, max: 1159 },
 }
 
-/** Currency the church's plan is billed in. */
+/** Currency the church's plan is billed in (its own when we have a local price, else EUR). */
 export const billingCurrency = (churchCurrency: unknown): FlwCurrency => {
   const c = chargeCurrency(churchCurrency)
-  return PLAN_PRICES[c] ? c : 'USD'
+  return PLAN_PRICES[c] ? c : BASE_CURRENCY
+}
+
+/** The euro price and, when different, what the visitor/church pays in their own currency. */
+export const priceWithLocal = (plan: PlanId, currency: unknown) => {
+  const base = { currency: BASE_CURRENCY as string, amount: PLAN_PRICES.EUR![plan] }
+  const local = planPrice(plan, currency)
+  return { base, local: local.currency === BASE_CURRENCY ? null : local }
 }
 
 export const planPrice = (plan: PlanId, churchCurrency: unknown) => {

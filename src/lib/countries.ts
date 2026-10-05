@@ -260,7 +260,9 @@ export const countryByCode = (code: string, locale = 'en') => countries(locale).
 /** Finds a country from a name typed in the past (e.g. "Lagos, Nigeria"). */
 export function countryFromText(text: string, locale = 'en'): Country | undefined {
   const t = text.toLowerCase()
-  return countries(locale).find((c) => t.includes(c.name.toLowerCase())) ?? countries('en').find((c) => t.includes(c.name.toLowerCase()))
+  // Longest name first, so "Nigeria" isn't read as "Niger".
+  const pick = (list: Country[]) => [...list].sort((a, b) => b.name.length - a.name.length).find((c) => t.includes(c.name.toLowerCase()))
+  return pick(countries(locale)) ?? pick(countries('en'))
 }
 
 /** Splits "+234 803 123 4567" into the country and the local number. Longest dialling code wins; ties go to `prefer`. */

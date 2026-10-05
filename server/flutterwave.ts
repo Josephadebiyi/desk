@@ -119,3 +119,5 @@ export interface FlwSubscription {
 /** Subscriptions for a payer email (Flutterwave keys subscriptions by customer email). */
 export const listSubscriptions = (email: string) => flw<FlwSubscription[]>(`/subscriptions?email=${encodeURIComponent(email)}`).catch(() => [] as FlwSubscription[])
 export const cancelSubscription = (id: number) => flw(`/subscriptions/${id}/cancel`, { method: 'PUT', body: {} })
+/** Turns a cancelled subscription back on (auto-renew on again). */
+export const activateSubscription = (id: number) => flw(`/subscriptions/${id}/activate`, { method: 'PUT', body: {} })

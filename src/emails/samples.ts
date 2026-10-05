@@ -4,7 +4,7 @@ export const SAMPLE_VARS: Record<string, string | number> = {
   church: 'Grace Chapel',
   days: 7,
   plan: 'Ministry Plus',
-  amount: '$19.99',
+  amount: '€19.99',
   date: 'November 5, 2026',
   time: '9:00 AM',
   fund: 'Tithe',

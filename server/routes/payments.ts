@@ -14,7 +14,7 @@ import { Router, type Request } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
-import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan, listBanks, listSubscriptions, resolveAccount, verifyByReference, verifyTransaction, type VerifiedTx } from '../flutterwave'
+import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan, listBanks, listSubscriptions, resolveAccount, verifyByReference, verifyTransaction, type VerifiedTx, activateSubscription } from '../flutterwave'
 import { compose, sendEmail } from '../mail'
 import { billingCurrency, chargeCurrency, PLAN_PRICES, planPrice, type FlwCurrency } from '../../src/lib/currency'
 import type { PlanKey } from '../../src/lib/plans'
@@ -27,7 +27,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const str = (v: unknown, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 /** Monthly plan prices in USD (local prices: src/lib/currency.ts) — keep in sync with the pricing page. */
-export const PLAN_PRICE: Record<string, number> = PLAN_PRICES.USD!
+export const PLAN_PRICE: Record<string, number> = PLAN_PRICES.EUR!
 const PLAN_NAME: Record<string, string> = { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' }
 
 const hits = new Map<string, number[]>()
@@ -84,7 +84,6 @@ paymentRoutes.post(
 
 /** Flutterwave monthly payment plan for a plan in a currency (created on demand, e.g. "ZionDesk Essentials NGN"). */
 async function flwPlanId(plan: PlanKey, currency: FlwCurrency) {
-  if (currency === 'USD' && env.flwPlans[plan]) return env.flwPlans[plan]
   const amount = PLAN_PRICES[currency]![plan]
   return ensurePaymentPlan(`ZionDesk ${PLAN_NAME[plan]}${currency === 'USD' ? '' : ` ${currency}`}`, amount, currency)
 }
@@ -117,7 +116,9 @@ async function recordRenewal(tx: VerifiedTx) {
   const { data: promo } = await db().from('promo_redemptions').select('percent_off').eq('church_id', church.id).eq('status', 'active').not('percent_off', 'is', null).maybeSingle()
   const full = PLAN_PRICES[tx.currency as FlwCurrency]?.[plan]
   const price = full && promo?.percent_off ? discounted(full, promo.percent_off, tx.currency) : full
-  if (!price || Number(tx.amount) < price) throw new HttpError(400, 'Renewal amount mismatch')
+  // Subscriptions started on the older USD plans (FLW_PLAN_*) keep renewing at their original price.
+  const legacy = Object.values(env.flwPlans).filter(Boolean).includes(String(tx.plan ?? tx.payment_plan ?? ''))
+  if (!legacy && (!price || Number(tx.amount) < price)) throw new HttpError(400, 'Renewal amount mismatch')
   const { error } = await db().from('online_payments').insert({ church_id: church.id, kind: 'subscription', tx_ref: tx.tx_ref, flw_transaction_id: tx.id, amount: tx.amount, currency: tx.currency, plan, email, status: 'successful', completed_at: new Date().toISOString() })
   if (error) return { status: 'successful' } // already recorded (webhook retries)
   const base = church.plan_renews_at && new Date(church.plan_renews_at) > new Date() ? new Date(church.plan_renews_at) : new Date()
@@ -382,5 +383,28 @@ paymentRoutes.post(
     }
     await db().from('churches').update({ plan_status: 'cancelled' }).eq('id', church.id)
     res.json({ ok: true, accessUntil: church.plan_renews_at })
+  }),
+)
+
+/** Auto-renew back on: reactivates the church's cancelled subscription while the paid month is still running. */
+paymentRoutes.post(
+  '/billing/resume',
+  requireCaller(['admin']),
+  route(async (req, res) => {
+    const { data: church } = await db().from('churches').select('id, plan, currency, plan_status, plan_renews_at, flw_subscription_email').eq('id', req.caller!.churchId).single()
+    if (!church?.flw_subscription_email || church.plan_status !== 'cancelled') throw new HttpError(409, 'There is no subscription to turn back on.')
+    if (!church.plan_renews_at || new Date(church.plan_renews_at) < new Date()) throw new HttpError(409, 'Your plan has ended — choose a plan to subscribe again.')
+    const subs = await listSubscriptions(church.flw_subscription_email)
+    if (subs.some((s) => s.status === 'active')) {
+      await db().from('churches').update({ plan_status: 'active' }).eq('id', church.id)
+      return res.json({ ok: true })
+    }
+    // The subscription for the church's current plan (fall back to the most recent one).
+    const wanted = String(await flwPlanId(church.plan as PlanKey, billingCurrency(church.currency)).catch(() => ''))
+    const target = subs.filter((s) => s.status === 'cancelled').sort((a, b) => b.id - a.id).find((s) => String(s.plan) === wanted) ?? subs.filter((s) => s.status === 'cancelled').sort((a, b) => b.id - a.id)[0]
+    if (!target) throw new HttpError(409, 'We couldn’t find your subscription — choose a plan to subscribe again.')
+    await activateSubscription(target.id)
+    await db().from('churches').update({ plan_status: 'active' }).eq('id', church.id)
+    res.json({ ok: true })
   }),
 )

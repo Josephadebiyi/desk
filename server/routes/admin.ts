@@ -124,7 +124,7 @@ adminRoutes.get(
     // Monthly recurring revenue per currency (active paid plans at list price).
     const mrr: Record<string, number> = {}
     for (const c of list.filter((c) => c.plan_status === 'active')) {
-      const cur = (PLAN_PRICES[c.currency as FlwCurrency] ? c.currency : 'USD') as FlwCurrency
+      const cur = (PLAN_PRICES[c.currency as FlwCurrency] ? c.currency : 'EUR') as FlwCurrency
       mrr[cur] = (mrr[cur] ?? 0) + (PLAN_PRICES[cur]?.[c.plan as 'essentials'] ?? 0)
     }
     // Last 6 months: sign-ups and subscription revenue by currency.

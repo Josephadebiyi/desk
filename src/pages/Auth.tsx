@@ -38,7 +38,7 @@ import { countryByCode } from '../lib/countries'
 import { supabase } from '../lib/supabase'
 import './auth.css'
 import { tr, useT } from '../i18n'
-import { CHURCH_CURRENCIES, currencyForRegion, formatMoney, guessCurrency, guessRegion, planPrice } from '../lib/currency'
+import { CHURCH_CURRENCIES, currencyForRegion, formatMoney, guessCurrency, guessRegion, priceWithLocal } from '../lib/currency'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -812,8 +812,14 @@ export function Register() {
                       </span>
                       <span className="auth-plan-price">
                         {(() => {
-                          const lp = planPrice(p.id, org.currency)
-                          return formatMoney(lp.amount, lp.currency, locale)
+                          const { base, local } = priceWithLocal(p.id, org.currency)
+                          return local ? (
+                            <>
+                              {formatMoney(local.amount, local.currency, locale)} <i className="auth-eur">{formatMoney(base.amount, base.currency, locale)}</i>
+                            </>
+                          ) : (
+                            formatMoney(base.amount, base.currency, locale)
+                          )
                         })()}
                         <small>{t('auth.perMo')}</small>
                       </span>

@@ -36,7 +36,7 @@ import { Icon3D, IconCanvas, type IconName } from './components/Icons3D'
 import { Flyer, flyerName, flyerSample, FLYER_TEMPLATES, type FlyerId } from './components/Flyers'
 import { Reveal } from './components/ui'
 import { getLocale, useT } from './i18n'
-import { guessCurrency, planPrice } from './lib/currency'
+import { BASE_CURRENCY, formatMoney, guessCurrency, planPrice, priceWithLocal } from './lib/currency'
 import type { PlanKey } from './lib/plans'
 
 /** Escape user text before putting it into a translated HTML string. */
@@ -1235,10 +1235,14 @@ const PLANS = [
 
 function Pricing() {
   const { t, locale } = useT()
-  // Prices in the visitor's currency when we bill in it (e.g. ₦ in Nigeria), otherwise USD.
+  // Prices are in euros; visitors from other regions also see what they'd pay in their own currency.
   const [visitorCurrency] = useState(guessCurrency)
+  const localLine = (id: PlanKey) => {
+    const l = priceWithLocal(id, visitorCurrency).local
+    return l ? t('site.pricing.local', { amount: formatMoney(l.amount, l.currency, locale) }) : ''
+  }
   const priceParts = (id: PlanKey) => {
-    const { amount, currency } = planPrice(id, visitorCurrency)
+    const { amount, currency } = planPrice(id, BASE_CURRENCY)
     const parts = new Intl.NumberFormat(locale, { style: 'currency', currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: amount % 1 ? 2 : 0 }).formatToParts(amount)
     const pick = (types: string[]) => parts.filter((x) => types.includes(x.type)).map((x) => x.value).join('')
     return { symbol: pick(['currency']), whole: pick(['integer', 'group']), cents: amount % 1 ? pick(['decimal', 'fraction']) : '' }
@@ -1268,6 +1272,7 @@ function Pricing() {
                   {priceParts(p.id).cents && <em>{priceParts(p.id).cents}</em>}
                   <span>{t('site.pricing.perMonth')}</span>
                 </div>
+                {localLine(p.id) && <p className="plan-local">{localLine(p.id)}</p>}
                 <ul>
                   {t(`site.pricing.${p.id}.f`).split('|').map((f) => (
                     <li key={f}>

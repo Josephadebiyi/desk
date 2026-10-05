@@ -94,10 +94,10 @@ const site: Dict['site'] = {
     q3: "Dîmes, offrandes et dépenses saisies une seule fois, avec reçus et rapports prêts pour votre conseil.", r3: "Pour les équipes financières"
   },
   pricing: {
-    kicker: 'Tarifs', h2: 'Des tarifs simples pour chaque église', sub: 'Commencez par un essai gratuit de {days} jours. Changez de forfait à tout moment.', perMonth: '/mois', cta: 'Commencer l’essai gratuit',
-    essentials: { blurb: 'Gestion complète de l’église', badge: '', f: 'Membres illimités|7 flyers IA par mois|Gestion des membres et des équipes|E-mails et SMS en 5 langues|Suivi financier et rapports|Événements et réunions en ligne|Ellen, votre assistante IA|Support prioritaire' },
-    plus: { blurb: 'Tout, plus design et dons', badge: 'Le plus populaire', f: 'Tout Essentials|12 flyers IA par mois|Studio de design — flyers et affiches|Dons en ligne|ZionDesk Payments ou votre propre banque|QR codes pour inscriptions, dons et événements|Page de dons à vos couleurs' },
-    max: { blurb: 'Toutes les fonctions + notre équipe design', badge: 'Tout inclus', f: 'Tout Ministry Plus|Flyers IA illimités|Demandes de flyers à l’équipe design|Chat direct avec votre designer|Ellen recueille vos détails et votre inspiration|Flyers livrés sous 48 heures' },
+    kicker: 'Tarifs', h2: 'Des tarifs simples pour chaque église', sub: 'Commencez par un essai gratuit de {days} jours. Changez de forfait à tout moment.', perMonth: '/mois', local: '≈ {amount}/mois dans votre devise', cta: 'Commencer l’essai gratuit',
+    essentials: { blurb: 'Gestion complète de l’église', badge: '', f: 'Membres illimités|Pointage du dimanche par QR code|7 flyers IA par mois|Gestion des membres et des équipes|E-mails et SMS en 5 langues|Suivi financier et rapports|Événements et réunions en ligne|Ellen, votre assistante IA|Support prioritaire' },
+    plus: { blurb: 'Tout, plus design et dons', badge: 'Le plus populaire', f: 'Tout Essentials|12 flyers IA par mois|Studio de design — flyers et affiches|Dons en ligne|ZionDesk Payments ou votre propre banque|QR codes pour inscriptions, dons et événements|Page de dons à vos couleurs|Suivi automatique après des dimanches manqués' },
+    max: { blurb: 'Toutes les fonctions + notre équipe design', badge: 'Tout inclus', f: 'Tout Ministry Plus|Flyers IA illimités|8 demandes de flyer au graphiste par mois (10 € la suivante)|Chat direct avec votre designer|Ellen recueille vos détails et votre inspiration|Flyers livrés sous 48 heures' },
   },
   faq: {
     h2: 'Des questions ? Nous avons les réponses.', sub: 'Vous ne trouvez pas ? Notre équipe est là pour vous aider.',

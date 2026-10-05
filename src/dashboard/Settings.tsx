@@ -14,7 +14,7 @@ import { useAi } from '../ai/store'
 import { PROVIDERS } from '../ai/providers'
 import { USAGE_LABEL, type ProviderPref, type UsageFeature } from '../ai/types'
 import { LANGS, useT } from '../i18n'
-import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, planPrice } from '../lib/currency'
+import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, PLAN_PRICES, planPrice, priceWithLocal } from '../lib/currency'
 import { Flag, LangCards } from '../i18n/Flags'
 import { getSignupCode } from '../lib/signupCode'
 
@@ -516,6 +516,18 @@ function Plan() {
       setBusy('')
     }
   }
+  const resume = async () => {
+    setError('')
+    setBusy('cancel')
+    try {
+      await api('/billing/resume', {})
+      updateSettings({ planStatus: 'active' })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy('')
+    }
+  }
   // Promo codes: checked against every plan so each card can show its own discount.
   const [code, setCode] = useState(getSignupCode)
   const [promo, setPromo] = useState<{ code: string; offers: Partial<Record<PlanId, PromoOffer>> } | null>(null)
@@ -612,6 +624,7 @@ function Plan() {
                   formatMoney(planPrice(p.id, settings.currency).amount, planPrice(p.id, settings.currency).currency, locale)
                 )}
                 <small>{t('common.perMonth')}</small>
+                {priceWithLocal(p.id, settings.currency).local && <small className="st-eur">{formatMoney(PLAN_PRICES.EUR![p.id], 'EUR', locale)}</small>}
               </b>
               {promo?.offers[p.id] && <p className="st-offer">{offerLine(promo.offers[p.id]!)}</p>}
               <ul>
@@ -630,15 +643,19 @@ function Plan() {
       </div>
       <p className="d-hint-box">{live ? t('settings.plan.noteLive') : t('settings.plan.note')}</p>
       <p className="d-notes">
-        {billingCurrency(settings.currency) === settings.currency ? t('settings.plan.billedIn', { currency: settings.currency }) : t('settings.plan.usdFallback', { currency: settings.currency })}
+        {billingCurrency(settings.currency) === settings.currency ? t('settings.plan.billedIn', { currency: settings.currency }) : t('settings.plan.eurFallback', { currency: settings.currency })}
       </p>
-      {live && (settings.planStatus === 'active' || settings.planStatus === 'past_due') && (
-        <div className="st-danger">
-          <b>{t('settings.plan.cancelTitle')}</b>
-          <small>{t('settings.plan.cancelText')}</small>
-          <button type="button" className="d-btn d-danger" disabled={busy !== ''} onClick={cancel}>
-            {busy === 'cancel' ? t('common.loading') : t('settings.plan.cancel')}
-          </button>
+      {live && (settings.planStatus === 'active' || settings.planStatus === 'past_due' || (settings.planStatus === 'cancelled' && settings.planRenewsAt && new Date(settings.planRenewsAt) > new Date())) && (
+        <div className="st-renew">
+          <label className="d-switch">
+            <input type="checkbox" checked={settings.planStatus !== 'cancelled'} disabled={busy !== ''} onChange={(e) => (e.target.checked ? resume() : cancel())} />
+            <span>{t('settings.plan.autoRenew')}</span>
+          </label>
+          <small>
+            {settings.planStatus === 'cancelled'
+              ? t('settings.plan.autoRenewOff', { date: settings.planRenewsAt ? fmt(settings.planRenewsAt) : '' })
+              : t('settings.plan.autoRenewOn', { date: settings.planRenewsAt ? fmt(settings.planRenewsAt) : '' })}
+          </small>
         </div>
       )}
       <p className="d-notes">
