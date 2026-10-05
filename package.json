@@ -12,7 +12,10 @@
     "start": "tsx server/index.ts",
     "server:dev": "tsx watch server/index.ts",
     "typecheck:server": "tsc -p server/tsconfig.json",
-    "flw:plans": "tsx scripts/flw-plans.ts"
+    "flw:plans": "tsx scripts/flw-plans.ts",
+    "promo": "bash promo/build.sh",
+    "promo:voice": "node promo/voice.mjs",
+    "promo:stills": "node promo/stills.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
@@ -40,6 +43,7 @@
     "@types/three": "0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
+    "puppeteer-core": "24.43.1",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   },

@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ZionDesk launch film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --lime: #c4ec62; --lime-ink: #18210a; --purple: #6c34ff; --purple-2: #8457ff; --ink: #111015; --night: #120c2b;
+    --lav: #dcd8fd; --sky: #d3e8fb; --mint: #ddf5d3; --peach: #fde3d6;
+    --serif: 'DM Serif Display', Georgia, serif; --grotesk: 'Inter Tight', Inter, sans-serif; --ui: Inter, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: var(--W); height: var(--H); overflow: hidden; background: var(--night); }
+  body { font-family: var(--ui); color: #fff; font-size: var(--u); }
+  .stage { position: absolute; inset: 0; overflow: hidden; perspective: 140em; background: radial-gradient(120em 80em at 15% 110%, #3b1d9a 0%, transparent 55%), radial-gradient(90em 70em at 100% 0%, #2a1470 0%, transparent 60%), var(--night); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(8em); opacity: .55; will-change: transform; }
+  .grain { position: absolute; inset: 0; opacity: .06; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); pointer-events: none; }
+  .cam { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+  .scene { position: absolute; inset: 0; transform-style: preserve-3d; opacity: 0; }
+  .abs { position: absolute; left: 50%; top: 50%; will-change: transform, opacity; transform-style: preserve-3d; }
+
+  /* ── type ── */
+  .kicker { font-family: var(--grotesk); font-weight: 600; letter-spacing: .02em; color: rgba(255,255,255,.75); font-size: 3.2em; white-space: nowrap; }
+  .huge { font-family: var(--serif); font-size: 13em; line-height: .95; color: var(--lime); white-space: nowrap; letter-spacing: -.01em; }
+  .big { font-family: var(--grotesk); font-weight: 800; font-size: 7em; letter-spacing: -.035em; white-space: nowrap; }
+  .strike { position: relative; display: inline-block; }
+  .strike i { position: absolute; left: -2%; right: -2%; top: 55%; height: .12em; background: #ff5a6a; border-radius: 1em; transform-origin: left; }
+  .tile { position: absolute; width: 11em; height: 7em; border-radius: 1.2em; background: rgba(255,255,255,.06); border: .12em solid rgba(255,255,255,.1); display: grid; grid-template-columns: repeat(4,1fr); gap: .35em; padding: .8em; }
+  .tile b { background: rgba(255,255,255,.12); border-radius: .3em; }
+
+  /* ── logo ── */
+  .logo { width: 22em; height: 22em; border-radius: 6em; background: var(--ink); display: grid; place-items: center; box-shadow: 0 0 0 .3em rgba(196,236,98,.25), 0 3em 8em -2em rgba(196,236,98,.45); backface-visibility: visible; }
+  .logo img { width: 58%; }
+  .wordmark { font-family: var(--grotesk); font-weight: 800; font-size: 12em; letter-spacing: -.045em; white-space: nowrap; display: flex; }
+  .wordmark span { display: inline-block; }
+  .ring { width: 30em; height: 30em; border-radius: 50%; border: .5em solid var(--lime); }
+
+  /* ── UI cards ── */
+  .win { width: 100em; border-radius: 3em; background: linear-gradient(160deg, #fff 0%, #f2f4fd 60%, #fbeef3 100%); color: var(--ink); padding: 2.6em; box-shadow: 0 5em 12em -3em rgba(0,0,0,.6), inset 0 .1em 0 #fff; }
+  .win-top { display: flex; align-items: center; gap: 1.4em; margin-bottom: 2.2em; }
+  .win-top .lg { width: 4.4em; height: 4.4em; border-radius: 1.3em; background: var(--ink); display: grid; place-items: center; }
+  .win-top .lg img { width: 55%; }
+  .pills { display: flex; gap: .5em; padding: .5em; border-radius: 99em; background: #fff; box-shadow: 0 .1em 0 rgba(0,0,0,.05); margin: 0 auto; }
+  .pills span { padding: .9em 1.7em; border-radius: 99em; font-size: 1.45em; color: #8b8a98; }
+  .pills span.on { background: var(--ink); color: #fff; }
+  .me { width: 4.2em; height: 4.2em; border-radius: 1.3em; background: var(--purple); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 1.3em; }
+  .h1 { font-family: var(--grotesk); font-weight: 400; font-size: 5em; letter-spacing: -.03em; margin-bottom: .45em; }
+  .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6em; }
+  .kpi { background: #fff; border-radius: 2em; padding: 1.8em 2em; box-shadow: 0 .1em 0 rgba(0,0,0,.05); }
+  .kpi small { display: block; color: #8b8a98; font-size: 1.5em; margin-bottom: .4em; }
+  .kpi b { font-family: var(--grotesk); font-size: 4.2em; letter-spacing: -.03em; }
+  .kpi em { font-style: normal; color: #2f9e5b; font-size: 1.4em; margin-left: .6em; }
+  .card { background: #fff; border-radius: 2.4em; padding: 2em 2.2em; box-shadow: 0 .1em 0 rgba(0,0,0,.05), 0 3em 6em -4em rgba(30,20,80,.4); color: var(--ink); }
+  .card h3 { font-family: var(--grotesk); font-weight: 500; font-size: 2.3em; letter-spacing: -.01em; }
+  .card .sub { color: #8b8a98; font-size: 1.45em; margin-top: .2em; }
+  .people { display: grid; gap: 1.1em; margin-top: 1.8em; }
+  .person { display: grid; grid-template-columns: 4.6em 1fr auto; align-items: center; gap: 1.4em; padding: 1em 1.2em; border-radius: 1.6em; }
+  .av { width: 4.6em; height: 4.6em; border-radius: 1.4em; display: grid; place-items: center; font-family: var(--grotesk); font-weight: 700; font-size: 1em; }
+  .av span { font-size: 1.6em; }
+  .person b { font-size: 1.75em; font-weight: 600; display: block; }
+  .person small { color: #6f6d7c; font-size: 1.35em; }
+  .tag { padding: .5em 1.1em; border-radius: 99em; font-size: 1.35em; font-weight: 600; background: var(--ink); color: #fff; }
+  .tag.l { background: var(--lime); color: var(--lime-ink); }
+
+  .bars { display: flex; align-items: flex-end; gap: 1.2em; height: 22em; margin-top: 2em; padding: 0 .5em; }
+  .bars i { flex: 1; border-radius: 1em 1em .4em .4em; background: linear-gradient(180deg, #8b6cf6, #c9b8ff); transform-origin: bottom; }
+  .bars i.hl { background: linear-gradient(180deg, #a6d93a, var(--lime)); }
+  .amount { font-family: var(--grotesk); font-weight: 800; font-size: 7em; letter-spacing: -.04em; }
+  .chips { display: flex; gap: .8em; flex-wrap: wrap; }
+  .chip { padding: .7em 1.3em; border-radius: 99em; background: #f1effa; font-size: 1.5em; font-weight: 600; color: #4b4860; }
+  .chip.on { background: var(--ink); color: #fff; }
+  .phone { width: 40em; height: 80em; border-radius: 6em; background: #0d0b14; padding: 1.4em; box-shadow: 0 0 0 .5em #2a2638, 0 5em 12em -2em rgba(0,0,0,.7); }
+  .screen { width: 100%; height: 100%; border-radius: 4.8em; overflow: hidden; background: #efe7dd; position: relative; }
+  .wa-head { height: 9.5em; background: #075e54; display: flex; align-items: flex-end; gap: 1.2em; padding: 0 2em 1.6em; color: #fff; }
+  .wa-head .lg { width: 4.6em; height: 4.6em; border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+  .wa-head .lg img { width: 52%; }
+  .wa-head b { font-size: 1.9em; display: block; }
+  .wa-head small { font-size: 1.3em; opacity: .8; }
+  .bubble { position: absolute; left: 2em; right: 6em; background: #fff; color: #111; border-radius: .6em 2em 2em 2em; padding: 1.2em 1.5em 1.6em; font-size: 1.75em; line-height: 1.35; box-shadow: 0 .15em .2em rgba(0,0,0,.12); }
+  .bubble .fl { font-size: .85em; font-weight: 700; color: #075e54; display: block; margin-bottom: .2em; }
+  .bubble small { position: absolute; right: 1em; bottom: .5em; font-size: .6em; color: #8a8a8a; }
+  .langs { display: flex; gap: 1.2em; }
+  .flag { width: 6.6em; height: 6.6em; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 .35em rgba(255,255,255,.9), 0 1.5em 3em -1em rgba(0,0,0,.5); }
+  .flag svg { width: 100%; height: 100%; display: block; }
+  .mail { width: 52em; }
+  .mail .bar { height: 1.3em; border-radius: 1em; background: #ecebf3; margin-top: 1.1em; }
+  .mail .bar.s { width: 60%; }
+  .meet { width: 52em; }
+  .meet .when { display: flex; align-items: center; gap: 1.6em; margin-top: 1.8em; }
+  .meet .date { width: 8em; height: 8em; border-radius: 2em; background: var(--lav); display: grid; place-items: center; text-align: center; font-family: var(--grotesk); }
+  .meet .date b { font-size: 3.6em; line-height: 1; display: block; }
+  .meet .date small { font-size: 1.3em; text-transform: uppercase; letter-spacing: .1em; color: #5a4fc2; }
+  .meetbtn { margin-top: 2em; display: flex; align-items: center; gap: 1.2em; padding: 1.4em 1.8em; border-radius: 1.8em; background: #f4f6f4; }
+  .meetbtn b { font-size: 1.7em; }
+  .meetbtn small { display: block; color: #1a73e8; font-size: 1.4em; }
+  .flyer { width: 44em; height: 55em; border-radius: 2.4em; overflow: hidden; position: relative; box-shadow: 0 4em 10em -2em rgba(0,0,0,.6); background: #1b0f45; }
+  .flyer .art { position: absolute; inset: 0; background: radial-gradient(30em 30em at 80% 15%, #ffcf5a 0%, transparent 60%), radial-gradient(40em 30em at 0% 100%, #8457ff 0%, transparent 65%), linear-gradient(170deg, #2a1470, #120c2b); }
+  .flyer .rays { position: absolute; left: 50%; top: 18%; width: 80em; height: 80em; margin-left: -40em; margin-top: -40em; background: repeating-conic-gradient(from 0deg, rgba(255,215,120,.16) 0 6deg, transparent 6deg 18deg); border-radius: 50%; }
+  .flyer .txt { position: absolute; left: 3.4em; right: 3.4em; bottom: 4em; }
+  .flyer .txt small { font-family: var(--grotesk); letter-spacing: .3em; font-size: 1.5em; color: var(--lime); font-weight: 700; }
+  .flyer .txt h4 { font-family: var(--serif); font-size: 7.4em; line-height: .95; margin: .25em 0 .3em; color: #fff; }
+  .flyer .txt p { font-size: 1.8em; color: rgba(255,255,255,.85); }
+  .shimmer { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.35) 45%, transparent 70%); background-size: 250% 100%; }
+  .aibadge { display: inline-flex; align-items: center; gap: .6em; padding: .9em 1.5em; border-radius: 99em; background: var(--lime); color: var(--lime-ink); font-weight: 700; font-size: 1.8em; font-family: var(--grotesk); }
+  .chat { width: 64em; }
+  .msg { padding: 1.4em 1.8em; border-radius: 2em; font-size: 2em; line-height: 1.4; max-width: 85%; }
+  .msg.me { margin-left: auto; width: fit-content; background: var(--ink); color: #fff; border-bottom-right-radius: .5em; }
+  .msg.ai { background: #f1effa; color: var(--ink); border-bottom-left-radius: .5em; margin-top: 1.4em; }
+  .ellen { display: flex; align-items: center; gap: 1em; margin-bottom: 1.8em; }
+  .ellen .dot { width: 4.6em; height: 4.6em; border-radius: 50%; background: conic-gradient(from 90deg, var(--purple), var(--lime), var(--purple)); display: grid; place-items: center; }
+  .ellen .dot i { width: 3.6em; height: 3.6em; border-radius: 50%; background: #fff; display: grid; place-items: center; font-style: normal; font-size: 1.8em; }
+  .ellen b { font-family: var(--grotesk); font-size: 2.3em; }
+  .ellen small { color: #8b8a98; font-size: 1.4em; display: block; }
+  .todo { display: grid; gap: .8em; margin-top: 1em; }
+  .todo div { display: flex; align-items: center; justify-content: space-between; gap: 1em; background: #fff; border-radius: 1.2em; padding: .8em 1em; font-size: .85em; }
+  .todo span.btn { background: var(--purple); color: #fff; border-radius: 99em; padding: .4em .9em; font-size: .8em; font-weight: 600; }
+  .cta { display: inline-flex; align-items: center; gap: .8em; padding: 1.2em 2.4em; border-radius: 99em; background: var(--lime); color: var(--lime-ink); font-family: var(--grotesk); font-weight: 800; font-size: 3.2em; white-space: nowrap; box-shadow: 0 1.5em 4em -1em rgba(196,236,98,.6); }
+  .tagline { font-family: var(--serif); font-size: 6.4em; white-space: nowrap; }
+  .tagline em { color: var(--lime); font-style: italic; }
+  .ticker { display: flex; gap: 1.4em; white-space: nowrap; }
+  .ticker span { padding: 1em 1.8em; border-radius: 99em; border: .15em solid rgba(255,255,255,.18); font-size: 2.2em; font-weight: 600; color: rgba(255,255,255,.9); background: rgba(255,255,255,.04); }
+  .ticker span b { color: var(--lime); margin-right: .4em; }
+  .price { font-size: 2.2em; color: rgba(255,255,255,.75); }
+  .price b { color: #fff; }
+  .cap { position: absolute; left: 50%; transform: translateX(-50%); padding: .55em 1.1em; border-radius: 1em; background: rgba(10,8,22,.62); backdrop-filter: blur(.6em); font-family: var(--grotesk); font-weight: 700; text-align: center; color: #fff; line-height: 1.25; }
+  .cap b { color: var(--lime); }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="blob" id="b1" style="width:70em;height:70em;background:#6c34ff"></div>
+  <div class="blob" id="b2" style="width:55em;height:55em;background:#c4ec62;opacity:.22"></div>
+  <div class="blob" id="b3" style="width:60em;height:60em;background:#ff6aa8;opacity:.18"></div>
+  <div class="cam" id="cam">
+
+    <!-- S1: calling vs paperwork -->
+    <section class="scene" id="s1">
+      <div id="tiles"></div>
+      <div class="abs kicker" id="s1a">Pastor, your calling is</div>
+      <div class="abs huge" id="s1b">people.</div>
+      <div class="abs big" id="s1c"><span class="strike">not paperwork.<i id="s1strike"></i></span></div>
+    </section>
+
+    <!-- S2: logo -->
+    <section class="scene" id="s2">
+      <div class="abs ring" id="ring"></div>
+      <div class="abs logo" id="logo"><img src="mark.png" alt="" /></div>
+      <div class="abs wordmark" id="word"></div>
+      <div class="abs kicker" id="s2k">Church management, made simple.</div>
+    </section>
+
+    <!-- S3: dashboard / members -->
+    <section class="scene" id="s3">
+      <div class="abs win" id="win">
+        <div class="win-top">
+          <span class="lg"><img src="mark.png" alt="" /></span>
+          <div class="pills"><span class="on">Overview</span><span>Members</span><span>Giving</span><span>Messaging</span><span>Events</span><span>Design</span></div>
+          <span class="me">PA</span>
+        </div>
+        <div class="h1">Good morning, Pastor</div>
+        <div class="row3">
+          <div class="kpi"><small>People in your church</small><b id="cnt1">0</b><em>+24 this month</em></div>
+          <div class="kpi"><small>Giving this month</small><b id="cnt2">0</b></div>
+          <div class="kpi"><small>Newcomers to follow up</small><b id="cnt3">0</b></div>
+        </div>
+      </div>
+      <div class="abs card" id="members" style="width:46em">
+        <h3>Members &amp; families</h3>
+        <div class="sub">Profiles, families, ministries, follow-ups</div>
+        <div class="people" id="people"></div>
+      </div>
+    </section>
+
+    <!-- S4: giving -->
+    <section class="scene" id="s4">
+      <div class="abs card" id="give" style="width:58em">
+        <h3>Giving &amp; finance</h3>
+        <div class="sub">Tithes, offerings, pledges and expenses</div>
+        <div style="display:flex;align-items:baseline;gap:1.2em;margin-top:1.6em"><span class="amount" id="amt">₦2,480,000</span><span class="chip" style="background:#ddf5d3;color:#1d6b3b">+18%</span></div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="abs card" id="cur" style="width:40em">
+        <h3>Give online</h3>
+        <div class="sub">Your church’s currency — card, transfer, mobile money</div>
+        <div class="chips" id="curchips" style="margin-top:1.6em"></div>
+        <div class="cta" style="font-size:2.4em;margin-top:1em;width:100%;justify-content:center" id="givebtn">Give ₦10,000</div>
+      </div>
+    </section>
+
+    <!-- S5: WhatsApp + email in 5 languages -->
+    <section class="scene" id="s5">
+      <div class="abs card mail" id="mail">
+        <h3>Email campaign</h3>
+        <div class="sub">Sent in each member’s language</div>
+        <div class="bar"></div><div class="bar"></div><div class="bar s"></div>
+      </div>
+      <div class="abs phone" id="phone">
+        <div class="screen" id="screen">
+          <div class="wa-head"><span class="lg"><img src="mark.png" alt="" /></span><div><b>Covenant Chapel</b><small>via ZionDesk · WhatsApp</small></div></div>
+        </div>
+      </div>
+      <div class="abs langs" id="flags"></div>
+    </section>
+
+    <!-- S6: Meet + AI flyer -->
+    <section class="scene" id="s6">
+      <div class="abs card meet" id="meet">
+        <h3>Sunday Service</h3>
+        <div class="sub">Online &amp; in person · invitations sent</div>
+        <div class="when"><div class="date"><small>Sun</small><b>12</b></div><div><b style="font-size:2em;font-family:var(--grotesk)">9:00 AM</b><div class="sub">Main auditorium + online</div></div></div>
+        <div class="meetbtn" id="meetbtn"><svg width="44" height="36" viewBox="0 0 87 72"><path fill="#00832d" d="M49.5 36l8.53 9.75 11.47 7.33 2-17.02-2-16.64-11.69 6.44z"/><path fill="#0066da" d="M0 51.5V66c0 3.315 2.685 6 6 6h14.5l3-10.96-3-9.54-9.95-3z"/><path fill="#e94235" d="M20.5 0L0 20.5l10.55 3 9.95-3 2.95-9.41z"/><path fill="#2684fc" d="M20.5 20.5H0v31h20.5z"/><path fill="#00ac47" d="M82.6 8.68L69.5 19.42v33.66l13.16 10.79c1.97 1.54 4.85.135 4.85-2.37V11c0-2.535-2.945-3.925-4.91-2.32zM49.5 36v15.5h-29V72h43c3.315 0 6-2.685 6-6V53.08z"/><path fill="#ffba00" d="M63.5 0h-43v20.5h29V36l20-16.57V6c0-3.315-2.685-6-6-6z"/></svg><div><b>Google Meet</b><small>meet.google.com/zdk-sun-0912</small></div></div>
+      </div>
+      <div class="abs flyer" id="flyer">
+        <div class="art"></div><div class="rays" id="rays"></div>
+        <div class="txt"><small>COVENANT CHAPEL PRESENTS</small><h4>Harvest<br/>Sunday</h4><p>Sun 12 Oct · 9:00 AM · Come with a friend</p></div>
+        <div class="shimmer" id="shim"></div>
+      </div>
+      <div class="abs aibadge" id="aib">✨ Designed with AI</div>
+    </section>
+
+    <!-- S7: Ellen -->
+    <section class="scene" id="s7">
+      <div class="abs card chat" id="chat">
+        <div class="ellen"><span class="dot"><i>✦</i></span><div><b>Ellen</b><small>Your AI ministry assistant</small></div></div>
+        <div class="msg me" id="ask"></div>
+        <div class="msg ai" id="ans">
+          <span id="anstext"></span>
+          <div class="todo" id="todo">
+            <div><span><b>Ada Okafor</b> · first visit Sunday</span><span class="btn">Send welcome</span></div>
+            <div><span><b>Samuel Mensah</b> · missed 3 weeks</span><span class="btn">Call</span></div>
+            <div><span><b>Grace Wanjiru</b> · birthday today 🎉</span><span class="btn">Send prayer</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S8: end card -->
+    <section class="scene" id="s8">
+      <div class="abs logo" id="logo2" style="font-size:.55em"><img src="mark.png" alt="" /></div>
+      <div class="abs wordmark" id="word2" style="font-size:10em">ZionDesk</div>
+      <div class="abs tagline" id="tag">Church management, <em>made simple.</em></div>
+      <div class="abs ticker" id="tick"></div>
+      <div class="abs cta" id="cta">Start your free trial · ziondesk.com</div>
+      <div class="abs price" id="price">7 days free · plans from <b>$8</b> / <b>₦12,000</b> a month</div>
+    </section>
+  </div>
+  <div class="grain"></div>
+  <div class="cap" id="cap"></div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+const q = new URLSearchParams(location.search)
+const REEL = q.get('format') === 'reel'
+const W = REEL ? 1080 : 1920, H = REEL ? 1920 : 1080
+const U = REEL ? 10.8 : 10.8 // 1em = U px; layout coordinates below are in em
+document.documentElement.style.setProperty('--W', W + 'px')
+document.documentElement.style.setProperty('--H', H + 'px')
+document.documentElement.style.setProperty('--u', U + 'px')
+const EW = W / U, EH = H / U // stage size in em (wide 177.8 x 100, reel 100 x 177.8)
+const CAPTIONS = q.get('captions') !== '0'
+
+/* ── easing ── */
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const P = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, k) => a + (b - a) * k
+const out3 = (k) => 1 - Math.pow(1 - k, 3)
+const out5 = (k) => 1 - Math.pow(1 - k, 5)
+const inOut = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+const back = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2) }
+const $ = (id) => document.getElementById(id)
+/** Positions an .abs element: x/y offsets from centre (em), plus transforms. */
+function put(el, { x = 0, y = 0, z = 0, s = 1, rx = 0, ry = 0, rz = 0, o = 1, blur = 0 } = {}) {
+  el.style.transform = `translate(-50%,-50%) translate3d(${x * U}px,${y * U}px,${z * U}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s})`
+  el.style.opacity = o
+  el.style.filter = blur ? `blur(${blur * U}px)` : ''
+}
+const sceneVis = (id, t, a, b, fade = 0.25) => { const el = $(id); const o = Math.min(P(t, a - fade, a), 1 - P(t, b, b + fade)); el.style.opacity = o; el.style.display = o <= 0 ? 'none' : 'block'; return o }
+
+/* ── build repeated content ── */
+const tiles = $('tiles')
+const TILE = Array.from({ length: 16 }, (_, i) => ({ x: (i % 4) * 27 - 40 + (i * 37) % 11, y: Math.floor(i / 4) * 22 - 33 + (i * 13) % 7, r: ((i * 47) % 30) - 15, d: (i * 0.07) % 0.6 }))
+TILE.forEach(() => { const d = document.createElement('div'); d.className = 'tile abs'; d.innerHTML = '<b></b>'.repeat(12); tiles.appendChild(d) })
+$('word').innerHTML = 'ZionDesk'.split('').map((c) => `<span>${c}</span>`).join('')
+const PEOPLE = [
+  ['AO', 'Ada Okafor', 'Newcomer · Choir', 'New', 'l', '#dcd8fd'],
+  ['KM', 'Kwame Mensah', 'Worker · Ushering', 'Worker', '', '#d3e8fb'],
+  ['GW', 'Grace Wanjiru', 'Member · Children’s church', 'Member', '', '#ddf5d3'],
+  ['TA', 'Tunde & Bisi Adeyemi', 'Family · 4 people', 'Family', '', '#fde3d6'],
+]
+$('people').innerHTML = PEOPLE.map(([i, n, s, tg, cls, bg]) => `<div class="person" style="background:${bg}55"><span class="av" style="background:${bg}"><span>${i}</span></span><span><b>${n}</b><small>${s}</small></span><span class="tag ${cls}">${tg}</span></div>`).join('')
+const BARS = [38, 52, 45, 63, 58, 74, 69, 88, 80, 96]
+$('bars').innerHTML = BARS.map((h, i) => `<i style="height:${h}%" class="${i === BARS.length - 1 ? 'hl' : ''}"></i>`).join('')
+const CUR = [['₦', 'NGN', '₦10,000'], ['$', 'USD', '$50'], ['£', 'GBP', '£40'], ['KSh', 'KES', 'KSh 5,000'], ['R', 'ZAR', 'R500'], ['€', 'EUR', '€45']]
+$('curchips').innerHTML = CUR.map(([s, c]) => `<span class="chip">${s} ${c}</span>`).join('')
+const FLAG = {
+  en: '<svg viewBox="0 0 60 60"><rect width="60" height="60" fill="#012169"/><path d="M0 0l60 60M60 0L0 60" stroke="#fff" stroke-width="12"/><path d="M0 0l60 60M60 0L0 60" stroke="#C8102E" stroke-width="5"/><path d="M30 0v60M0 30h60" stroke="#fff" stroke-width="18"/><path d="M30 0v60M0 30h60" stroke="#C8102E" stroke-width="10"/></svg>',
+  es: '<svg viewBox="0 0 60 60"><rect width="60" height="60" fill="#AA151B"/><rect y="15" width="60" height="30" fill="#F1BF00"/></svg>',
+  fr: '<svg viewBox="0 0 60 60"><rect width="20" height="60" fill="#002395"/><rect x="20" width="20" height="60" fill="#fff"/><rect x="40" width="20" height="60" fill="#ED2939"/></svg>',
+  de: '<svg viewBox="0 0 60 60"><rect width="60" height="20" fill="#000"/><rect y="20" width="60" height="20" fill="#DD0000"/><rect y="40" width="60" height="20" fill="#FFCE00"/></svg>',
+  pt: '<svg viewBox="0 0 60 60"><rect width="60" height="60" fill="#FF0000"/><rect width="24" height="60" fill="#006600"/><circle cx="24" cy="30" r="9" fill="#FFCC00"/></svg>',
+}
+const MSGS = [
+  ['en', 'Welcome home, Ada! 🙏 See you Sunday at 9.'],
+  ['es', '¡Bienvenido, Carlos! Te esperamos el domingo.'],
+  ['fr', 'Bienvenue, Amélie ! À dimanche, 9 h.'],
+  ['de', 'Willkommen, Jonas! Bis Sonntag um 9.'],
+  ['pt', 'Bem-vindo, João! Até domingo às 9h. 🙌'],
+]
+$('flags').innerHTML = MSGS.map(([l]) => `<span class="flag" data-l="${l}">${FLAG[l]}</span>`).join('')
+const screen = $('screen')
+MSGS.forEach(([l, m], i) => { const b = document.createElement('div'); b.className = 'bubble'; b.id = 'bub' + i; b.innerHTML = `<span class="fl">${{ en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português' }[l]}</span>${m}<small>9:0${i} ✓✓</small>`; screen.appendChild(b) })
+const FEATURES = [['👥', 'Members'], ['💚', 'Giving'], ['💬', 'WhatsApp'], ['🌍', '5 languages'], ['📹', 'Google Meet'], ['✨', 'AI flyers'], ['🤖', 'Ellen AI'], ['📊', 'Reports'], ['🔗', 'QR links']]
+$('tick').innerHTML = [...FEATURES, ...FEATURES].map(([e, f]) => `<span><b>${e}</b>${f}</span>`).join('')
+const SCRIPT = window.__SCRIPT__ || []
+
+/* ── typing helper ── */
+const typed = (s, k) => s.slice(0, Math.round(s.length * clamp(k)))
+const fmtN = (n) => Math.round(n).toLocaleString('en-US')
+
+/* ── the timeline: everything is a pure function of t (seconds) ── */
+function seek(t) {
+  // ambient background
+  put($('b1'), { x: -50 + Math.sin(t * 0.5) * 20, y: 30 + Math.cos(t * 0.4) * 15 }); $('b1').style.left = '50%'; $('b1').style.top = '50%'
+  put($('b2'), { x: 55 + Math.cos(t * 0.6) * 18, y: -35 + Math.sin(t * 0.5) * 12, o: 0.22 }); $('b2').style.left = '50%'; $('b2').style.top = '50%'
+  put($('b3'), { x: 30 + Math.sin(t * 0.35) * 25, y: 45, o: 0.18 }); $('b3').style.left = '50%'; $('b3').style.top = '50%'
+
+  // camera: gentle punch on every beat (music is 120 bpm, see music.py)
+  const beat = 60 / 120
+  const pulse = Math.pow(1 - ((t % beat) / beat), 6) * 0.012
+  $('cam').style.transform = `scale(${1 + pulse})`
+
+  /* S1 0–3.4 */
+  if (sceneVis('s1', t, 0, 3.3, 0.2) > 0) {
+    const a = out5(P(t, 0.15, 0.7)), b = back(P(t, 0.55, 1.1)), c = out5(P(t, 1.5, 2.0)), st = inOut(P(t, 2.15, 2.6)), ex = inOut(P(t, 2.9, 3.4))
+    const yA = REEL ? -30 : -24, yB = REEL ? -8 : -5, yC = REEL ? 18 : 15
+    put($('s1a'), { x: lerp(40, 0, a) - ex * 120, y: yA, o: a })
+    put($('s1b'), { y: yB, s: lerp(0.6, 1, b) + ex * 0.5, o: P(t, 0.55, 0.8) * (1 - ex), blur: ex * 1.5, rz: lerp(-6, 0, b) })
+    put($('s1c'), { x: lerp(60, 0, c) - ex * 120, y: yC, o: c * (1 - ex), s: REEL ? 0.8 : 1 })
+    $('s1strike').style.transform = `scaleX(${st})`
+    // paperwork tiles drift right→left and get swept away
+    ;[...tiles.children].forEach((el, i) => {
+      const d = TILE[i], k = P(t, 0 + d.d, 3)
+      const sweep = inOut(P(t, 2.2 + d.d * 0.5, 3.2))
+      put(el, { x: d.x * (REEL ? 0.7 : 1.5) + 20 - k * 30 - sweep * 160, y: d.y * (REEL ? 2.2 : 1.3), z: -40 - (i % 3) * 30, rz: d.r + k * 10, ry: sweep * -60, o: 0.9 * P(t, d.d, d.d + 0.4) * (1 - sweep) })
+    })
+  }
+
+  /* S2 3.4–5.6 logo spin */
+  if (sceneVis('s2', t, 3.35, 5.55, 0.15) > 0) {
+    const k = P(t, 3.4, 4.5), sp = out3(k)
+    const ly = REEL ? -22 : -14
+    put($('logo'), { y: ly, ry: lerp(-540, 0, sp), rx: lerp(25, 0, sp), s: lerp(0.2, 1, back(P(t, 3.4, 4.2))) * (1 - inOut(P(t, 5.25, 5.55)) * 0.6), o: P(t, 3.4, 3.6) })
+    const r = P(t, 4.0, 4.9)
+    put($('ring'), { y: ly, s: lerp(0.6, 2.6, out3(r)), o: (1 - r) * 0.8 })
+    ;[...$('word').children].forEach((el, i) => { const kk = back(P(t, 4.1 + i * 0.05, 4.6 + i * 0.05)); el.style.transform = `translateY(${lerp(1, 0, kk)}em) rotateX(${lerp(90, 0, kk)}deg)`; el.style.opacity = P(t, 4.1 + i * 0.05, 4.3 + i * 0.05) })
+    put($('word'), { y: REEL ? 10 : 12, s: REEL ? 0.75 : 1 })
+    put($('s2k'), { y: REEL ? 25 : 27, o: P(t, 4.6, 4.9), x: lerp(10, 0, out3(P(t, 4.6, 5.0))) })
+  }
+
+  /* S3 5.6–9.6 dashboard: slide from right with 3D, then push-in to members */
+  if (sceneVis('s3', t, 5.5, 9.55, 0.2) > 0) {
+    const enter = out5(P(t, 5.5, 6.4)), push = inOut(P(t, 7.3, 8.6)), exitk = inOut(P(t, 9.25, 9.6))
+    const sw = REEL ? 0.82 : 1.1
+    put($('win'), { x: lerp(160, 0, enter) - exitk * 40 + push * (REEL ? 0 : 22), y: (REEL ? -38 : -6) + push * (REEL ? -4 : 0), ry: lerp(-38, -8, enter) + push * 6, rx: lerp(10, 4, enter), s: sw * (1 - push * 0.12), z: -push * 40, o: enter * (1 - push * 0.45) })
+    ;['cnt1', 'cnt2', 'cnt3'].forEach((id, i) => { const kk = out3(P(t, 6.1 + i * 0.15, 7.2)); $(id).textContent = i === 1 ? '₦' + fmtN(2480000 * kk) : fmtN([1248, 0, 37][i] * kk) })
+    const mk = back(P(t, 7.1, 7.9))
+    put($('members'), { x: lerp(REEL ? 0 : 70, REEL ? 0 : -24, out3(P(t, 7.1, 7.9))), y: REEL ? lerp(60, 26, out3(P(t, 7.1, 7.9))) : 4, ry: lerp(30, 0, mk), s: lerp(0.8, REEL ? 1.75 : 1.5, mk) + exitk * 0.4, o: P(t, 7.1, 7.4) * (1 - exitk), blur: exitk * 1 })
+    ;[...$('people').children].forEach((el, i) => { const kk = out3(P(t, 7.5 + i * 0.18, 8.0 + i * 0.18)); el.style.transform = `translateX(${lerp(12, 0, kk)}em)`; el.style.opacity = kk })
+  }
+
+  /* S4 9.6–14 giving: 3D flip in, bars grow, currencies cycle */
+  if (sceneVis('s4', t, 9.55, 13.95, 0.2) > 0) {
+    const flip = out3(P(t, 9.55, 10.5)), exitk = inOut(P(t, 13.6, 14.0))
+    put($('give'), { x: REEL ? 0 : -24 + lerp(0, -4, P(t, 10, 14)), y: REEL ? -50 : 0, ry: lerp(180, 0, flip) - exitk * 70, s: (REEL ? 1.45 : 1.15) * lerp(0.85, 1, flip), o: P(t, 9.55, 9.8) * (1 - exitk), z: lerp(-80, 0, flip) })
+    ;[...$('bars').children].forEach((el, i) => { el.style.transform = `scaleY(${back(P(t, 10.1 + i * 0.07, 10.7 + i * 0.07))})` })
+    $('amt').textContent = '₦' + fmtN(2480000 * out3(P(t, 10.0, 11.2)))
+    const ck = out5(P(t, 10.9, 11.8))
+    put($('cur'), { x: REEL ? lerp(120, 0, ck) : lerp(140, 52, ck), y: REEL ? 22 : 6, ry: lerp(-50, -10, ck) + exitk * -40, s: REEL ? 1.55 : 1.2, o: ck * (1 - exitk) })
+    const idx = Math.min(CUR.length - 1, Math.floor(P(t, 11.6, 13.6) * CUR.length))
+    ;[...$('curchips').children].forEach((el, i) => el.classList.toggle('on', i === idx))
+    $('givebtn').textContent = 'Give ' + CUR[idx][2]
+  }
+
+  /* S5 14–18 messaging: phone, bubbles right→left in 5 languages */
+  if (sceneVis('s5', t, 13.95, 17.95, 0.2) > 0) {
+    const pk = out5(P(t, 13.95, 14.8)), exitk = inOut(P(t, 17.6, 18.0))
+    put($('phone'), { x: REEL ? 0 : 6, y: REEL ? 4 : 0, ry: lerp(-60, -12, pk) + exitk * -50, rz: lerp(8, 0, pk), s: (REEL ? 1.12 : 1.12) * lerp(0.7, 1, pk), o: pk * (1 - exitk), z: exitk * -100 })
+    MSGS.forEach((_, i) => { const kk = back(P(t, 14.6 + i * 0.55, 15.1 + i * 0.55)); const el = $('bub' + i); el.style.top = 11 + i * 12.5 + 'em'; el.style.transform = `translateX(${lerp(40, 0, kk)}em) scale(${lerp(0.8, 1, kk)})`; el.style.opacity = P(t, 14.6 + i * 0.55, 14.8 + i * 0.55) })
+    put($('mail'), { x: REEL ? 0 : lerp(-130, -56, out5(P(t, 14.4, 15.4))), y: REEL ? lerp(-130, -76, out5(P(t, 14.4, 15.4))) : -24, ry: REEL ? 0 : 24, rz: REEL ? -3 : 0, s: REEL ? 0.95 : 1, o: P(t, 14.4, 14.8) * (1 - exitk) })
+    put($('flags'), { x: REEL ? 0 : 58, y: REEL ? -58 : 18, s: REEL ? 1.05 : 1.1, o: 1 - exitk })
+    ;[...$('flags').children].forEach((el, i) => { const kk = back(P(t, 14.6 + i * 0.55, 15.1 + i * 0.55)); el.style.transform = `translateY(${lerp(6, 0, kk)}em) scale(${lerp(0, 1, kk)}) rotate(${lerp(-90, 0, kk)}deg)`; el.style.display = 'inline-block' })
+  }
+
+  /* S6 18–22.8 Google Meet + AI flyer 3D spin */
+  if (sceneVis('s6', t, 17.95, 22.75, 0.2) > 0) {
+    const mk = out5(P(t, 17.95, 18.8)), exitk = inOut(P(t, 22.4, 22.8))
+    put($('meet'), { x: REEL ? 0 : lerp(-140, -40, mk), y: REEL ? lerp(-110, -60, mk) : -2, ry: lerp(40, 8, mk), s: REEL ? 1.2 : 1.2, o: mk * (1 - exitk) })
+    const bk = back(P(t, 18.8, 19.4)); $('meetbtn').style.transform = `scale(${lerp(0.6, 1, bk)})`; $('meetbtn').style.opacity = P(t, 18.8, 19.0)
+    const fk = out3(P(t, 19.6, 21.0))
+    put($('flyer'), { x: REEL ? 0 : 46, y: REEL ? 20 : 2, ry: lerp(-720, -10, fk), rx: lerp(20, 0, fk), s: (REEL ? 1.0 : 1.05) * lerp(0.4, 1, fk) + inOut(P(t, 21.2, 22.6)) * 0.08, o: P(t, 19.6, 19.8) * (1 - exitk), z: lerp(-200, 0, fk) })
+    $('shim').style.backgroundPosition = `${lerp(150, -60, P(t, 20.6, 21.6))}% 0`
+    $('rays').style.transform = `rotate(${t * 18}deg)`
+    put($('aib'), { x: REEL ? 0 : 46, y: REEL ? -30 : -33, s: back(P(t, 21.0, 21.5)), o: P(t, 21.0, 21.2) * (1 - exitk) })
+  }
+
+  /* S7 22.8–26 Ellen */
+  if (sceneVis('s7', t, 22.75, 25.95, 0.2) > 0) {
+    const ck = out5(P(t, 22.75, 23.5)), exitk = inOut(P(t, 25.6, 26.0))
+    put($('chat'), { y: REEL ? 0 : 0, ry: lerp(25, 0, ck), x: lerp(60, 0, ck) - exitk * 80, s: (REEL ? 1.38 : 1.1) * lerp(0.9, 1, ck) + inOut(P(t, 23.5, 25.6)) * 0.06, o: ck * (1 - exitk) })
+    $('ask').textContent = typed('Who needs a follow-up this week?', P(t, 23.2, 24.0)) || ' '
+    $('ans').style.opacity = P(t, 24.1, 24.3)
+    $('anstext').textContent = typed('Here are 3 people to reach today:', P(t, 24.1, 24.6))
+    ;[...$('todo').children].forEach((el, i) => { const kk = out3(P(t, 24.5 + i * 0.2, 24.9 + i * 0.2)); el.style.opacity = kk; el.style.transform = `translateY(${lerp(1.5, 0, kk)}em)` })
+  }
+
+  /* S8 26–30 end card */
+  if (sceneVis('s8', t, 25.95, 31, 0.2) > 0) {
+    const lk = out3(P(t, 25.95, 26.9))
+    const L = REEL ? { logo: -48, word: -30, tag: -10, tick: 10, cta: 30, price: 42 } : { logo: -30, word: -15, tag: 1, tick: 16, cta: 30, price: 40 }
+    put($('logo2'), { y: L.logo, ry: lerp(-360, 0, lk), s: back(P(t, 25.95, 26.7)), o: P(t, 25.95, 26.1) })
+    put($('word2'), { y: L.word, s: (REEL ? 0.8 : 0.9) * lerp(0.7, 1, back(P(t, 26.2, 26.8))), o: P(t, 26.2, 26.4) })
+    put($('tag'), { y: L.tag, s: REEL ? 0.62 : 1, o: P(t, 26.6, 26.9), x: lerp(8, 0, out3(P(t, 26.6, 27.1))) })
+    const tw = $('tick').scrollWidth / U
+    put($('tick'), { y: L.tick, x: (REEL ? 10 : 30) - ((t - 26) * 14) % (tw / 2), o: P(t, 26.8, 27.1) })
+    put($('cta'), { y: L.cta, s: (REEL ? 0.82 : 1) * back(P(t, 27.1, 27.6)) * (1 + Math.sin(t * 6) * 0.012 * P(t, 27.6, 28)), o: P(t, 27.1, 27.3) })
+    put($('price'), { y: L.price, s: REEL ? 0.95 : 1, o: P(t, 27.6, 27.9) })
+  }
+
+  // white flash on scene cuts (beat-aligned)
+  const cuts = [3.5, 5.5, 9.5, 14.0, 18.0, 23.0, 26.0] // = music.py CUTS (hits)
+  $('flash').style.opacity = Math.max(...cuts.map((c) => Math.max(0, 0.22 - Math.abs(t - c) * 1.6)))
+
+  // burned-in captions (most Reels are watched muted)
+  const cap = $('cap')
+  const line = CAPTIONS ? SCRIPT.find((l) => l.start < 26 && t >= l.start - 0.05 && t <= l.end + 0.25) : null // end card shows its own text
+  if (line) {
+    cap.style.display = 'block'
+    cap.innerHTML = line.text.replace(/(ZionDesk|WhatsApp|Google Meet|AI|Ellen|five languages|own currency)/g, '<b>$1</b>')
+    cap.style.opacity = Math.min(P(t, line.start - 0.05, line.start + 0.1), 1 - P(t, line.end + 0.1, line.end + 0.25))
+    cap.style.fontSize = (REEL ? 36 : 30) + 'px'
+    cap.style.maxWidth = (REEL ? 940 : 1300) + 'px'
+    cap.style.bottom = (REEL ? 300 : 60) + 'px' // Reels: above Instagram's caption/buttons overlay
+  } else cap.style.display = 'none'
+}
+window.seek = seek
+window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map((i) => (i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))))).then(() => true)
+seek(Number(q.get('t') || 0))
+// Preview in a normal browser: ?play
+if (q.has('play')) { const t0 = performance.now(); const tick = () => { seek(((performance.now() - t0) / 1000) % 30); requestAnimationFrame(tick) }; tick() }
+</script>
+</body>
+</html>

@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.local
 render.env
+
+# rendered video, frames and audio
+promo/out/

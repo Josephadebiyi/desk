@@ -1,0 +1,46 @@
+{
+  "title": "ZionDesk — 30s launch",
+  "voiceDirection": "Energetic, warm, confident male voice with a light Nigerian (West African) accent; clear, upbeat product-launch delivery, smiling, not shouting.",
+  "lines": [
+    {
+      "start": 0.3,
+      "end": 3.2,
+      "text": "Pastor, your calling is people — not paperwork."
+    },
+    {
+      "start": 3.5,
+      "end": 5.4,
+      "text": "Meet ZionDesk."
+    },
+    {
+      "start": 5.7,
+      "end": 9.4,
+      "text": "Every member, every family, every first-time guest — in one place."
+    },
+    {
+      "start": 9.7,
+      "end": 13.8,
+      "text": "Track tithes and offerings, and receive giving online, in your own currency."
+    },
+    {
+      "start": 14.1,
+      "end": 17.8,
+      "text": "Reach your church on WhatsApp and email — in five languages."
+    },
+    {
+      "start": 18.1,
+      "end": 22.6,
+      "text": "Run services on Google Meet, and create stunning flyers with AI, in seconds."
+    },
+    {
+      "start": 22.9,
+      "end": 25.8,
+      "text": "And Ellen, your AI assistant, keeps every ministry moving."
+    },
+    {
+      "start": 26.2,
+      "end": 29.8,
+      "text": "ZionDesk. Church management, made simple. Try it free today."
+    }
+  ]
+}
