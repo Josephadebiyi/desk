@@ -40,6 +40,8 @@ export const env = {
   twilioSid: v('TWILIO_ACCOUNT_SID'),
   twilioToken: v('TWILIO_AUTH_TOKEN'),
   twilioSmsFrom: v('TWILIO_SMS_FROM'),
+  // Messaging Service (MG…): preferred over a single From number — handles sender pools and STOP opt-outs.
+  twilioMessagingService: v('TWILIO_MESSAGING_SERVICE_SID'),
   twilioWhatsappFrom: v('TWILIO_WHATSAPP_FROM'),
 
   // Flutterwave (dashboard → Settings → API keys / Webhooks)
@@ -77,7 +79,7 @@ export const env = {
 export const configured = {
   supabase: Boolean(env.supabaseUrl && env.supabaseServiceKey),
   email: Boolean(env.resendKey),
-  sms: Boolean(env.twilioSid && env.twilioToken && env.twilioSmsFrom),
+  sms: Boolean(env.twilioSid && env.twilioToken && (env.twilioMessagingService || env.twilioSmsFrom)),
   whatsappCloud: Boolean(env.waToken && env.waPhoneId),
   whatsapp: Boolean((env.waToken && env.waPhoneId) || (env.twilioSid && env.twilioToken && env.twilioWhatsappFrom)),
   googleMeet: Boolean(env.googleClientId && env.googleClientSecret),

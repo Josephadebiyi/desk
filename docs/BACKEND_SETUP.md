@@ -82,7 +82,8 @@ Nothing to set up: they use the same `ANTHROPIC_API_KEY` as Ellen (Claude).
 | `FLW_PLAN_*` | `npm run flw:plans` | ✅ for plan billing |
 | `FLW_PLATFORM_FEE` | your choice | optional |
 | `OPENAI_*` | OpenAI | optional |
-| `TWILIO_*` | twilio.com | optional (SMS/WhatsApp) |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Twilio Console → Account Info | optional (SMS) |
+| `TWILIO_MESSAGING_SERVICE_SID` | Twilio → Messaging → Services → your service (MG…) | optional (SMS; or `TWILIO_SMS_FROM` = one number) |
 | Google OAuth Client ID/Secret | Google Cloud Console → entered in **Supabase**, not Render | for "Continue with Google" |
 
 ## 7. Run locally with the real backend

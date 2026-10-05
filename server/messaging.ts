@@ -62,7 +62,11 @@ async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string) {
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.twilioSid}/Messages.json`, {
     method: 'POST',
     headers: { Authorization: 'Basic ' + Buffer.from(`${env.twilioSid}:${env.twilioToken}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body }),
+    body: new URLSearchParams(
+      channel === 'SMS' && env.twilioMessagingService
+        ? { MessagingServiceSid: env.twilioMessagingService, To: to, Body: body }
+        : { From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body },
+    ),
   })
   const data = (await res.json().catch(() => ({}))) as { sid?: string; message?: string }
   if (!res.ok) throw new Error(data.message ?? `Twilio ${res.status}`)
