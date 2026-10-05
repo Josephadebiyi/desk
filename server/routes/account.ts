@@ -35,13 +35,13 @@ accountRoutes.get(
   }),
 )
 
-async function cancelChurchBilling(churchId: string) {
+export async function cancelChurchBilling(churchId: string) {
   const { data: c } = await db().from('churches').select('flw_subscription_email').eq('id', churchId).single()
   if (!c?.flw_subscription_email) return
   for (const s of await listSubscriptions(c.flw_subscription_email)) if (s.status === 'active') await cancelSubscription(s.id).catch(() => undefined)
 }
 
-async function deleteChurch(churchId: string) {
+export async function deleteChurch(churchId: string) {
   await cancelChurchBilling(churchId)
   const { data: files } = await db().storage.from('logos').list(churchId)
   if (files?.length) await db().storage.from('logos').remove(files.map((f) => `${churchId}/${f.name}`))

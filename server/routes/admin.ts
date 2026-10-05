@@ -21,6 +21,7 @@ import { PLAN_PRICES, type FlwCurrency } from '../../src/lib/currency'
 import { db, HttpError, requireUser, route } from '../db'
 import { configured, env } from '../env'
 import { sendEmail } from '../mail'
+import { deleteChurch } from './account'
 
 export const adminRoutes = Router()
 
@@ -356,7 +357,7 @@ adminRoutes.get(
   '/admin/payments',
   ...staff,
   route(async (_req, res) => {
-    const { data } = await db().from('online_payments').select('id, kind, amount, currency, plan, fund, status, email, promo_code, created_at, completed_at, churches(name)').order('created_at', { ascending: false }).limit(150)
+    const { data } = await db().from('online_payments').select('id, church_id, kind, amount, currency, plan, fund, status, email, promo_code, created_at, completed_at, churches(name)').order('created_at', { ascending: false }).limit(150)
     res.json({ payments: data ?? [] })
   }),
 )
@@ -364,3 +365,209 @@ adminRoutes.get(
 adminRoutes.get('/admin/system', ...staff, (_req, res) => {
   res.json({ ...configured, siteUrl: env.siteUrl, cron: Boolean(env.cronSecret), commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) })
 })
+
+/* ───────── detail pages, actions, search, settings ───────── */
+
+const count = async (table: string, churchId: string, filter?: (q: any) => any) => {
+  let q = db().from(table).select('id', { count: 'exact', head: true }).eq('church_id', churchId)
+  if (filter) q = filter(q)
+  const { count: c } = await q
+  return c ?? 0
+}
+const getSetting = async (key: string) => (await db().from('platform_settings').select('value').eq('key', key).maybeSingle()).data?.value ?? null
+const setSetting = (key: string, value: unknown) => db().from('platform_settings').upsert({ key, value, updated_at: new Date().toISOString() })
+
+adminRoutes.get(
+  '/admin/churches/:id',
+  ...staff,
+  route(async (req, res) => {
+    const id = String(req.params.id)
+    const { data: church } = await db().from('churches').select('*').eq('id', id).maybeSingle()
+    if (!church) throw new HttpError(404, 'Church not found')
+    const { flw_subaccount_id, ...safe } = church as Record<string, unknown>
+    const { data: team } = await db().from('church_users').select('user_id, role, created_at, profiles(full_name, email)').eq('church_id', id)
+    const stages: Record<string, number> = {}
+    for (const st of ['Newcomer', 'Convert', 'Member', 'Worker']) stages[st] = await count('members', id, (q) => q.eq('stage', st))
+    const { data: gifts } = await db().from('gifts').select('amount').eq('church_id', id).gte('date', new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10))
+    const { data: payments } = await db().from('online_payments').select('id, kind, amount, currency, plan, fund, status, promo_code, created_at').eq('church_id', id).order('created_at', { ascending: false }).limit(20)
+    const { data: promos } = await db().from('promo_redemptions').select('status, redeemed_at, ends_at, percent_off, promo_codes(code)').eq('church_id', id)
+    const { data: tickets } = await db().from('support_tickets').select('id, subject, status, updated_at').eq('church_id', id).order('updated_at', { ascending: false }).limit(10)
+    res.json({
+      church: { ...safe, onlineGiving: Boolean(flw_subaccount_id) },
+      team: (team ?? []).map((t) => ({ userId: t.user_id, role: t.role, since: t.created_at, name: (t.profiles as unknown as { full_name: string } | null)?.full_name ?? '', email: (t.profiles as unknown as { email: string } | null)?.email ?? '' })),
+      stats: {
+        members: Object.values(stages).reduce((a, b) => a + b, 0),
+        stages,
+        giving30d: (gifts ?? []).reduce((a, g) => a + Number(g.amount), 0),
+        events: await count('events', id),
+        messages: await count('campaigns', id),
+        flyers: await count('ai_usage', id, (q) => q.eq('feature', 'designs')),
+      },
+      payments: payments ?? [],
+      promos: (promos ?? []).map((p) => ({ ...p, code: (p.promo_codes as unknown as { code: string } | null)?.code })),
+      tickets: tickets ?? [],
+      note: ((await getSetting(`note:church:${id}`)) as { text?: string } | null)?.text ?? '',
+    })
+  }),
+)
+
+adminRoutes.put(
+  '/admin/churches/:id/note',
+  ...staff,
+  route(async (req, res) => {
+    await setSetting(`note:church:${req.params.id}`, { text: str(req.body?.text, 4000), by: req.caller!.email, at: new Date().toISOString() })
+    res.json({ ok: true })
+  }),
+)
+
+adminRoutes.patch(
+  '/admin/churches/:id/members/:userId',
+  ...staff,
+  route(async (req, res) => {
+    const role = String(req.body?.role)
+    if (!['admin', 'finance', 'leader'].includes(role)) throw new HttpError(400, 'Unknown role')
+    const { error } = await db().from('church_users').update({ role }).eq('church_id', req.params.id).eq('user_id', req.params.userId)
+    if (error) throw new HttpError(400, error.message)
+    res.json({ ok: true })
+  }),
+)
+
+adminRoutes.delete(
+  '/admin/churches/:id/members/:userId',
+  ...staff,
+  route(async (req, res) => {
+    const { data: team } = await db().from('church_users').select('user_id, role').eq('church_id', req.params.id)
+    const admins = (team ?? []).filter((t) => t.role === 'admin')
+    if (admins.length === 1 && admins[0].user_id === req.params.userId) throw new HttpError(409, 'This is the church’s only Administrator. Make someone else Administrator first.')
+    await db().from('church_users').delete().eq('church_id', req.params.id).eq('user_id', req.params.userId)
+    res.json({ ok: true })
+  }),
+)
+
+adminRoutes.delete(
+  '/admin/churches/:id',
+  ...staff,
+  route(async (req, res) => {
+    const { data: church } = await db().from('churches').select('name').eq('id', req.params.id).maybeSingle()
+    if (!church) throw new HttpError(404, 'Church not found')
+    if (str(req.body?.confirm).toLowerCase() !== church.name.trim().toLowerCase()) throw new HttpError(400, 'Type the church name exactly to confirm.')
+    await deleteChurch(String(req.params.id))
+    res.json({ ok: true })
+  }),
+)
+
+adminRoutes.get(
+  '/admin/users/:id',
+  ...staff,
+  route(async (req, res) => {
+    const { data, error } = await db().auth.admin.getUserById(String(req.params.id))
+    if (error || !data.user) throw new HttpError(404, 'User not found')
+    const u = data.user
+    const { data: profile } = await db().from('profiles').select('*').eq('id', u.id).maybeSingle()
+    const { data: links } = await db().from('church_users').select('role, created_at, churches(id, name, plan, plan_status)').eq('user_id', u.id)
+    const { data: tickets } = await db().from('support_tickets').select('id, subject, status, updated_at').eq('user_id', u.id).order('updated_at', { ascending: false }).limit(10)
+    res.json({
+      user: {
+        id: u.id, email: u.email, name: profile?.full_name || u.user_metadata?.full_name || '', avatar: profile?.avatar_url ?? null, phone: u.phone || '',
+        createdAt: u.created_at, lastSignIn: u.last_sign_in_at, confirmed: Boolean(u.email_confirmed_at), providers: u.app_metadata?.providers ?? [],
+        suspended: Boolean(u.banned_until && new Date(u.banned_until) > new Date()), staff: isStaff(u.email ?? ''),
+        language: profile?.ui_language ?? 'en', termsVersion: profile?.terms_version ?? null, termsAcceptedAt: profile?.terms_accepted_at ?? null,
+      },
+      churches: (links ?? []).map((l) => ({ ...(l.churches as unknown as { id: string; name: string; plan: string; plan_status: string }), role: l.role, since: l.created_at })),
+      tickets: tickets ?? [],
+    })
+  }),
+)
+
+/** Email a password-reset or one-time sign-in link (sent from ZionDesk via Resend). */
+adminRoutes.post(
+  '/admin/users/:id/link',
+  ...staff,
+  route(async (req, res) => {
+    const type = req.body?.type === 'magiclink' ? 'magiclink' : 'recovery'
+    const { data: u } = await db().auth.admin.getUserById(String(req.params.id))
+    const email = u?.user?.email
+    if (!email) throw new HttpError(404, 'User not found')
+    const redirectTo = `${env.siteUrl}${type === 'recovery' ? '/reset-password' : '/dashboard'}`
+    const { data, error } = await db().auth.admin.generateLink({ type, email, options: { redirectTo } })
+    if (error || !data.properties?.action_link) throw new HttpError(500, error?.message ?? 'Could not create the link')
+    if (!configured.email) throw new HttpError(503, 'Email is not configured (RESEND_API_KEY).')
+    const m = plainMail(type === 'recovery' ? 'Reset your ZionDesk password' : 'Your ZionDesk sign-in link', [type === 'recovery' ? 'Our support team sent you a link to choose a new password. It expires in 1 hour.' : 'Use this one-time link to sign in to ZionDesk. It expires in 1 hour.', 'If you didn’t ask for this, you can ignore this email.'], { url: data.properties.action_link, label: type === 'recovery' ? 'Choose a new password' : 'Sign in' })
+    await sendEmail({ to: email, subject: type === 'recovery' ? 'Reset your ZionDesk password' : 'Sign in to ZionDesk', ...m })
+    res.json({ ok: true, sentTo: email })
+  }),
+)
+
+adminRoutes.delete(
+  '/admin/users/:id',
+  ...staff,
+  route(async (req, res) => {
+    const id = String(req.params.id)
+    if (id === req.caller!.userId) throw new HttpError(400, 'You can’t delete your own account here.')
+    const { data: u } = await db().auth.admin.getUserById(id)
+    if (!u?.user) throw new HttpError(404, 'User not found')
+    if (str(req.body?.confirm).toLowerCase() !== (u.user.email ?? '').toLowerCase()) throw new HttpError(400, 'Type the user’s email exactly to confirm.')
+    const { data: links } = await db().from('church_users').select('church_id, role').eq('user_id', id)
+    for (const l of links ?? []) {
+      if (l.role !== 'admin') continue
+      const { data: team } = await db().from('church_users').select('user_id, role').eq('church_id', l.church_id)
+      const others = (team ?? []).filter((t) => t.user_id !== id)
+      if (others.length && !others.some((t) => t.role === 'admin')) throw new HttpError(409, 'This user is the only Administrator of a church with other team members. Change roles on the church page first.')
+      if (!others.length) await deleteChurch(l.church_id)
+    }
+    const { error } = await db().auth.admin.deleteUser(id)
+    if (error) throw new HttpError(500, error.message)
+    res.json({ ok: true })
+  }),
+)
+
+adminRoutes.get(
+  '/admin/search',
+  ...staff,
+  route(async (req, res) => {
+    const q = str(req.query.q, 60).replace(/[%,()]/g, '')
+    if (q.length < 2) return res.json({ churches: [], users: [] })
+    const { data: churches } = await db().from('churches').select('id, name, location, plan_status').or(`name.ilike.%${q}%,email.ilike.%${q}%,location.ilike.%${q}%`).limit(6)
+    const { data: users } = await db().from('profiles').select('id, full_name, email').or(`full_name.ilike.%${q}%,email.ilike.%${q}%`).limit(6)
+    res.json({ churches: churches ?? [], users: users ?? [] })
+  }),
+)
+
+adminRoutes.get(
+  '/admin/alerts',
+  ...staff,
+  route(async (_req, res) => {
+    const { data: tickets } = await db().from('support_tickets').select('id, subject, name, updated_at, priority').eq('status', 'open').order('updated_at', { ascending: false }).limit(8)
+    const { data: pastDue } = await db().from('churches').select('id, name, plan_renews_at').eq('plan_status', 'past_due').limit(8)
+    const { data: trials } = await db().from('churches').select('id, name, trial_ends_at').eq('plan_status', 'trial').lte('trial_ends_at', new Date(Date.now() + 2 * 864e5).toISOString()).limit(8)
+    res.json({ tickets: tickets ?? [], pastDue: pastDue ?? [], trialsEnding: trials ?? [] })
+  }),
+)
+
+adminRoutes.get(
+  '/admin/settings',
+  ...staff,
+  route(async (_req, res) => {
+    res.json({ announcement: (await getSetting('announcement')) ?? { text: '', active: false, tone: 'info' }, staff: env.adminEmails, supportEmail: env.supportEmail, siteUrl: env.siteUrl, adminUrl: env.adminUrl })
+  }),
+)
+
+adminRoutes.put(
+  '/admin/settings/announcement',
+  ...staff,
+  route(async (req, res) => {
+    const value = { text: str(req.body?.text, 300), active: Boolean(req.body?.active), tone: ['info', 'success', 'warning'].includes(req.body?.tone) ? req.body.tone : 'info', link: str(req.body?.link, 300), by: req.caller!.email, at: new Date().toISOString() }
+    const { error } = await setSetting('announcement', value)
+    if (error) throw new HttpError(500, error.message)
+    res.json({ ok: true })
+  }),
+)
+
+/** Public: the active announcement shown at the top of every church dashboard. */
+adminRoutes.get(
+  '/announcement',
+  route(async (_req, res) => {
+    const a = (await getSetting('announcement').catch(() => null)) as { text?: string; active?: boolean; tone?: string; link?: string; at?: string } | null
+    res.json(a?.active && a.text ? { text: a.text, tone: a.tone ?? 'info', link: a.link ?? '', at: a.at } : null)
+  }),
+)

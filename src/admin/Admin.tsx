@@ -2,13 +2,14 @@
  * ZionDesk staff console (/admin). Only emails listed in ADMIN_EMAILS on the server get data;
  * everyone else sees "Staff only". Internal tool, English only.
  */
-import { BadgePercent, Bell, Building2, CreditCard, Gauge, LayoutGrid, LifeBuoy, LogOut, Maximize2, Search, ShieldCheck, Sparkles, TicketPercent, TriangleAlert, UserRound, Users } from 'lucide-react'
+import { BadgePercent, Building2, CreditCard, Gauge, LayoutGrid, LifeBuoy, LogOut, Maximize2, Settings as SettingsIcon, ShieldCheck, Sparkles, TicketPercent, TriangleAlert, UserRound, Users } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
 import { useSession } from '../lib/session'
 import { Churches, Payments, Promos, Support, System, UsersPage } from './AdminPages'
+import { AdminProfile, AdminSettings, AlertsMenu, AvatarMenu, ChurchDetail, SearchBox, UserDetail } from './AdminDetail'
 import './admin.css'
 
 export interface Overview {
@@ -33,6 +34,7 @@ const NAV = [
   { to: '/admin/support', label: 'Support', icon: LifeBuoy },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard },
   { to: '/admin/system', label: 'System', icon: Gauge },
+  { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
 export const initialsOf = (s: string) =>
@@ -175,6 +177,7 @@ interface PromoRow {
 }
 
 function Dashboard() {
+  const navigate = useNavigate()
   const [o, setO] = useState<Overview | null>(null)
   const [promos, setPromos] = useState<PromoRow[]>([])
   const [error, setError] = useState('')
@@ -228,7 +231,7 @@ function Dashboard() {
               ['max', 'Ministry Max', 'Everything + the ZionDesk design team', 'is-mint'],
             ] as const
           ).map(([k, name, text, tone]) => (
-            <div key={k} className={`adm-plan ${tone}`}>
+            <Link key={k} to={`/admin/churches?plan=${k}`} className={`adm-plan ${tone}`}>
               <h3>{name}</h3>
               <p>{text}</p>
               <footer>
@@ -240,10 +243,10 @@ function Dashboard() {
                 </span>
                 <b>{o.plans[k]}</b>
               </footer>
-            </div>
+            </Link>
           ))}
         </Card>
-        <Card title="Growth" sub="New churches and online gifts, last 6 months" action={<span className="adm-chip">Monthly</span>}>
+        <Card title="Growth" sub="New churches and online gifts, last 6 months" action={<Link to="/admin/payments" className="adm-chip">Payments →</Link>}>
           <div className="adm-legend">
             <span>
               <i style={{ background: '#8b6cf6' }} />
@@ -263,7 +266,7 @@ function Dashboard() {
       </div>
 
       <div className="adm-grid-b">
-        <Card title="Subscription health" sub="Where every church is in its billing cycle" action={<span className="adm-chip">All time</span>}>
+        <Card title="Subscription health" sub="Where every church is in its billing cycle" action={<Link to="/admin/churches" className="adm-chip">All churches →</Link>}>
           <div className="adm-rows">
             {(
               [
@@ -274,7 +277,7 @@ function Dashboard() {
                 ['expired', 'Expired', UserRound],
               ] as const
             ).map(([k, label, Icon]) => (
-              <div key={k} className="adm-row">
+              <Link key={k} to={`/admin/churches?status=${k}`} className="adm-row adm-click">
                 <i className="ico">
                   <Icon size={16} />
                 </i>
@@ -285,7 +288,7 @@ function Dashboard() {
                   </div>
                 </div>
                 <b>{pct(o.status[k])}%</b>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>
@@ -295,7 +298,7 @@ function Dashboard() {
               .sort((a, b) => b.redemptions - a.redemptions)
               .slice(0, 4)
               .map((p, i) => (
-                <div key={p.id}>
+                <Link key={p.id} to="/admin/promos" className="adm-click">
                   <span className={`av ${['is-lav', 'is-sky', 'is-mint', 'is-peach'][i % 4]}`}>{p.kind === 'percent' ? `${p.percent_off}%` : `${p.free_days}d`}</span>
                   <span>
                     <b>{p.code}</b>
@@ -304,7 +307,7 @@ function Dashboard() {
                     </small>
                   </span>
                   <b className="num">{p.redemptions}</b>
-                </div>
+                </Link>
               ))}
             {!promos.length && <p className="adm-empty">No promo codes yet — create one in Promo codes.</p>}
           </div>
@@ -316,7 +319,7 @@ function Dashboard() {
           <table className="adm-table">
             <tbody>
               {o.recent.map((c) => (
-                <tr key={c.id}>
+                <tr key={c.id} className="adm-click" onClick={() => navigate(`/admin/churches/${c.id}`)}>
                   <td>
                     <b>{c.name}</b>
                     <small>{fmtDay(c.created_at)}</small>
@@ -366,7 +369,7 @@ export default function Admin() {
 const DEMO = import.meta.env.DEV && new URLSearchParams(location.search).has('demo')
 if (DEMO) await import('./demo')
 
-function Shell({ name }: { name: string }) {
+function Shell(_props: { name: string }) {
   const session = useSession()
   const navigate = useNavigate()
   return (
@@ -388,15 +391,9 @@ function Shell({ name }: { name: string }) {
             ))}
           </nav>
           <div className="adm-tools">
-            <button type="button" className="adm-circle" aria-label="Search churches" onClick={() => navigate('/admin/churches')}>
-              <Search size={17} />
-            </button>
-            <button type="button" className="adm-circle" aria-label="Support tickets" onClick={() => navigate('/admin/support')}>
-              <Bell size={17} />
-            </button>
-            <span className="adm-avatar" title={name}>
-              {session.avatarUrl ? <img src={session.avatarUrl} alt="" /> : initialsOf(name)}
-            </span>
+            <SearchBox />
+            <AlertsMenu />
+            <AvatarMenu />
           </div>
         </header>
         <aside className="adm-rail">
@@ -433,6 +430,10 @@ function Shell({ name }: { name: string }) {
             <Route path="support" element={<Support />} />
             <Route path="payments" element={<Payments />} />
             <Route path="system" element={<System />} />
+            <Route path="churches/:id" element={<ChurchDetail />} />
+            <Route path="users/:id" element={<UserDetail />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="profile" element={<AdminProfile />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </main>

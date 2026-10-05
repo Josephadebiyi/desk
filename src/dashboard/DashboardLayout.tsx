@@ -77,6 +77,51 @@ function useTrial() {
   return { ...trial, left }
 }
 
+/** Platform announcement set by ZionDesk staff in /admin → Settings (dismissible per message). */
+function AnnouncementBar() {
+  const [a, setA] = useState<{ text: string; tone: string; link: string; at?: string } | null>(null)
+  const [hidden, setHidden] = useState(false)
+  useEffect(() => {
+    fetch('/api/announcement')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return
+        try {
+          if (localStorage.getItem('ziondesk-announcement-hidden') === d.at) return
+        } catch {
+          /* ignore */
+        }
+        setA(d)
+      })
+      .catch(() => {})
+  }, [])
+  if (!a || hidden) return null
+  return (
+    <div className={`d-announce is-${a.tone}`}>
+      <span>{a.text}</span>
+      {a.link && (
+        <a href={a.link} className="d-trial-cta">
+          →
+        </a>
+      )}
+      <button
+        type="button"
+        aria-label="Hide"
+        onClick={() => {
+          setHidden(true)
+          try {
+            localStorage.setItem('ziondesk-announcement-hidden', a.at ?? '')
+          } catch {
+            /* ignore */
+          }
+        }}
+      >
+        <X size={14} />
+      </button>
+    </div>
+  )
+}
+
 function TrialBanner() {
   const trial = useTrial()
   const { live, settings } = useWorkspace()
@@ -169,6 +214,7 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
   const [menu, setMenu] = useState(false)
   return (
     <div className={`dash ${preview ? 'is-preview' : ''}`}>
+      {!preview && <AnnouncementBar />}
       {!preview && <TrialBanner />}
       {!preview && <LanguagePopup />}
       <header className="d-top">

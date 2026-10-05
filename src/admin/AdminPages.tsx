@@ -1,6 +1,7 @@
 import { Ban, CheckCircle2, Plus, RotateCcw, Search, Send, XCircle } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { downloadCsv } from './AdminDetail'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
 import { Card, fmtDay, Head } from './Admin'
@@ -40,6 +41,10 @@ interface ChurchRow {
 }
 
 export function Churches() {
+  const navigate = useNavigate()
+  const [sp, setSp] = useSearchParams()
+  const fStatus = sp.get('status') ?? ''
+  const fPlan = sp.get('plan') ?? ''
   const [q, setQ] = useState('')
   const dq = useDebounced(q)
   const [rows, setRows] = useState<ChurchRow[] | null>(null)
@@ -49,6 +54,7 @@ export function Churches() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dq])
+  const shown = (rows ?? []).filter((c) => (!fStatus || c.plan_status === fStatus) && (!fPlan || c.plan === fPlan))
   const patch = async (id: string, body: Record<string, unknown>, done: string) => {
     setMsg('')
     try {
@@ -68,7 +74,27 @@ export function Churches() {
         </label>
       </Head>
       {msg && <p className="adm-ok">{msg}</p>}
-      <Card title={`${rows?.length ?? '…'} churches`}>
+      <div className="adm-toolbar">
+        {(['', ...STATUSES] as string[]).map((st) => (
+          <button key={st || 'all'} type="button" className={`adm-chip ${fStatus === st ? 'is-on' : ''}`} onClick={() => setSp(st ? { status: st } : {})}>
+            {st ? st.replace('_', ' ') : 'all'} {rows ? `(${(rows ?? []).filter((c) => !st || c.plan_status === st).length})` : ''}
+          </button>
+        ))}
+        {fPlan && (
+          <button type="button" className="adm-chip is-on" onClick={() => setSp({})}>
+            {PLAN_LABEL[fPlan]} ✕
+          </button>
+        )}
+      </div>
+      <Card
+        title={`${shown.length} churches`}
+        sub="Click a church to open it"
+        action={
+          <button type="button" className="adm-chip" onClick={() => downloadCsv('ziondesk-churches', shown.map(({ id, name, location, email, currency, plan, plan_status, plan_renews_at, trial_ends_at, created_at, members, team, admins }) => ({ id, name, location, email, currency, plan, plan_status, plan_renews_at, trial_ends_at, created_at, members, team, admins: admins.join(' ') })))}>
+            Export CSV
+          </button>
+        }
+      >
         <div className="adm-table-wrap">
           <table className="adm-table">
             <thead>
@@ -83,8 +109,8 @@ export function Churches() {
               </tr>
             </thead>
             <tbody>
-              {(rows ?? []).map((c) => (
-                <tr key={c.id}>
+              {shown.map((c) => (
+                <tr key={c.id} className="adm-click" onClick={(e) => !(e.target as HTMLElement).closest('select,button') && navigate(`/admin/churches/${c.id}`)}>
                   <td>
                     <b>{c.name}</b>
                     <small>
@@ -153,6 +179,7 @@ interface UserRow {
 }
 
 export function UsersPage() {
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const dq = useDebounced(q)
   const [page, setPage] = useState(1)
@@ -181,7 +208,7 @@ export function UsersPage() {
         </label>
       </Head>
       {msg && <p className="adm-err">{msg}</p>}
-      <Card title="Accounts" sub={data ? `Page ${page}` : 'Loading…'} action={<div className="adm-toolbar"><button type="button" className="adm-chip" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><button type="button" className="adm-chip" disabled={!data?.more} onClick={() => setPage(page + 1)}>Next</button></div>}>
+      <Card title="Accounts" sub={data ? `Page ${page}` : 'Loading…'} action={<div className="adm-toolbar"><button type="button" className="adm-chip" onClick={() => downloadCsv('ziondesk-users', (data?.users ?? []).map((u) => ({ id: u.id, name: u.name, email: u.email, churches: u.churches.map((c) => `${c.name} (${c.role})`).join('; '), joined: u.createdAt, lastSignIn: u.lastSignIn ?? '', confirmed: u.confirmed, suspended: u.suspended })))}>Export CSV</button><button type="button" className="adm-chip" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><button type="button" className="adm-chip" disabled={!data?.more} onClick={() => setPage(page + 1)}>Next</button></div>}>
         <div className="adm-table-wrap">
           <table className="adm-table">
             <thead>
@@ -196,7 +223,7 @@ export function UsersPage() {
             </thead>
             <tbody>
               {(data?.users ?? []).map((u) => (
-                <tr key={u.id}>
+                <tr key={u.id} className="adm-click" onClick={(e) => !(e.target as HTMLElement).closest('button') && navigate(`/admin/users/${u.id}`)}>
                   <td>
                     <b>{u.name || '—'}</b>
                     <small>
@@ -564,10 +591,12 @@ interface PaymentRow {
   email: string
   promo_code: string | null
   created_at: string
+  church_id: string
   churches: { name: string } | null
 }
 
 export function Payments() {
+  const navigate = useNavigate()
   const [rows, setRows] = useState<PaymentRow[] | null>(null)
   const [kind, setKind] = useState<'' | 'subscription' | 'gift'>('')
   useEffect(() => {
@@ -585,7 +614,7 @@ export function Payments() {
           ))}
         </div>
       </Head>
-      <Card title={`${list.length} payments`}>
+      <Card title={`${list.length} payments`} action={<button type="button" className="adm-chip" onClick={() => downloadCsv('ziondesk-payments', list.map((p) => ({ date: p.created_at, church: p.churches?.name ?? '', type: p.kind, plan: p.plan ?? '', fund: p.fund ?? '', amount: p.amount, currency: p.currency, payer: p.email, status: p.status, promo: p.promo_code ?? '' })))}>Export CSV</button>}>
         <div className="adm-table-wrap">
           <table className="adm-table">
             <thead>
@@ -600,7 +629,7 @@ export function Payments() {
             </thead>
             <tbody>
               {list.map((p) => (
-                <tr key={p.id}>
+                <tr key={p.id} className="adm-click" onClick={() => p.church_id && navigate(`/admin/churches/${p.church_id}`)}>
                   <td>{fmtDay(p.created_at)}</td>
                   <td>{p.churches?.name ?? '—'}</td>
                   <td>

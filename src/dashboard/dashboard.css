@@ -927,3 +927,8 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .hp-thread p.is-staff { background: color-mix(in srgb, var(--lime) 25%, transparent); }
 .hp-thread form { display: flex; gap: 8px; }
 .hp-thread input { flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--d-line, rgba(0,0,0,.1)); background: transparent; color: inherit; font: inherit; }
+.d-announce { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 9px 44px; font-size: 13.5px; font-weight: 600; position: relative; background: #ece6ff; color: #4a1bd8; }
+.d-announce.is-success { background: #ddf5d3; color: #1d6b3b; }
+.d-announce.is-warning { background: #fff1c7; color: #8a5a00; }
+.d-announce .d-trial-cta { color: inherit; }
+.d-announce button { position: absolute; right: 12px; top: 50%; translate: 0 -50%; background: none; border: 0; color: inherit; opacity: .6; display: grid; cursor: pointer; }
