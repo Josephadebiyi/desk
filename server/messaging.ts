@@ -12,6 +12,7 @@ import { db } from './db'
 import { configured, env } from './env'
 import { compose, sendEmails } from './mail'
 import { sendWhatsApp } from './whatsapp'
+import { withChurchName } from '../src/emails/sender'
 
 const TPL: Record<EmailLang, Record<string, string>> = { en: enTpl, es: esTpl, fr: frTpl, de: deTpl, pt: ptTpl }
 const LOCALE: Record<EmailLang, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
@@ -119,7 +120,8 @@ export async function sendCampaign(campaignId: string, byName: string) {
   } else {
     const ready = channel === 'SMS' ? configured.sms : configured.whatsapp
     for (const m of recipients) {
-      const { lang, text } = textFor(m)
+      const { lang, text: raw } = textFor(m)
+      const text = withChurchName(raw, churchName)
       const to = phoneOf(channel === 'WhatsApp' ? m.whatsapp : m.phone)
       let status = 'queued'
       let providerId: string | undefined

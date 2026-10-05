@@ -8,6 +8,7 @@ import { can } from './types'
 import { useWorkspace, type Audience, type Channel } from './workspace'
 import { LANGS, localeOf, translate, useT, type Lang } from '../i18n'
 import { Flag } from '../i18n/Flags'
+import { withChurchName } from '../emails/sender'
 
 /** Built-in templates (text lives in locales/<lang>/tpl.ts; admins can override per language). */
 const TEMPLATE_KEYS = ['welcome', 'sunday', 'reminder', 'meetingInvite', 'birthday', 'thanks', 'announcement', 'departmentMeeting'] as const
@@ -139,7 +140,9 @@ export default function Messaging() {
   const group = groups.find(([l]) => l === viewLang)?.[1] ?? []
   const sampleName = (group[0] ?? recipients[0])?.fullName.split(' ')[0] ?? 'Grace'
   const render = (s: string) => s.replace(/\{first_name\}/g, sampleName).replace(/\{church\}/g, settings.churchName)
-  const shown = render(textFor(viewLang))
+  const rendered = render(textFor(viewLang))
+  // SMS / WhatsApp come from the shared ZionDesk sender, so the church name leads every message.
+  const shown = channel === 'Email' || !rendered ? rendered : withChurchName(rendered, settings.churchName)
   const segments = Math.max(1, Math.ceil(shown.length / 160))
 
   const send = () => {
@@ -316,7 +319,7 @@ export default function Messaging() {
         <section className="m-preview-wrap">
           <div className={`m-phone ch-${channel.toLowerCase()}`}>
             <div className="m-phone-top">
-              <b>{channel === 'Email' ? settings.email : settings.churchName}</b>
+              <b>{channel === 'Email' ? settings.email : 'ZionDesk'}</b>
               <small>
                 {channel} · <Flag lang={viewLang} size={12} /> {langName(viewLang)}
               </small>

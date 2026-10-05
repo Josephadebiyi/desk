@@ -11,6 +11,7 @@ import { compose, sendEmails } from './mail'
 import { audienceMembers, sendCampaign, type Audience } from './messaging'
 import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
+import { withChurchName } from '../src/emails/sender'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
 
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
@@ -102,7 +103,7 @@ async function runBirthdays() {
         mails.push(prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }) : compose('birthday', lang, m.email, { church: name(churchId), name: first }))
         rows.push({ church_id: churchId, member_id: m.id, channel: 'Email', language: lang, to_address: m.email, status: 'sent', provider_id: stamp, body: prayer ?? null })
       } else if (m.whatsapp && configured.whatsapp) {
-        const text = `🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]} — ${name(churchId)}`
+        const text = withChurchName(`🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]}`, name(churchId))
         try {
           await sendWhatsApp(m.whatsapp, text, lang)
           rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'sent', provider_id: stamp, body: text })
