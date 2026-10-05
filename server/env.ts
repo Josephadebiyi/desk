@@ -72,7 +72,8 @@ export const env = {
   // Staff console on its own domain, e.g. https://admin.ziondesk.com (optional; used in staff emails)
   adminUrl: (v('ADMIN_URL') || '').replace(/\/$/, ''),
   // Platform admin console (/admin): comma-separated emails of ZionDesk staff
-  adminEmails: v('ADMIN_EMAILS').toLowerCase().split(',').map((e) => e.trim()).filter(Boolean),
+  // Tolerant of how it's pasted: commas, semicolons or spaces; quotes; a stray "ADMIN_EMAILS=" prefix.
+  adminEmails: (v('ADMIN_EMAILS').toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g) ?? []) as string[],
 
   // Protects the cron endpoints (Render Cron Job sends it as a Bearer token)
   cronSecret: v('CRON_SECRET'),

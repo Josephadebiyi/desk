@@ -84,6 +84,7 @@ app.get('/api/health', (_req, res) =>
     ok: true,
     ...configured,
     commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7),
+    staffAccounts: env.adminEmails.length, // how many valid staff emails ADMIN_EMAILS contains (never the emails)
     env: Object.fromEntries(ENV_NAMES.map((k) => [k, Boolean(process.env[k]?.trim())])),
     unknownKeys: Object.keys(process.env).filter((k) => /SUPABASE|FLW|FLUTTER|ANTHROPIC|RESEND|WHATSAPP|GEMINI|GOOGLE|ADMIN/i.test(k) && !ENV_NAMES.includes(k)),
   }),
