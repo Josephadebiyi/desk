@@ -50,16 +50,18 @@ const allowedOrigins = new Set(
       }
     }),
 )
+// Any https://*.ziondesk.com address is ours (main site, admin domain, future subdomains).
+const isOurs = (origin: string) => allowedOrigins.has(origin) || /^https:\/\/([a-z0-9-]+\.)?ziondesk\.com$/i.test(origin)
 app.use((req, res, next) => {
   const origin = req.headers.origin
-  if (origin && allowedOrigins.has(origin)) {
+  if (origin && isOurs(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
     res.setHeader('Vary', 'Origin')
     res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, x-church-id')
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
     res.setHeader('Access-Control-Max-Age', '86400')
   }
-  if (req.method === 'OPTIONS') return res.sendStatus(origin && allowedOrigins.has(origin) ? 204 : 403)
+  if (req.method === 'OPTIONS') return res.sendStatus(origin && isOurs(origin) ? 204 : 403)
   next()
 })
 

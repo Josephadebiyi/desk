@@ -346,7 +346,7 @@ function Dashboard() {
 
 export default function Admin() {
   const session = useSession()
-  const [state, setState] = useState<'loading' | 'staff' | 'denied' | 'unconfigured'>('loading')
+  const [state, setState] = useState<'loading' | 'staff' | 'denied' | 'unconfigured' | 'offline'>('loading')
   useEffect(() => {
     document.title = 'ZionDesk Admin'
   }, [])
@@ -354,7 +354,7 @@ export default function Admin() {
     if (!session.session) return
     api<{ admin: boolean; configured: boolean }>('/admin/me')
       .then((r) => setState(r.admin ? 'staff' : r.configured ? 'denied' : 'unconfigured'))
-      .catch(() => setState('denied'))
+      .catch((e) => setState(/sign in|session/i.test(String(e?.message)) ? 'denied' : 'offline'))
   }, [session.session])
 
   if (DEMO) return <Shell name="Demo admin" />
@@ -363,6 +363,8 @@ export default function Admin() {
   if (!session.session) return <Navigate to="/login?next=/admin" replace />
   if (state === 'loading') return <Gate title="Checking access…" />
   if (state === 'unconfigured') return <Gate title="Staff console not set up" text="Add ADMIN_EMAILS (your staff emails, comma-separated) in Render → Environment, then redeploy." />
+  if (state === 'offline')
+    return <Gate title="Can’t reach the ZionDesk server" text="The server didn’t answer or blocked this address. If this is a new admin domain, add it as ADMIN_URL on Render and redeploy, then refresh." />
   if (state === 'denied') return <Gate title="Staff only" text={`${session.email} isn’t a ZionDesk staff account.`} />
 
   return <Shell name={session.name || session.email} />
