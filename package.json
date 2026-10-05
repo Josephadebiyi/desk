@@ -16,7 +16,8 @@
     "promo": "bash promo/build.sh",
     "promo:voice": "node promo/voice.mjs",
     "promo:stills": "node promo/stills.mjs",
-    "build:hostinger": "VITE_API_URL=${VITE_API_URL:-https://desk-noae.onrender.com} vite build && cd dist && rm -f ../ziondesk-hostinger.zip && zip -qr ../ziondesk-hostinger.zip . -x '*.DS_Store' && echo '→ ziondesk-hostinger.zip (upload its contents to public_html)'"
+    "build:hostinger": "VITE_API_URL=${VITE_API_URL:-https://desk-noae.onrender.com} vite build && cd dist && rm -f ../ziondesk-hostinger.zip && zip -qr ../ziondesk-hostinger.zip . -x '*.DS_Store' && echo '→ ziondesk-hostinger.zip (upload its contents to public_html)'",
+    "build:admin": "VITE_ADMIN_ONLY=1 VITE_API_URL=${VITE_API_URL:-https://desk-noae.onrender.com} vite build --outDir dist-admin --emptyOutDir && sed -i '' 's|<If \"%{HTTP_HOST} =~ /^admin\\\\./\">|<If \"true\">|' dist-admin/.htaccess && cd dist-admin && rm -f ../ziondesk-admin.zip && zip -qr ../ziondesk-admin.zip . -x '*.DS_Store' && echo '→ ziondesk-admin.zip (upload its contents to the admin domain folder)'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",

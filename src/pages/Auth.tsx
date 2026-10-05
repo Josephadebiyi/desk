@@ -31,6 +31,7 @@ import {
   type GoogleProfile,
   type PlanId,
 } from '../lib/auth'
+import { isAdminHost } from '../lib/site'
 import { supabase } from '../lib/supabase'
 import './auth.css'
 import { tr, useT } from '../i18n'
@@ -329,7 +330,7 @@ export function Login() {
   const google = useGoogleEnabled()
   // Only same-site paths (e.g. /admin) are allowed as the post-login destination.
   const [search] = useSearchParams()
-  const dest = /^\/(admin|dashboard)(\/|$)/.test(search.get('next') ?? '') ? search.get('next')! : window.location.hostname.startsWith('admin.') ? '/admin' : '/dashboard'
+  const dest = /^\/(admin|dashboard)(\/|$)/.test(search.get('next') ?? '') ? search.get('next')! : isAdminHost() ? '/admin' : '/dashboard'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -914,7 +915,7 @@ export function ResetPassword() {
     setNotice(null)
     try {
       await updatePassword(password)
-      navigate(window.location.hostname.startsWith('admin.') ? '/admin' : '/dashboard', { replace: true })
+      navigate(isAdminHost() ? '/admin' : '/dashboard', { replace: true })
     } catch (err) {
       setNotice(notConnected(err))
     } finally {

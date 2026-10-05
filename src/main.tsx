@@ -23,19 +23,17 @@ import Settings from './dashboard/Settings.tsx'
 import Help from './dashboard/Help.tsx'
 import Links from './dashboard/Links.tsx'
 import { GivePage, JoinPage } from './pages/Public.tsx'
+import { isAdminHost } from './lib/site'
 
 // Staff console: separate chunk, only downloaded by staff.
 const Admin = lazy(() => import('./admin/Admin.tsx'))
 
 /**
  * Staff console on its own domain (e.g. admin.ziondesk.com → same Render service).
- * Any host starting with "admin." (or VITE_ADMIN_HOST) only serves /admin and /login.
+ * Any host starting with "admin.", VITE_ADMIN_HOST, or an admin-only build (npm run build:admin)
+ * only serves /admin, /login and password reset.
  */
-const ADMIN_HOST = (() => {
-  const h = window.location.hostname
-  const configured = (import.meta.env.VITE_ADMIN_HOST as string | undefined)?.trim()
-  return configured ? h === configured : h.startsWith('admin.')
-})()
+const ADMIN_HOST = isAdminHost()
 if (ADMIN_HOST) {
   document.title = 'ZionDesk Admin'
   const meta = document.createElement('meta')

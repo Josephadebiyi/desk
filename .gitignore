@@ -31,3 +31,5 @@ render.env
 # rendered video, frames and audio
 promo/out/
 ziondesk-hostinger.zip
+ziondesk-admin.zip
+dist-admin

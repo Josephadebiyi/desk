@@ -11,3 +11,15 @@ export function publicOrigin(): string {
   if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.localhost')) return window.location.origin
   return 'https://ziondesk.com'
 }
+
+/**
+ * True when this copy of the app is the staff console: an admin-only build (VITE_ADMIN_ONLY=1,
+ * e.g. uploaded to its own domain), the host in VITE_ADMIN_HOST, or any "admin." address.
+ */
+export function isAdminHost(): boolean {
+  if (import.meta.env.VITE_ADMIN_ONLY === '1') return true
+  if (typeof window === 'undefined') return false
+  const h = window.location.hostname
+  const configured = (import.meta.env.VITE_ADMIN_HOST as string | undefined)?.trim()
+  return configured ? h === configured : h.startsWith('admin.')
+}
