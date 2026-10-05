@@ -340,7 +340,6 @@ function Dashboard() {
 
 export default function Admin() {
   const session = useSession()
-  const navigate = useNavigate()
   const [state, setState] = useState<'loading' | 'staff' | 'denied' | 'unconfigured'>('loading')
   useEffect(() => {
     document.title = 'ZionDesk Admin'
@@ -352,6 +351,7 @@ export default function Admin() {
       .catch(() => setState('denied'))
   }, [session.session])
 
+  if (DEMO) return <Shell name="Demo admin" />
   if (!session.remote) return <Gate title="Admin needs the live backend" text="Connect Supabase (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY) to use the staff console." />
   if (session.loading) return <Gate title="Loading…" />
   if (!session.session) return <Navigate to="/login?next=/admin" replace />
@@ -359,7 +359,16 @@ export default function Admin() {
   if (state === 'unconfigured') return <Gate title="Staff console not set up" text="Add ADMIN_EMAILS (your staff emails, comma-separated) in Render → Environment, then redeploy." />
   if (state === 'denied') return <Gate title="Staff only" text={`${session.email} isn’t a ZionDesk staff account.`} />
 
-  const name = session.name || session.email
+  return <Shell name={session.name || session.email} />
+}
+
+// Development only: `/admin?demo` shows the console with sample data (stripped from production builds).
+const DEMO = import.meta.env.DEV && new URLSearchParams(location.search).has('demo')
+if (DEMO) await import('./demo')
+
+function Shell({ name }: { name: string }) {
+  const session = useSession()
+  const navigate = useNavigate()
   return (
     <div className="adm">
       <div className="adm-frame">
