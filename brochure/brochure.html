@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ZionDesk — Church management made simple</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --purple: #6c34ff; --purple-2: #5a24e8; --lav: #b9a2ff; --lime: #c4ec62; --ink: #111015; --muted: #5d5a68; --line: #ece9f5; --bg: #f6f4fb;
+  }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: Inter, Helvetica, Arial, sans-serif; color: var(--ink); }
+  .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  .pad { padding: 18mm 16mm; }
+  h1, h2, h3 { margin: 0; }
+  .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; }
+  .kicker { display: inline-block; padding: 5px 12px; border-radius: 999px; background: var(--lime); color: #18210a; font-size: 9.5pt; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .kicker.dark { background: var(--ink); color: var(--lime); }
+  .kicker.purple { background: rgba(108,52,255,.1); color: var(--purple); }
+  p { margin: 0; line-height: 1.55; }
+  .muted { color: var(--muted); }
+  .foot { position: absolute; left: 16mm; right: 16mm; bottom: 10mm; display: flex; justify-content: space-between; font-size: 8.5pt; color: #9a97a6; }
+  .foot b { color: var(--purple); }
+
+  /* Cover */
+  .cover { background: radial-gradient(120% 70% at 85% 0%, #e4f7b6 0%, rgba(228,247,182,0) 55%), radial-gradient(90% 60% at 0% 10%, #e3d9ff 0%, rgba(227,217,255,0) 60%), #f7f5fc; }
+  .cover .logo { height: 34px; }
+  .cover h1 { font-size: 44pt; line-height: 1.02; letter-spacing: -.01em; margin-top: 12mm; }
+  .cover h1 em { color: var(--purple); font-style: italic; }
+  .cover .lead { font-size: 12.5pt; max-width: 160mm; margin-top: 6mm; color: #3c3a44; }
+  .cover .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 7mm; position: relative; z-index: 2; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; background: #fff; box-shadow: 0 1px 0 var(--line); font-size: 10pt; font-weight: 600; }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); display: inline-block; }
+  .chip.l i { background: #8ab82a; }
+  .hero { position: absolute; left: 16mm; width: 205mm; bottom: 18mm; }
+  .hero .frame { border-radius: 18px; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(40,20,110,.35), 0 0 0 1px rgba(17,16,21,.05); background: #fff; }
+  .hero .bar { height: 26px; background: #fff; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+  .hero .bar span { width: 9px; height: 9px; border-radius: 50%; background: #e2dfea; }
+  .hero img { display: block; width: 100%; }
+  .phone { position: absolute; width: 50mm; border-radius: 26px; overflow: hidden; border: 6px solid var(--ink); box-shadow: 0 24px 50px -16px rgba(20,10,60,.45); background: #fff; }
+  .phone img { display: block; width: 100%; }
+  .cover .phone { right: 14mm; bottom: 12mm; transform: rotate(4deg); }
+  .cover .tag { position: absolute; left: 16mm; bottom: 9mm; font-size: 9pt; color: #6c6878; }
+
+  /* Why */
+  .why h2 { font-size: 27pt; line-height: 1.08; margin-top: 5mm; }
+  .why .intro { font-size: 11pt; margin-top: 4mm; max-width: 175mm; }
+  .pairs { display: grid; gap: 3.5mm; margin-top: 7mm; }
+  .pair { display: grid; grid-template-columns: 1fr 12mm 1fr; align-items: stretch; }
+  .pair .from, .pair .to { padding: 4mm 5mm; border-radius: 16px; font-size: 9.8pt; line-height: 1.45; }
+  .pair .from { background: var(--bg); color: #4a4756; }
+  .pair .from b { display: block; color: var(--ink); margin-bottom: 1mm; font-size: 11pt; }
+  .pair .to { background: var(--purple); color: #fff; }
+  .pair .to b { display: block; margin-bottom: 1mm; font-size: 11pt; color: var(--lime); }
+  .pair .arrow { display: grid; place-items: center; color: var(--purple); font-size: 18pt; font-weight: 800; }
+  .quote { margin-top: 7mm; padding: 6mm 8mm; border-radius: 20px; background: var(--ink); color: #fff; display: grid; grid-template-columns: 1.1fr 1fr; gap: 8mm; align-items: center; }
+  .quote .big { font-size: 20pt; line-height: 1.15; }
+  .quote .big em { color: var(--lime); font-style: italic; }
+
+  /* Features */
+  .feat-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10mm; }
+  .feat-head h2 { font-size: 27pt; line-height: 1.08; margin-top: 5mm; }
+  .feat-head p { max-width: 70mm; font-size: 10.5pt; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3.5mm; margin-top: 6mm; }
+  .f { padding: 4.5mm 5mm; border-radius: 18px; background: var(--bg); display: grid; grid-template-columns: 12mm 1fr; gap: 4mm; align-items: start; }
+  .f .ico { width: 12mm; height: 12mm; border-radius: 12px; display: grid; place-items: center; background: #fff; }
+  .f .ico svg { width: 6mm; height: 6mm; stroke: var(--purple); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .f h3 { font-size: 12pt; margin-bottom: 1.2mm; }
+  .f p { font-size: 9.2pt; color: var(--muted); line-height: 1.45; }
+  .f.hl { background: var(--purple); color: #fff; }
+  .f.hl p { color: #e6dcff; }
+  .f.hl .ico { background: rgba(255,255,255,.15); }
+  .f.hl .ico svg { stroke: var(--lime); }
+  .f.lm { background: var(--lime); }
+  .f.lm p { color: #3b4a10; }
+  .shot-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; margin-top: 5mm; }
+  .shot-strip img { width: 100%; height: 42mm; object-fit: cover; object-position: top left; border-radius: 12px; box-shadow: 0 10px 24px -12px rgba(40,20,110,.35); border: 1px solid var(--line); }
+
+  /* Sunday */
+  .sunday { background: linear-gradient(180deg, #17112e 0%, #241a52 100%); color: #fff; }
+  .sunday h2 { font-size: 32pt; line-height: 1.08; margin-top: 6mm; max-width: 170mm; }
+  .sunday h2 em { color: var(--lime); font-style: italic; }
+  .sunday .intro { color: #cfc7ee; font-size: 12pt; margin-top: 5mm; max-width: 120mm; }
+  .steps { margin-top: 9mm; display: grid; gap: 5mm; width: 96mm; }
+  .step { display: grid; grid-template-columns: 11mm 1fr; gap: 4mm; align-items: start; }
+  .step .n { width: 11mm; height: 11mm; border-radius: 50%; background: var(--lime); color: #18210a; display: grid; place-items: center; font-weight: 800; font-size: 12pt; }
+  .step h3 { font-size: 12.5pt; margin-bottom: 1mm; }
+  .step p { font-size: 10pt; color: #cfc7ee; }
+  .sunday .phone { right: 36mm; top: 84mm; width: 46mm; border-color: #000; transform: rotate(-4deg); }
+  .sunday .phone.two { right: 8mm; top: 116mm; width: 44mm; transform: rotate(5deg); }
+  .sunday .note { position: absolute; left: 16mm; right: 16mm; bottom: 20mm; padding: 6mm 7mm; border-radius: 18px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); font-size: 10.5pt; color: #e4defa; }
+  .sunday .note b { color: var(--lime); }
+  .sunday .foot { color: #8f86b8; }
+
+  /* Plans */
+  .plans-head { text-align: center; }
+  .plans-head h2 { font-size: 32pt; margin-top: 5mm; }
+  .plans-head p { margin-top: 3mm; font-size: 11.5pt; }
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4.5mm; margin-top: 9mm; align-items: stretch; }
+  .plan { border-radius: 22px; padding: 7mm 6mm; background: var(--bg); display: flex; flex-direction: column; }
+  .plan.mid { background: var(--lime); }
+  .plan.top { background: var(--ink); color: #fff; }
+  .plan .name { font-size: 15pt; font-weight: 800; }
+  .plan .blurb { font-size: 9.5pt; margin-top: 1mm; opacity: .75; }
+  .plan .price { margin: 6mm 0 5mm; display: flex; align-items: flex-start; gap: 1mm; }
+  .plan .price sup { font-size: 14pt; font-weight: 700; margin-top: 2mm; }
+  .plan .price b { font-size: 40pt; line-height: 1; letter-spacing: -.02em; }
+  .plan .price em { font-style: normal; font-size: 14pt; font-weight: 700; margin-top: 2mm; }
+  .plan .price span { align-self: flex-end; font-size: 10pt; opacity: .7; margin-left: 1mm; }
+  .plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.4mm; font-size: 9.6pt; line-height: 1.4; }
+  .plan li { display: grid; grid-template-columns: 4.5mm 1fr; gap: 2mm; }
+  .plan li::before { content: '✓'; font-weight: 800; color: var(--purple); }
+  .plan.top li::before { color: var(--lime); }
+  .plan .badge { align-self: flex-start; margin-bottom: 3mm; padding: 3px 10px; border-radius: 999px; font-size: 8pt; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: var(--ink); color: var(--lime); }
+  .plan.top .badge { background: var(--lime); color: #18210a; }
+  .plan .best { margin-top: auto; padding-top: 5mm; font-size: 9pt; font-weight: 600; opacity: .8; }
+  .trial { margin-top: 7mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+  .trial div { padding: 5mm; border-radius: 16px; background: var(--bg); font-size: 9.5pt; line-height: 1.45; }
+  .trial b { display: block; font-size: 11pt; margin-bottom: 1mm; color: var(--purple); }
+  .fine { margin-top: 5mm; font-size: 8.5pt; color: #8b8896; text-align: center; }
+
+  /* Subscribe */
+  .sub h2 { font-size: 28pt; line-height: 1.08; margin-top: 5mm; }
+  .road { margin-top: 7mm; display: grid; gap: 3mm; }
+  .r { display: grid; grid-template-columns: 14mm 1fr; gap: 5mm; padding: 4mm 5mm; border-radius: 18px; background: var(--bg); align-items: center; }
+  .r .n { width: 14mm; height: 14mm; border-radius: 16px; background: var(--purple); color: #fff; display: grid; place-items: center; font-size: 18pt; font-family: 'DM Serif Display', Georgia, serif; }
+  .r:nth-child(even) .n { background: var(--lime); color: #18210a; }
+  .r h3 { font-size: 12.5pt; margin-bottom: 1mm; }
+  .r p { font-size: 10pt; color: var(--muted); }
+  .r code { font-family: Inter, sans-serif; font-weight: 700; color: var(--purple); }
+  .cta { position: absolute; left: 16mm; right: 16mm; bottom: 20mm; border-radius: 24px; padding: 8mm; background: linear-gradient(135deg, #7b45ff 0%, #5a24e8 100%); color: #fff; display: grid; grid-template-columns: 1fr 36mm; gap: 8mm; align-items: center; }
+  .cta h3 { font-size: 24pt; line-height: 1.1; }
+  .cta h3 em { color: var(--lime); font-style: italic; }
+  .cta p { margin-top: 3mm; color: #e6dcff; font-size: 10.5pt; }
+  .cta .url { margin-top: 4mm; display: inline-block; padding: 7px 14px; border-radius: 999px; background: var(--lime); color: #18210a; font-weight: 800; font-size: 11pt; }
+  .qr { background: #fff; border-radius: 16px; padding: 3mm; }
+  .qr svg, .qr img { display: block; width: 100%; height: auto; }
+  .qr small { display: block; text-align: center; color: var(--ink); font-size: 7.5pt; font-weight: 700; margin-top: 1.5mm; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Cover -->
+<section class="page cover pad">
+  <img class="logo" src="../public/brand/logo-color.webp" alt="ZionDesk" />
+  <h1 class="serif">Church management,<br /><em>made simple.</em></h1>
+  <p class="lead">Members, Sunday check-ins, giving, messaging, events and beautiful flyers — in one place, in your members’ own languages. So your team spends less time on admin and more time on ministry.</p>
+  <div class="chips">
+    <span class="chip"><i></i>7-day free trial</span>
+    <span class="chip l"><i></i>No card needed to start</span>
+    <span class="chip"><i></i>5 languages</span>
+    <span class="chip l"><i></i>From €8 / month</span>
+  </div>
+  <div class="hero">
+    <div class="frame"><div class="bar"><span></span><span></span><span></span></div><img src="../promo/shots/overview.png" alt="ZionDesk dashboard" /></div>
+  </div>
+  <div class="phone"><img src="../promo/shots/phone-join.png" alt="New convert registration on a phone" /></div>
+  <p class="tag">ziondesk.com</p>
+</section>
+
+<!-- 2 · Why -->
+<section class="page why pad">
+  <span class="kicker purple">Why ZionDesk</span>
+  <h2 class="serif">Every person matters.<br />Nobody should slip through the cracks.</h2>
+  <p class="intro muted">Churches grow one person at a time — a first-time guest, a new convert, a faithful member who quietly stops coming. Spreadsheets, paper cards and scattered WhatsApp groups make it easy to lose people. ZionDesk gives your church one simple home for the people God sends you.</p>
+  <div class="pairs">
+    <div class="pair"><div class="from"><b>Paper cards on Sunday</b>New members fill in cards that get lost, misread or typed up weeks later.</div><div class="arrow">→</div><div class="to"><b>Registered before the sermon ends</b>Guests and new converts scan a QR code and sign up on their own phone — live, during the service.</div></div>
+    <div class="pair"><div class="from"><b>“We haven’t seen them in weeks”</b>By the time anyone notices someone has stopped coming, the moment to reach out has passed.</div><div class="arrow">→</div><div class="to"><b>Sunday check-ins &amp; gentle follow-ups</b>One-tap QR check-in shows who’s here. Optionally, a caring message goes out after missed Sundays.</div></div>
+    <div class="pair"><div class="from"><b>Messages that miss people</b>Announcements in one language, sent from personal phones, with no record of who was reached.</div><div class="arrow">→</div><div class="to"><b>Everyone, in their own language</b>Email, SMS and WhatsApp in 5 languages — and replies land in one shared inbox.</div></div>
+    <div class="pair"><div class="from"><b>Giving in notebooks</b>Tithes and offerings recorded by hand, receipts forgotten, reports hard to produce.</div><div class="arrow">→</div><div class="to"><b>Online giving with receipts</b>Card and mobile money, every gift in the right fund, receipts sent automatically, reports in a click.</div></div>
+  </div>
+  <div class="quote">
+    <p class="big serif">Less time on admin.<br /><em>More time on ministry.</em></p>
+    <p style="font-size:10.5pt;color:#cfc8e8">Built for pastors, administrators, ministry leaders and finance teams — with roles, so everyone sees exactly what they need.</p>
+  </div>
+  <div class="foot"><span><b>ZionDesk</b> · Church management made simple</span><span>2</span></div>
+</section>
+
+<!-- 3 · Features -->
+<section class="page pad">
+  <div class="feat-head">
+    <div>
+      <span class="kicker">Everything in one place</span>
+      <h2 class="serif">One platform for<br />your whole church</h2>
+    </div>
+    <p class="muted">No more juggling apps. Your members, attendance, giving, messages, events and designs all talk to each other.</p>
+  </div>
+  <div class="grid">
+    <div class="f hl"><span class="ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><div><h3>Members &amp; discipleship</h3><p>Unlimited members, ministries and branches. Track every journey from first visit to newcomer, convert, member and worker.</p></div></div>
+    <div class="f"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg></span><div><h3>QR registration &amp; Sunday check-ins</h3><p>New converts and guests register live during service. Members check in with one tap; see attendance trends over 8 weeks.</p></div></div>
+    <div class="f"><span class="ico"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><h3>Messaging &amp; inbox</h3><p>Email, SMS and WhatsApp in English, Spanish, French, German and Portuguese. Members reply — your team answers from one inbox.</p></div></div>
+    <div class="f lm"><span class="ico"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></span><div><h3>Online giving</h3><p>Card and mobile-money giving in your local currency, bank transfers, funds, automatic receipts and finance reports.</p></div></div>
+    <div class="f"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><div><h3>Events &amp; online meetings</h3><p>Plan services and meetings, send invitations and reminders, and create Google Meet links automatically.</p></div></div>
+    <div class="f"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.55C21.97 6.01 17.46 2 12 2z"/></svg></span><div><h3>Design Studio &amp; designers</h3><p>AI flyers in seconds — and on Ministry Max, real ZionDesk designers deliver your flyers within 48 hours.</p></div></div>
+    <div class="f hl"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10.7l-5 3.9L16.6 21 12 17.3 7.4 21 9 14.6 4 10.7l6.1-1.9z"/></svg></span><div><h3>Ellen, your AI assistant</h3><p>Ask “Who hasn’t attended in a month?” or “Draft Sunday’s announcement” — Ellen answers from your church’s records.</p></div></div>
+    <div class="f"><span class="ico"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span><div><h3>Reports &amp; birthdays</h3><p>Growth, attendance and giving at a glance. Birthday greetings with a personal prayer, sent automatically.</p></div></div>
+  </div>
+  <div class="shot-strip">
+    <img src="../promo/shots/members.png" alt="Members" />
+    <img src="../promo/shots/messaging.png" alt="Messaging" />
+  </div>
+  <div class="foot"><span><b>ZionDesk</b> · Church management made simple</span><span>3</span></div>
+</section>
+
+<!-- 4 · Sunday -->
+<section class="page sunday pad">
+  <span class="kicker">A Sunday with ZionDesk</span>
+  <h2 class="serif">From first visit<br />to <em>family</em> — automatically.</h2>
+  <p class="intro">Here’s what happens when a guest walks through your doors this Sunday.</p>
+  <div class="steps">
+    <div class="step"><span class="n">1</span><div><h3>They scan the QR on the screen</h3><p>A first-time guest or new convert registers on their phone in under a minute — in their own language.</p></div></div>
+    <div class="step"><span class="n">2</span><div><h3>A warm welcome arrives</h3><p>ZionDesk sends a welcome message by email, SMS or WhatsApp, signed with your church’s name.</p></div></div>
+    <div class="step"><span class="n">3</span><div><h3>Your team follows up the same day</h3><p>New people appear on your dashboard so leaders can call, visit and pray with them.</p></div></div>
+    <div class="step"><span class="n">4</span><div><h3>Every Sunday, one-tap check-in</h3><p>Members check in with the same QR. You see who’s here — and who you’ve been missing.</p></div></div>
+    <div class="step"><span class="n">5</span><div><h3>Nobody quietly disappears</h3><p>When a regular misses Sundays in a row, a caring check-up goes out (if you switch it on). Replies come straight to your inbox.</p></div></div>
+  </div>
+  <div class="phone"><img src="../promo/shots/phone-join.png" alt="Registration" /></div>
+  <div class="phone two"><img src="../promo/shots/phone-give.png" alt="Giving" /></div>
+  <div class="note"><b>Giving works the same way.</b> Share your giving QR code — members give by card or mobile money in seconds, and every gift is recorded with a receipt.</div>
+  <div class="foot"><span><b style="color:var(--lime)">ZionDesk</b> · Church management made simple</span><span>4</span></div>
+</section>
+
+<!-- 5 · Plans -->
+<section class="page pad">
+  <div class="plans-head">
+    <span class="kicker purple">Plans &amp; pricing</span>
+    <h2 class="serif">Simple pricing for every church</h2>
+    <p class="muted">Start with a 7-day free trial. Change plans or switch auto-renew off anytime.</p>
+  </div>
+  <div class="plans">
+    <div class="plan">
+      <span class="badge" style="visibility:hidden">·</span>
+      <div class="name">Essentials</div>
+      <div class="blurb">Complete church management</div>
+      <div class="price"><sup>€</sup><b>8</b><span>/month</span></div>
+      <ul>
+        <li>Unlimited members</li>
+        <li>Sunday QR check-ins &amp; attendance</li>
+        <li>Member &amp; ministry team management</li>
+        <li>Email &amp; SMS in 5 languages</li>
+        <li>Financial tracking &amp; reporting</li>
+        <li>Events &amp; online meetings</li>
+        <li>Ellen, your AI assistant</li>
+        <li>7 AI flyers per month</li>
+      </ul>
+      <p class="best">Best for: getting organised</p>
+    </div>
+    <div class="plan mid">
+      <span class="badge">Most popular</span>
+      <div class="name">Ministry Plus</div>
+      <div class="blurb">Everything, plus design &amp; giving</div>
+      <div class="price"><sup>€</sup><b>19</b><em>.99</em><span>/month</span></div>
+      <ul>
+        <li>Everything in Essentials</li>
+        <li>Online giving &amp; donations</li>
+        <li>QR codes for sign-up, giving &amp; events</li>
+        <li>Branded church giving page</li>
+        <li>Design Studio — flyers &amp; posters</li>
+        <li>12 AI flyers per month</li>
+        <li>Automatic follow-ups after missed Sundays</li>
+      </ul>
+      <p class="best">Best for: growing churches</p>
+    </div>
+    <div class="plan top">
+      <span class="badge">All features</span>
+      <div class="name">Ministry Max</div>
+      <div class="blurb">All features + our design team</div>
+      <div class="price"><sup>€</sup><b>39</b><em>.99</em><span>/month</span></div>
+      <ul>
+        <li>Everything in Ministry Plus</li>
+        <li>Unlimited AI flyers</li>
+        <li>8 designer flyer requests a month (extras €10 each)</li>
+        <li>Chat directly with your designer</li>
+        <li>Ellen gathers your event details &amp; inspiration</li>
+        <li>Finished flyers delivered within 48 hours</li>
+      </ul>
+      <p class="best">Best for: churches that want it all done</p>
+    </div>
+  </div>
+  <div class="trial">
+    <div><b>7 days free</b>Try ZionDesk with your real church — no card needed to start.</div>
+    <div><b>Your currency</b>Prices shown in euros; you’re billed in your local currency where available.</div>
+    <div><b>Card &amp; mobile money</b>Secure monthly payments through Flutterwave.</div>
+    <div><b>You’re in control</b>Upgrade, downgrade or turn auto-renew off anytime.</div>
+  </div>
+  <p class="fine">Prices per church per month. Local-currency prices are shown in the app before you pay.</p>
+  <div class="foot"><span><b>ZionDesk</b> · Church management made simple</span><span>5</span></div>
+</section>
+
+<!-- 6 · Subscribe -->
+<section class="page sub pad">
+  <span class="kicker">Get started</span>
+  <h2 class="serif">How to subscribe<br />in five easy steps</h2>
+  <div class="road">
+    <div class="r"><span class="n">1</span><div><h3>Start your free trial</h3><p>Go to <code>ziondesk.com</code> and tap <b>Start free trial</b> (or scan the QR code below). Sign up with your email or Google.</p></div></div>
+    <div class="r"><span class="n">2</span><div><h3>Tell us about your church</h3><p>Church name, country, phone and currency — then choose the plan you’d like to try. Your 7-day trial starts straight away.</p></div></div>
+    <div class="r"><span class="n">3</span><div><h3>Set up in minutes</h3><p>Add or import members, print your registration and check-in QR codes, connect giving and invite your team.</p></div></div>
+    <div class="r"><span class="n">4</span><div><h3>Choose your plan</h3><p>In your dashboard open <b>Settings → Plan</b>, pick Essentials, Ministry Plus or Ministry Max. Have a promo code? Enter it there.</p></div></div>
+    <div class="r"><span class="n">5</span><div><h3>Pay securely — and stay in control</h3><p>Pay by card or mobile money through Flutterwave. Your plan renews monthly; switch <b>Auto-renew</b> off or on anytime in Settings → Plan.</p></div></div>
+  </div>
+  <div class="cta">
+    <div>
+      <h3 class="serif">Ready to welcome<br /><em>everyone</em> God sends?</h3>
+      <p>Start your 7-day free trial today. Questions? Write to us at hello@ziondesk.com — a real person will help.</p>
+      <span class="url">ziondesk.com</span>
+    </div>
+    <div class="qr"><img src="qr.svg" alt="QR code to sign up" /><small>Scan to start</small></div>
+  </div>
+  <div class="foot"><span><b>ZionDesk</b> · Church management made simple</span><span>6</span></div>
+</section>
+
+</body>
+</html>
