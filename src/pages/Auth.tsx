@@ -324,6 +324,8 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [unconfirmed, setUnconfirmed] = useState(false)
+  // Staff console: email + password only (no Google, no sign-up link).
+  const staffLogin = isAdminHost()
   const { t } = useT()
   const navigate = useNavigate()
   const session = useSession()
@@ -405,11 +407,13 @@ export function Login() {
           {t('auth.forgot')}
         </Link>
         <Submit loading={loading}>{t('site.nav.login')}</Submit>
-        <p className="auth-switch">
-          {t('auth.noAccount')} <Link to="/register">{t('auth.signUp')}</Link>
-        </p>
-        {google && <Or />}
-        {google && <GoogleButton label={t('auth.continueGoogle')} returnTo={dest} onProfile={() => setNotice(notConnected(new NotConnectedError()))} onError={setNotice} />}
+        {!staffLogin && (
+          <p className="auth-switch">
+            {t('auth.noAccount')} <Link to="/register">{t('auth.signUp')}</Link>
+          </p>
+        )}
+        {google && !staffLogin && <Or />}
+        {google && !staffLogin && <GoogleButton label={t('auth.continueGoogle')} returnTo={dest} onProfile={() => setNotice(notConnected(new NotConnectedError()))} onError={setNotice} />}
       </form>
     </AuthLayout>
   )

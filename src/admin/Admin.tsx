@@ -12,6 +12,7 @@ import { Churches, Payments, Promos, Support, System, UsersPage } from './AdminP
 import { AdminEmails } from './AdminEmails'
 import { AdminProfile, AdminSettings, AlertsMenu, AvatarMenu, ChurchDetail, SearchBox, UserDetail } from './AdminDetail'
 import './admin.css'
+import { isAdminHost } from '../lib/site'
 
 export interface Overview {
   churches: number
@@ -446,6 +447,12 @@ function Shell(_props: { name: string }) {
 }
 
 function Gate({ title, text }: { title: string; text?: string }) {
+  const session = useSession()
+  const navigate = useNavigate()
+  const switchAccount = async () => {
+    await session.signOut()
+    navigate('/login?next=/admin', { replace: true })
+  }
   return (
     <div className="adm">
       <div className="adm-gate">
@@ -455,9 +462,17 @@ function Gate({ title, text }: { title: string; text?: string }) {
           </span>
           <h2 style={{ margin: 0, fontFamily: 'var(--grotesk)' }}>{title}</h2>
           {text && <p style={{ margin: 0, color: '#8b8a98' }}>{text}</p>}
-          <Link to="/" className="adm-btn ghost">
-            Back to site
-          </Link>
+          {session.session && !session.loading ? (
+            <button type="button" className="adm-btn" onClick={switchAccount}>
+              <LogOut size={14} /> Sign out & use another account
+            </button>
+          ) : (
+            !isAdminHost() && (
+              <Link to="/" className="adm-btn ghost">
+                Back to site
+              </Link>
+            )
+          )}
         </div>
       </div>
     </div>
