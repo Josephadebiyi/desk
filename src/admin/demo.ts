@@ -33,6 +33,7 @@ const payments: Any[] = [
   { id: 'pay4', church_id: 'c4', kind: 'subscription', amount: 8, currency: 'USD', plan: 'essentials', fund: null, status: 'failed', email: 'pastor4@church.org', promo_code: null, created_at: iso(3) },
 ]
 const notes: Record<string, string> = { c0: 'Partner church — onboarding call done.' }
+const newsletters: { id: string; subject: string; audience: string; sent_count: number; created_by: string; created_at: string }[] = []
 let announcement: Any = { text: '', active: false, tone: 'info', link: '' }
 const cname = (id: string) => churches.find((c) => c.id === id)?.name ?? ''
 
@@ -106,6 +107,10 @@ const routes: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/admin\/alerts$/, () => ({ tickets: tickets.filter((t) => t.status === 'open').map(({ id, subject, name, updated_at, priority }) => ({ id, subject, name, updated_at, priority })), pastDue: churches.filter((c) => c.plan_status === 'past_due'), trialsEnding: churches.filter((c) => c.plan_status === 'trial') })],
   ['GET', /^\/api\/admin\/settings$/, () => ({ announcement, staff: ['you@ziondesk.com'], supportEmail: 'hello@ziondesk.com', siteUrl: 'https://ziondesk.com', adminUrl: 'https://admin.ziondesk.com' })],
   ['PUT', /^\/api\/admin\/settings\/announcement$/, (_p, b) => { announcement = { ...b, at: new Date().toISOString() }; return { ok: true } }],
+  ['POST', /^\/api\/admin\/emails\/([^/]+)\/test$/, () => ({ ok: true, to: 'you@ziondesk.com' })],
+  ['GET', /^\/api\/admin\/newsletters$/, () => ({ history: newsletters, recipients: 42 })],
+  ['POST', /^\/api\/admin\/newsletters\/test$/, () => ({ ok: true, to: 'you@ziondesk.com' })],
+  ['POST', /^\/api\/admin\/newsletters\/send$/, (_p, b) => { newsletters.unshift({ id: 'n' + Date.now(), subject: b.subject, audience: b.audience, sent_count: 42, created_by: 'you@ziondesk.com', created_at: new Date().toISOString() }); return { ok: true, sent: 42 } }],
 ]
 
 const real = window.fetch.bind(window)

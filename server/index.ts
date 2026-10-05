@@ -22,6 +22,7 @@ import { designRoutes } from './routes/design'
 import { authHookRoutes } from './routes/authHook'
 import { whatsappRoutes } from './routes/whatsapp'
 import { publicRoutes } from './routes/public'
+import { validUnsubscribe } from './lifecycle'
 
 const app = express()
 app.set('trust proxy', 1) // Render sits behind a proxy; needed for per-IP rate limits
@@ -148,6 +149,20 @@ const cron = (fn: () => Promise<unknown>) =>
     if (!env.cronSecret || req.headers.authorization !== `Bearer ${env.cronSecret}`) throw new HttpError(401, 'Unauthorized')
     res.json(await fn())
   })
+// One-click unsubscribe from newsletters and sign-up reminders (link in the email + List-Unsubscribe header).
+const unsubscribe = route(async (req, res) => {
+  const u = String(req.query.u ?? '')
+  const s = String(req.query.s ?? '')
+  if (!validUnsubscribe(u, s)) return res.status(400).type('html').send(unsubPage('This unsubscribe link is not valid.'))
+  await db().from('profiles').update({ newsletter_opt_out: true }).eq('id', u)
+  if (req.method === 'POST') return res.json({ ok: true })
+  res.type('html').send(unsubPage('You’re unsubscribed. You won’t get ZionDesk newsletters or reminders any more. Account emails (like receipts and password resets) still arrive.'))
+})
+const unsubPage = (msg: string) =>
+  `<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex"/><title>ZionDesk</title></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f1fa;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;color:#111015"><div style="max-width:440px;margin:24px;padding:32px;background:#fff;border-radius:24px;box-shadow:0 8px 30px rgba(60,30,140,.08)"><img src="${env.siteUrl}/brand/logo-color.webp" alt="ZionDesk" height="32"/><p style="font-size:17px;line-height:1.6;margin:20px 0 24px">${msg}</p><a href="${env.siteUrl}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#6c34ff;color:#fff;text-decoration:none;font-weight:600">Go to ZionDesk →</a></div></body></html>`
+app.get('/api/email/unsubscribe', unsubscribe)
+app.post('/api/email/unsubscribe', unsubscribe)
+
 app.post('/api/cron/hourly', cron(runHourly))
 app.post('/api/cron/daily', cron(runDaily))
 

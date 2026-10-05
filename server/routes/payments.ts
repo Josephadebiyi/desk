@@ -18,6 +18,7 @@ import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan
 import { compose, sendEmail } from '../mail'
 import { billingCurrency, chargeCurrency, PLAN_PRICES, planPrice, type FlwCurrency } from '../../src/lib/currency'
 import type { PlanKey } from '../../src/lib/plans'
+import { sendBillingEmail } from '../lifecycle'
 
 export const paymentRoutes = Router()
 
@@ -119,7 +120,9 @@ async function recordRenewal(tx: VerifiedTx) {
   const { error } = await db().from('online_payments').insert({ church_id: church.id, kind: 'subscription', tx_ref: tx.tx_ref, flw_transaction_id: tx.id, amount: tx.amount, currency: tx.currency, plan, email, status: 'successful', completed_at: new Date().toISOString() })
   if (error) return { status: 'successful' } // already recorded (webhook retries)
   const base = church.plan_renews_at && new Date(church.plan_renews_at) > new Date() ? new Date(church.plan_renews_at) : new Date()
-  await db().from('churches').update({ plan, plan_status: 'active', plan_renews_at: nextMonth(base).toISOString() }).eq('id', church.id)
+  const renews = nextMonth(base)
+  await db().from('churches').update({ plan, plan_status: 'active', plan_renews_at: renews.toISOString() }).eq('id', church.id)
+  await sendBillingEmail('paymentReceipt', church.id, { email, amount: Number(tx.amount), currency: tx.currency, plan, renews })
   return { status: 'successful' }
 }
 
@@ -174,6 +177,7 @@ async function complete(ref: { id?: string; txRef?: string }) {
     for (const s of await listSubscriptions(p.email)) {
       if (s.status === 'active' && String(s.plan) !== newPlanId) await cancelSubscription(s.id).catch((e) => console.error('[cancel old sub]', e))
     }
+    await sendBillingEmail('subscriptionConfirmed', p.church_id, { email: p.email, amount: Number(p.amount), currency: p.currency, plan: p.plan, renews: nextMonth(new Date()) })
   }
   return { ...p, status: 'successful', slug: church?.slug }
 }

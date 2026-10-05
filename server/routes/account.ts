@@ -8,6 +8,7 @@
 import { Router } from 'express'
 import { db, HttpError, requireCaller, requireUser, route } from '../db'
 import { cancelSubscription, listSubscriptions } from '../flutterwave'
+import { profileOf, sendAccountDeleted, sendWelcome } from '../lifecycle'
 
 export const accountRoutes = Router()
 
@@ -54,6 +55,7 @@ accountRoutes.post(
   requireUser(),
   route(async (req, res) => {
     const id = req.caller!.userId
+    const who = await profileOf(id)
     const { data: links } = await db().from('church_users').select('church_id, role').eq('user_id', id)
     const toDelete: string[] = []
     for (const l of links ?? []) {
@@ -68,6 +70,7 @@ accountRoutes.post(
     if (files?.length) await db().storage.from('avatars').remove(files.map((f) => `${id}/${f.name}`))
     const { error } = await db().auth.admin.deleteUser(id)
     if (error) throw new HttpError(500, error.message)
+    await sendAccountDeleted({ email: req.caller!.email, name: who?.full_name ?? '', lang: who?.comm_language ?? 'en' })
     res.json({ ok: true, churchesDeleted: toDelete.length })
   }),
 )
@@ -98,5 +101,16 @@ accountRoutes.post(
     if (!church || typed !== church.name.trim().toLowerCase()) throw new HttpError(400, 'Type the church name exactly to confirm.')
     await deleteChurch(req.caller!.churchId)
     res.json({ ok: true })
+  }),
+)
+
+/** Called by the app right after a church is created: the welcome email goes out at once (once per church). */
+accountRoutes.post(
+  '/account/welcome',
+  requireCaller(['admin']),
+  route(async (req, res) => {
+    const { data: c } = await db().from('churches').select('created_at').eq('id', req.caller!.churchId).single()
+    const fresh = c && Date.now() - new Date(c.created_at).getTime() < 3 * 864e5
+    res.json({ sent: fresh ? await sendWelcome(req.caller!.churchId) : false })
   }),
 )

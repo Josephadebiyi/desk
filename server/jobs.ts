@@ -13,6 +13,7 @@ import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
+import { runSignupReminders, runWelcomeFallback } from './lifecycle'
 
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 
@@ -57,14 +58,16 @@ export async function runHourly() {
       reminders += mails.length
     }
   }
-  return { campaigns, reminders }
+  const welcomes = await runWelcomeFallback().catch((e) => (console.error('[welcome fallback]', e), 0))
+  return { campaigns, reminders, welcomes }
 }
 
 export async function runDaily() {
   const promos = await endPromos().catch((e) => (console.error('[promos]', e), null)) // before billing
   const billing = await runBilling().catch((e) => (console.error('[billing]', e), null))
   const birthdays = await runBirthdays().catch((e) => (console.error('[birthdays]', e), 0))
-  return { birthdays, billing, promos }
+  const signupReminders = await runSignupReminders().catch((e) => (console.error('[signup reminders]', e), null))
+  return { birthdays, billing, promos, signupReminders }
 }
 
 /**

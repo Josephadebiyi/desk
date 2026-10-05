@@ -2,13 +2,14 @@
  * ZionDesk staff console (/admin). Only emails listed in ADMIN_EMAILS on the server get data;
  * everyone else sees "Staff only". Internal tool, English only.
  */
-import { BadgePercent, Building2, CreditCard, Gauge, LayoutGrid, LifeBuoy, LogOut, Maximize2, Settings as SettingsIcon, ShieldCheck, Sparkles, TicketPercent, TriangleAlert, UserRound, Users } from 'lucide-react'
+import { BadgePercent, Building2, CreditCard, Gauge, LayoutGrid, LifeBuoy, LogOut, Mail, Maximize2, Settings as SettingsIcon, ShieldCheck, Sparkles, TicketPercent, TriangleAlert, UserRound, Users } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
 import { useSession } from '../lib/session'
 import { Churches, Payments, Promos, Support, System, UsersPage } from './AdminPages'
+import { AdminEmails } from './AdminEmails'
 import { AdminProfile, AdminSettings, AlertsMenu, AvatarMenu, ChurchDetail, SearchBox, UserDetail } from './AdminDetail'
 import './admin.css'
 
@@ -33,6 +34,7 @@ const NAV = [
   { to: '/admin/promos', label: 'Promo codes', icon: TicketPercent },
   { to: '/admin/support', label: 'Support', icon: LifeBuoy },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { to: '/admin/emails', label: 'Emails', icon: Mail },
   { to: '/admin/system', label: 'System', icon: Gauge },
   { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -432,6 +434,7 @@ function Shell(_props: { name: string }) {
             <Route path="system" element={<System />} />
             <Route path="churches/:id" element={<ChurchDetail />} />
             <Route path="users/:id" element={<UserDetail />} />
+            <Route path="emails" element={<AdminEmails />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />

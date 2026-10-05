@@ -14,11 +14,14 @@ export interface Outgoing {
   subject: string
   html: string
   text: string
+  headers?: Record<string, string>
 }
 
-export function compose(kind: EmailKind, lang: unknown, to: string, vars: Record<string, string | number>, url?: string): Outgoing {
-  const r = renderEmail({ kind, lang: asEmailLang(lang), vars, url, siteUrl: env.siteUrl })
-  return { to, ...r }
+export function compose(kind: EmailKind, lang: unknown, to: string, vars: Record<string, string | number>, url?: string, opts: { unsubscribeUrl?: string } = {}): Outgoing {
+  const r = renderEmail({ kind, lang: asEmailLang(lang), vars, url, siteUrl: env.siteUrl, unsubscribeUrl: opts.unsubscribeUrl })
+  // One-click unsubscribe (Gmail / Yahoo bulk-sender rules) for marketing-type emails.
+  const headers = opts.unsubscribeUrl ? { 'List-Unsubscribe': `<${opts.unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } : undefined
+  return { to, ...r, ...(headers ? { headers } : {}) }
 }
 
 async function resend(path: string, body: unknown) {
@@ -39,6 +42,7 @@ const payload = (m: Outgoing) => ({
   subject: m.subject,
   html: m.html,
   text: m.text,
+  ...(m.headers ? { headers: m.headers } : {}),
   ...(m.replyTo ? { reply_to: m.replyTo } : env.emailReplyTo ? { reply_to: env.emailReplyTo } : {}),
 })
 

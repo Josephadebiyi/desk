@@ -20,7 +20,11 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { PLAN_PRICES, type FlwCurrency } from '../../src/lib/currency'
 import { db, HttpError, requireUser, route } from '../db'
 import { configured, env } from '../env'
-import { sendEmail } from '../mail'
+import { compose, sendEmail, sendEmails } from '../mail'
+import { CATALOG, type EmailKind } from '../../src/emails/catalog'
+import { SAMPLE_VARS } from '../../src/emails/samples'
+import { asEmailLang } from '../../src/emails/strings'
+import { composeNewsletter, newsletterRecipients, unsubscribeUrl, type NewsletterAudience } from '../lifecycle'
 import { deleteChurch } from './account'
 
 export const adminRoutes = Router()
@@ -569,5 +573,69 @@ adminRoutes.get(
   route(async (_req, res) => {
     const a = (await getSetting('announcement').catch(() => null)) as { text?: string; active?: boolean; tone?: string; link?: string; at?: string } | null
     res.json(a?.active && a.text ? { text: a.text, tone: a.tone ?? 'info', link: a.link ?? '', at: a.at } : null)
+  }),
+)
+
+/* ───────── emails: test sends + newsletter ───────── */
+const AUDIENCES: NewsletterAudience[] = ['all', 'active', 'trial', 'expired', 'no_church']
+const MARKETING = new Set(['newsletter', 'finishSignup1', 'finishSignup2', 'finishSignup3', 'finishSignup4'])
+
+/** Sends one example of any email to the signed-in staff member. */
+adminRoutes.post(
+  '/admin/emails/:kind/test',
+  ...staff,
+  route(async (req, res) => {
+    const kind = String(req.params.kind) as EmailKind
+    if (!(kind in CATALOG.en)) throw new HttpError(404, 'Unknown email')
+    if (!configured.email) throw new HttpError(503, 'Email is not configured on the server (RESEND_API_KEY).')
+    const lang = asEmailLang(req.body?.lang)
+    const mail = compose(kind, lang, req.caller!.email, SAMPLE_VARS, `${env.siteUrl}/dashboard`, MARKETING.has(kind) ? { unsubscribeUrl: unsubscribeUrl(req.caller!.userId) } : {})
+    await sendEmail({ ...mail, subject: `[Test] ${mail.subject}` })
+    res.json({ ok: true, to: req.caller!.email })
+  }),
+)
+
+adminRoutes.get(
+  '/admin/newsletters',
+  ...staff,
+  route(async (req, res) => {
+    const { data } = await db().from('newsletters').select('*').order('created_at', { ascending: false }).limit(50)
+    const audience = AUDIENCES.includes(req.query.audience as NewsletterAudience) ? (req.query.audience as NewsletterAudience) : 'all'
+    res.json({ history: data ?? [], audience, recipients: (await newsletterRecipients(audience)).length })
+  }),
+)
+
+const newsletterInput = (body: unknown) => {
+  const b = (body ?? {}) as Record<string, unknown>
+  const subject = str(b.subject, 150)
+  const text = str(b.text, 20000)
+  if (subject.length < 3 || text.length < 10) throw new HttpError(400, 'Add a subject and a message.')
+  return { subject, text }
+}
+
+adminRoutes.post(
+  '/admin/newsletters/test',
+  ...staff,
+  route(async (req, res) => {
+    const { subject, text } = newsletterInput(req.body)
+    const me = { id: req.caller!.userId, email: req.caller!.email, full_name: req.caller!.name, comm_language: 'en' }
+    const mail = composeNewsletter(me, subject, text)
+    await sendEmail({ ...mail, subject: `[Test] ${mail.subject}` })
+    res.json({ ok: true, to: me.email })
+  }),
+)
+
+adminRoutes.post(
+  '/admin/newsletters/send',
+  ...staff,
+  route(async (req, res) => {
+    const { subject, text } = newsletterInput(req.body)
+    const audience = AUDIENCES.includes(req.body?.audience) ? (req.body.audience as NewsletterAudience) : 'all'
+    if (!configured.email) throw new HttpError(503, 'Email is not configured on the server (RESEND_API_KEY).')
+    const people = await newsletterRecipients(audience)
+    if (!people.length) throw new HttpError(400, 'Nobody in this audience yet.')
+    await sendEmails(people.map((p) => composeNewsletter(p, subject, text)))
+    await db().from('newsletters').insert({ subject, body: text, audience, sent_count: people.length, created_by: req.caller!.email })
+    res.json({ ok: true, sent: people.length })
   }),
 )

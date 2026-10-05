@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isLang, onPrefsSaved, useT, type Lang } from '../i18n'
 import type { Role } from '../dashboard/types'
-import { setApiChurch } from './api'
+import { apiUrl, setApiChurch } from './api'
 import { remote, supabase } from './supabase'
 
 export interface ChurchLink {
@@ -71,7 +71,20 @@ export async function createChurch(p: PendingChurch) {
     p_language: isLang(p.language) ? p.language : 'en',
   })
   if (error) throw error
-  return data as string
+  const id = data as string
+  void sendWelcomeEmail(id)
+  return id
+}
+
+/** Asks the server to send the welcome email right away (it sends once per church; the hourly job is the fallback). */
+async function sendWelcomeEmail(churchId: string) {
+  try {
+    const token = (await supabase?.auth.getSession())?.data.session?.access_token
+    if (!token) return
+    await fetch(apiUrl('/account/welcome'), { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'x-church-id': churchId } })
+  } catch {
+    /* the hourly job sends it instead */
+  }
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {

@@ -6,8 +6,9 @@
  * {role}, {inviter}, {reference}, {text}. HTML is allowed only where noted (body fields).
  */
 import type { EmailLang } from './strings'
+import { LIFECYCLE, type LifecycleKind } from './lifecycle'
 
-export type EmailKind =
+type BaseKind =
   | 'confirmSignup'
   | 'resetPassword'
   | 'magicLink'
@@ -26,6 +27,7 @@ export type EmailKind =
   | 'planExpired'
   | 'birthdayPrayer'
   | 'promoEnded'
+export type EmailKind = BaseKind | LifecycleKind
 
 export interface EmailCopy {
   subject: string
@@ -37,7 +39,7 @@ export interface EmailCopy {
   note?: string
 }
 
-type Catalog = Record<EmailKind, EmailCopy>
+type Catalog = Record<BaseKind, EmailCopy>
 
 const en: Catalog = {
   confirmSignup: {
@@ -223,4 +225,10 @@ const pt: Catalog = {
   promoEnded: { subject: 'A sua promoção ZionDesk terminou', eyebrow: 'Faturação', title: 'Mantenha {church} no {plan}', body: ['Olá, {name},', 'A sua oferta promocional do {plan} terminou, por isso parámos os pagamentos com desconto — não será cobrado. O acesso continua até ao fim do período atual.', 'Subscreva ao preço normal para manter tudo a funcionar. Todos os seus dados estão seguros.'], cta: 'Escolher um plano' },
 }
 
-export const CATALOG: Record<EmailLang, Catalog> = { en, es, fr, de, pt }
+export const CATALOG: Record<EmailLang, Record<EmailKind, EmailCopy>> = {
+  en: { ...en, ...LIFECYCLE.en },
+  es: { ...es, ...LIFECYCLE.es },
+  fr: { ...fr, ...LIFECYCLE.fr },
+  de: { ...de, ...LIFECYCLE.de },
+  pt: { ...pt, ...LIFECYCLE.pt },
+}
