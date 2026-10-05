@@ -280,7 +280,7 @@ async function findPromo(raw: string, plan: string, churchId: string): Promise<P
   const code = raw.trim().toUpperCase()
   const { data: p } = await db().from('promo_codes').select('*').eq('code', code).maybeSingle()
   const now = Date.now()
-  if (!p || !p.active || new Date(p.starts_at).getTime() > now) throw new HttpError(404, 'PROMO_INVALID')
+  if (!p || !p.active || p.kind === 'tracking' || new Date(p.starts_at).getTime() > now) throw new HttpError(404, 'PROMO_INVALID')
   if (p.expires_at && new Date(p.expires_at).getTime() < now) throw new HttpError(410, 'PROMO_EXPIRED')
   if (p.plans?.length && !p.plans.includes(plan)) throw new HttpError(400, 'PROMO_PLAN')
   const { data: used } = await db().from('promo_redemptions').select('id').eq('promo_id', p.id).eq('church_id', churchId).neq('status', 'pending').maybeSingle()

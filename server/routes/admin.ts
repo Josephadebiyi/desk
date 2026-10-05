@@ -158,7 +158,9 @@ adminRoutes.get(
   ...staff,
   route(async (req, res) => {
     const q = str(req.query.q, 80)
-    let query = db().from('churches').select('id, name, slug, location, email, currency, plan, plan_status, plan_renews_at, trial_ends_at, created_at, flw_subaccount_id').order('created_at', { ascending: false }).limit(200)
+    const code = str(req.query.code, 32).toUpperCase()
+    let query = db().from('churches').select('id, name, slug, location, email, currency, plan, plan_status, plan_renews_at, trial_ends_at, created_at, flw_subaccount_id, signup_code').order('created_at', { ascending: false }).limit(200)
+    if (code) query = query.eq('signup_code', code)
     if (q) query = query.or(`name.ilike.%${q.replace(/[%,()]/g, '')}%,email.ilike.%${q.replace(/[%,()]/g, '')}%,location.ilike.%${q.replace(/[%,()]/g, '')}%`)
     const { data } = await query
     const ids = (data ?? []).map((c) => c.id)
@@ -242,10 +244,13 @@ adminRoutes.get(
   ...staff,
   route(async (_req, res) => {
     const { data } = await db().from('promo_codes').select('*, promo_redemptions(status, redeemed_at, churches(name))').order('created_at', { ascending: false })
+    const { data: signed } = await db().from('churches').select('signup_code').not('signup_code', 'is', null)
+    const signups = new Map<string, number>()
+    for (const c of signed ?? []) signups.set(c.signup_code, (signups.get(c.signup_code) ?? 0) + 1)
     res.json({
       promos: (data ?? []).map((p) => {
         const r = ((p.promo_redemptions ?? []) as { status: string; redeemed_at: string; churches: { name: string } | null }[]).filter((x) => x.status !== 'pending')
-        return { ...p, promo_redemptions: undefined, redemptions: r.length, activeNow: r.filter((x) => x.status === 'active').length, recent: r.slice(0, 5).map((x) => ({ church: x.churches?.name ?? '', at: x.redeemed_at, status: x.status })) }
+        return { ...p, promo_redemptions: undefined, signups: signups.get(p.code) ?? 0, redemptions: r.length, activeNow: r.filter((x) => x.status === 'active').length, recent: r.slice(0, 5).map((x) => ({ church: x.churches?.name ?? '', at: x.redeemed_at, status: x.status })) }
       }),
     })
   }),
@@ -257,9 +262,11 @@ function promoFields(b: Record<string, unknown>, creating: boolean) {
     const code = str(b.code, 32).toUpperCase()
     if (!/^[A-Z0-9_-]{3,32}$/.test(code)) throw new HttpError(400, 'Code: 3–32 letters, numbers, - or _')
     f.code = code
-    if (b.kind !== 'percent' && b.kind !== 'free_days') throw new HttpError(400, 'Choose a discount type')
+    if (b.kind !== 'percent' && b.kind !== 'free_days' && b.kind !== 'tracking') throw new HttpError(400, 'Choose a discount type')
     f.kind = b.kind
-    if (b.kind === 'percent') {
+    if (b.kind === 'tracking') {
+      // Attribution only: no discount.
+    } else if (b.kind === 'percent') {
       const pct = Number(b.percent_off)
       if (!(pct >= 1 && pct <= 99)) throw new HttpError(400, 'Percent off: 1–99')
       f.percent_off = Math.round(pct)

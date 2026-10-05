@@ -1,6 +1,6 @@
 import { Ban, CheckCircle2, Plus, RotateCcw, Search, Send, XCircle } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { downloadCsv } from './AdminDetail'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
@@ -45,15 +45,16 @@ export function Churches() {
   const [sp, setSp] = useSearchParams()
   const fStatus = sp.get('status') ?? ''
   const fPlan = sp.get('plan') ?? ''
+  const fCode = sp.get('code') ?? ''
   const [q, setQ] = useState('')
   const dq = useDebounced(q)
   const [rows, setRows] = useState<ChurchRow[] | null>(null)
   const [msg, setMsg] = useState('')
-  const load = () => api<{ churches: ChurchRow[] }>(`/admin/churches?q=${encodeURIComponent(dq)}`).then((r) => setRows(r.churches)).catch((e) => setMsg(err(e)))
+  const load = () => api<{ churches: ChurchRow[] }>(`/admin/churches?q=${encodeURIComponent(dq)}&code=${encodeURIComponent(fCode)}`).then((r) => setRows(r.churches)).catch((e) => setMsg(err(e)))
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dq])
+  }, [dq, fCode])
   const shown = (rows ?? []).filter((c) => (!fStatus || c.plan_status === fStatus) && (!fPlan || c.plan === fPlan))
   const patch = async (id: string, body: Record<string, unknown>, done: string) => {
     setMsg('')
@@ -67,7 +68,12 @@ export function Churches() {
   }
   return (
     <>
-      <Head title="Churches" sub="Every church on ZionDesk — plans, billing state and size.">
+      <Head title="Churches" sub={fCode ? `Churches that signed up with code ${fCode}` : 'Every church on ZionDesk — plans, billing state and size.'}>
+        {fCode && (
+          <button type="button" className="adm-chip" onClick={() => setSp((p) => (p.delete('code'), p))}>
+            Code: {fCode} ✕
+          </button>
+        )}
         <label className="adm-search">
           <Search size={16} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or city" />
@@ -262,7 +268,7 @@ interface Promo {
   id: string
   code: string
   description: string
-  kind: 'percent' | 'free_days'
+  kind: 'percent' | 'free_days' | 'tracking'
   percent_off: number | null
   duration_months: number | null
   free_days: number | null
@@ -273,14 +279,15 @@ interface Promo {
   active: boolean
   created_at: string
   redemptions: number
+  signups: number
   activeNow: number
   recent: { church: string; at: string; status: string }[]
 }
 
 const offer = (p: Pick<Promo, 'kind' | 'percent_off' | 'duration_months' | 'free_days'>) =>
-  p.kind === 'free_days' ? `${p.free_days} days free` : `${p.percent_off}% off ${p.duration_months ? `for ${p.duration_months} month${p.duration_months > 1 ? 's' : ''}` : 'forever'}`
+  p.kind === 'tracking' ? 'Tracking only (no discount)' : p.kind === 'free_days' ? `${p.free_days} days free` : `${p.percent_off}% off ${p.duration_months ? `for ${p.duration_months} month${p.duration_months > 1 ? 's' : ''}` : 'forever'}`
 
-const BLANK = { code: '', description: '', kind: 'percent' as 'percent' | 'free_days', percent_off: '20', duration_months: '3', free_days: '30', plans: [] as string[], max_redemptions: '', expires_at: '' }
+const BLANK = { code: '', description: '', kind: 'percent' as 'percent' | 'free_days' | 'tracking', percent_off: '20', duration_months: '3', free_days: '30', plans: [] as string[], max_redemptions: '', expires_at: '' }
 
 export function Promos() {
   const [rows, setRows] = useState<Promo[] | null>(null)
@@ -331,7 +338,7 @@ export function Promos() {
   }
   return (
     <>
-      <Head title="Promo codes" sub="Discounts churches enter in Settings → Plan. Discounts apply through Flutterwave; free days need no card." />
+      <Head title="Promo codes" sub="Share a link like ziondesk.com/?promo=CODE — the code is filled in at sign-up, so you can see every church each campaign brought in. Discounts apply in Settings → Plan." />
       <Card title="Create a promo code">
         <form className="adm-form" onSubmit={create}>
           <label>
@@ -340,12 +347,13 @@ export function Promos() {
           </label>
           <label>
             Type
-            <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as 'percent' | 'free_days' })}>
+            <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as 'percent' | 'free_days' | 'tracking' })}>
               <option value="percent">% off monthly price</option>
               <option value="free_days">Free days (no card)</option>
+              <option value="tracking">Tracking only — PR / partner (no discount)</option>
             </select>
           </label>
-          {f.kind === 'percent' ? (
+          {f.kind === 'tracking' ? null : f.kind === 'percent' ? (
             <>
               <label>
                 Percent off
@@ -399,6 +407,7 @@ export function Promos() {
                 <th>Code</th>
                 <th>Offer</th>
                 <th>Plans</th>
+                <th>Sign-ups</th>
                 <th>Used</th>
                 <th>Active now</th>
                 <th>Window</th>
@@ -417,6 +426,20 @@ export function Promos() {
                     </td>
                     <td>{offer(p)}</td>
                     <td>{p.plans.length ? p.plans.map((x) => PLAN_LABEL[x]).join(', ') : 'All'}</td>
+                    <td>
+                      {p.signups ? (
+                        <Link to={`/admin/churches?code=${encodeURIComponent(p.code)}`} className="adm-link">
+                          {p.signups} →
+                        </Link>
+                      ) : (
+                        0
+                      )}
+                      <small>
+                        <button type="button" className="adm-link" style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }} onClick={() => navigator.clipboard?.writeText(`https://ziondesk.com/?promo=${p.code}`)}>
+                          copy link
+                        </button>
+                      </small>
+                    </td>
                     <td>
                       {p.redemptions}
                       {p.max_redemptions ? ` / ${p.max_redemptions}` : ''}

@@ -16,6 +16,7 @@ import { USAGE_LABEL, type ProviderPref, type UsageFeature } from '../ai/types'
 import { LANGS, useT } from '../i18n'
 import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, planPrice } from '../lib/currency'
 import { Flag, LangCards } from '../i18n/Flags'
+import { getSignupCode } from '../lib/signupCode'
 
 const ROLES: Role[] = ['admin', 'finance', 'leader']
 
@@ -516,7 +517,7 @@ function Plan() {
     }
   }
   // Promo codes: checked against every plan so each card can show its own discount.
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(getSignupCode)
   const [promo, setPromo] = useState<{ code: string; offers: Partial<Record<PlanId, PromoOffer>> } | null>(null)
   const [promoError, setPromoError] = useState('')
   const [redeemed, setRedeemed] = useState('')

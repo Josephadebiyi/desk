@@ -32,6 +32,7 @@ import {
   type PlanId,
 } from '../lib/auth'
 import { isAdminHost } from '../lib/site'
+import { getSignupCode, normalizeCode } from '../lib/signupCode'
 import { supabase } from '../lib/supabase'
 import './auth.css'
 import { tr, useT } from '../i18n'
@@ -509,6 +510,7 @@ export function Register() {
     churchSize: '',
     role: '',
     currency: guessCurrency(),
+    code: getSignupCode(),
   })
   const [logo, setLogo] = useState<File | null>(null)
   const [plan, setPlan] = useState<PlanId>(initialPlan)
@@ -753,6 +755,15 @@ export function Register() {
                 </div>
                 <SelectField label={t('settings.profile.currency')} value={org.currency} onChange={(v) => setOrg({ ...org, currency: v })} options={CURRENCIES.map((c) => ({ value: c, label: currencyLabel(c, locale) }))} />
                 <LogoPicker file={logo} onFile={setLogo} />
+                <Field
+                  label={t('auth.promoCode')}
+                  name="promo"
+                  placeholder={t('auth.promoCodePh')}
+                  value={org.code}
+                  maxLength={32}
+                  autoCapitalize="characters"
+                  onChange={(e) => setOrg({ ...org, code: normalizeCode(e.target.value) })}
+                />
                 <div className="auth-nav">
                   {!google && (
                     <button type="button" className="btn-ghost" onClick={() => go(0)}>

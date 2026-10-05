@@ -94,7 +94,7 @@ export function ChurchDetail() {
       <Link to="/admin/churches" className="adm-back">
         <ArrowLeft size={15} /> All churches
       </Link>
-      <Head title={c.name} sub={`${c.location || '—'} · ${c.currency} · joined ${fmtDay(c.created_at)} · /${c.slug}`}>
+      <Head title={c.name} sub={`${c.location || '—'} · ${c.currency} · joined ${fmtDay(c.created_at)} · /${c.slug}${c.signup_code ? ` · signed up with code ${c.signup_code}` : ''}`}>
         <span className={`adm-pill ${c.plan_status} big`}>{String(c.plan_status).replace('_', ' ')}</span>
       </Head>
       {flash.node}

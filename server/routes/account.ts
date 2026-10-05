@@ -111,6 +111,12 @@ accountRoutes.post(
   route(async (req, res) => {
     const { data: c } = await db().from('churches').select('created_at').eq('id', req.caller!.churchId).single()
     const fresh = c && Date.now() - new Date(c.created_at).getTime() < 3 * 864e5
+    // Promo / referral code from sign-up: recorded once, only if it's a real code.
+    const code = String(req.body?.code ?? '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 32)
+    if (fresh && code.length >= 3) {
+      const { data: promo } = await db().from('promo_codes').select('code').eq('code', code).maybeSingle()
+      if (promo) await db().from('churches').update({ signup_code: promo.code }).eq('id', req.caller!.churchId).is('signup_code', null)
+    }
     res.json({ sent: fresh ? await sendWelcome(req.caller!.churchId) : false })
   }),
 )

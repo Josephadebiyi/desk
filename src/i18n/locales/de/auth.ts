@@ -36,6 +36,8 @@ const auth: Dict['auth'] = {
   errRateLimit: 'Zu viele Versuche. Bitte warte eine Minute.',
   errOrg: 'Gib den Namen deiner Gemeinde oder Organisation ein',
   errLocation: 'Gib Stadt und Land ein',
+  promoCode: 'Aktions- oder Empfehlungscode (optional)',
+  promoCodePh: 'z. B. OSTERN26',
   errDenomination: 'Gib eine Konfession ein oder setze „keine Konfession“',
   errSize: 'Wähle die Gemeindegröße',
   errRole: 'Wähle deine Rolle',

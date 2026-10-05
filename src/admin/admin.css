@@ -232,3 +232,4 @@ a.adm-row:hover, .adm-board a.adm-click:hover { background: #f4f3fb; }
   .adm-email-layout { grid-template-columns: 1fr; }
   .adm-email-list { max-height: none; }
 }
+.adm-link { color: var(--a-purple); font-weight: 600; text-decoration: none; }

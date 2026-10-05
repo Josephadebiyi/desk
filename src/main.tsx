@@ -24,6 +24,9 @@ import Help from './dashboard/Help.tsx'
 import Links from './dashboard/Links.tsx'
 import { GivePage, JoinPage } from './pages/Public.tsx'
 import { isAdminHost } from './lib/site'
+import { captureSignupCode } from './lib/signupCode'
+
+captureSignupCode()
 
 // Staff console: separate chunk, only downloaded by staff.
 const Admin = lazy(() => import('./admin/Admin.tsx'))

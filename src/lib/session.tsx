@@ -47,6 +47,8 @@ export interface PendingChurch {
   currency: string
   plan: 'essentials' | 'plus' | 'max'
   language: string
+  /** Promo / referral code entered at sign-up (attribution). */
+  code?: string
 }
 
 const slugify = (s: string) =>
@@ -72,16 +74,20 @@ export async function createChurch(p: PendingChurch) {
   })
   if (error) throw error
   const id = data as string
-  void sendWelcomeEmail(id)
+  void sendWelcomeEmail(id, p.code)
   return id
 }
 
 /** Asks the server to send the welcome email right away (it sends once per church; the hourly job is the fallback). */
-async function sendWelcomeEmail(churchId: string) {
+async function sendWelcomeEmail(churchId: string, code?: string) {
   try {
     const token = (await supabase?.auth.getSession())?.data.session?.access_token
     if (!token) return
-    await fetch(apiUrl('/account/welcome'), { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'x-church-id': churchId } })
+    await fetch(apiUrl('/account/welcome'), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'x-church-id': churchId, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code ?? '' }),
+    })
   } catch {
     /* the hourly job sends it instead */
   }

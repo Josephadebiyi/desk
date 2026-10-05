@@ -36,6 +36,8 @@ const auth: Dict['auth'] = {
   errRateLimit: 'Demasiados intentos. Espera un minuto e inténtalo de nuevo.',
   errOrg: 'Introduce el nombre de tu iglesia u organización',
   errLocation: 'Introduce tu ciudad y país',
+  promoCode: 'Código promocional o de referido (opcional)',
+  promoCodePh: 'p. ej. PASCUA26',
   errDenomination: 'Introduce una denominación o marca «sin denominación»',
   errSize: 'Elige el tamaño de tu iglesia',
   errRole: 'Elige tu rol',

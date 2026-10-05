@@ -35,6 +35,8 @@ export default {
   errRateLimit: 'Too many attempts. Please wait a minute and try again.',
   errOrg: 'Enter your church or organization name',
   errLocation: 'Enter your city and country',
+  promoCode: 'Promo or referral code (optional)',
+  promoCodePh: 'e.g. EASTER26',
   errDenomination: 'Enter a denomination or tick “no denomination”',
   errSize: 'Choose your church size',
   errRole: 'Choose your role',

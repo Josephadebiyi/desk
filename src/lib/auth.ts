@@ -45,6 +45,8 @@ export interface RegisterInput {
   currency: string
   logo: File | null
   plan: PlanId
+  /** Optional promo / referral code (who brought this church in). */
+  code?: string
   /** App and communication language chosen during sign-up (saved on the user record). */
   uiLanguage?: string
   communicationLanguage?: string
@@ -101,6 +103,7 @@ export async function register(input: RegisterInput): Promise<'ready' | 'confirm
     currency: input.currency,
     plan: input.plan,
     language: input.communicationLanguage ?? input.uiLanguage ?? 'en',
+    code: input.code || undefined,
   }
   let { data: s } = await sb.auth.getSession()
   if (!s.session) {
