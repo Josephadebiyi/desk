@@ -139,7 +139,7 @@ async function complete(ref: { id?: string; txRef?: string }) {
 
   const { data: church } = await db().from('churches').select('id, name, slug, currency').eq('id', p.church_id).single()
   if (p.kind === 'gift') {
-    const { data: member } = await db().from('members').select('id').eq('church_id', p.church_id).ilike('email', p.email).maybeSingle()
+    const { data: member } = await db().from('members').select('id').eq('church_id', p.church_id).ilike('email', String(p.email).replace(/[\\%_]/g, '\\$&')).maybeSingle()
     const { data: gift } = await db()
       .from('gifts')
       .insert({ church_id: p.church_id, member_id: member?.id ?? null, donor: p.name, date: new Date().toISOString().slice(0, 10), amount: p.amount, fund: p.fund, method: 'Card' })

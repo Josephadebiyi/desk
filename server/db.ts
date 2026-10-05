@@ -43,10 +43,8 @@ declare module 'express-serve-static-core' {
 export function requireCaller(roles?: Role[]) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const token = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
-      if (!token) throw new HttpError(401, 'Please sign in.')
-      const { data, error } = await db().auth.getUser(token)
-      if (error || !data.user) throw new HttpError(401, 'Your session has expired. Please sign in again.')
+      const user = await verifiedUser(req)
+      const data = { user }
       const churchId = String(req.headers['x-church-id'] ?? '')
       if (!/^[0-9a-f-]{36}$/i.test(churchId)) throw new HttpError(400, 'No church selected.')
       const { data: link } = await db().from('church_users').select('role').eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle()
@@ -66,6 +64,19 @@ export function requireCaller(roles?: Role[]) {
   }
 }
 
+/** The signed-in Supabase user behind the Bearer token. Suspended accounts are refused straight away
+ *  (their access token would otherwise keep working until it expires). */
+async function verifiedUser(req: Request) {
+  const token = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
+  if (!token || token.length > 4096) throw new HttpError(401, 'Please sign in.')
+  const { data, error } = await db().auth.getUser(token)
+  if (error || !data.user) throw new HttpError(401, 'Your session has expired. Please sign in again.')
+  const banned = (data.user as { banned_until?: string | null }).banned_until
+  if (banned && new Date(banned) > new Date()) throw new HttpError(403, 'This account is suspended. Contact support@ziondesk.com.')
+  if (!data.user.email_confirmed_at) throw new HttpError(403, 'Please confirm your email address first.')
+  return data.user
+}
+
 /** Wraps async route handlers so thrown errors reach the error middleware. */
 export const route =
   (fn: (req: Request, res: Response) => Promise<unknown>) =>
@@ -76,10 +87,8 @@ export const route =
 export function requireUser() {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const token = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
-      if (!token) throw new HttpError(401, 'Please sign in.')
-      const { data, error } = await db().auth.getUser(token)
-      if (error || !data.user) throw new HttpError(401, 'Your session has expired. Please sign in again.')
+      const user = await verifiedUser(req)
+      const data = { user }
       req.caller = { userId: data.user.id, email: data.user.email ?? '', name: String(data.user.user_metadata?.full_name ?? ''), churchId: '', role: 'leader' }
       next()
     } catch (e) {

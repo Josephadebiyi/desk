@@ -661,7 +661,7 @@ const SERVICES: [string, string, string][] = [
   ['whatsapp', 'WhatsApp', 'WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID (+ WHATSAPP_TEMPLATE, WHATSAPP_VERIFY_TOKEN)'],
   ['sms', 'SMS (Twilio)', 'TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM'],
   ['googleMeet', 'Google Meet', 'GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET'],
-  ['gemini', 'Birthday prayers (Gemini)', 'GEMINI_API_KEY'],
+  ['prayers', 'Birthday prayers (Claude)', 'ANTHROPIC_API_KEY'],
   ['cron', 'Scheduled jobs', 'CRON_SECRET + Render cron jobs'],
 ]
 

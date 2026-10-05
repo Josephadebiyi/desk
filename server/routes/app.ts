@@ -11,7 +11,7 @@ import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
 import { compose, sendEmail } from '../mail'
 import { sendCampaign } from '../messaging'
-import { ageOn, birthdayPrayers } from '../gemini'
+import { ageOn, birthdayPrayers, prayersEnabled } from '../prayers'
 
 export const appRoutes = Router()
 
@@ -87,7 +87,7 @@ appRoutes.post(
       return res.json({ ok: true })
     }
     const { data: member } = claim.email
-      ? await db().from('members').select('id').eq('church_id', claim.church_id).ilike('email', claim.email).maybeSingle()
+      ? await db().from('members').select('id').eq('church_id', claim.church_id).ilike('email', claim.email.replace(/[\\%_]/g, '\\$&')).maybeSingle()
       : { data: null }
     await db().from('gifts').insert({ church_id: claim.church_id, member_id: member?.id ?? null, donor: claim.name, date: claim.date, amount: claim.amount, fund: claim.fund, method: 'Transfer' })
     await db().from('transfer_claims').update({ status: 'Confirmed' }).eq('id', claim.id)
@@ -113,7 +113,7 @@ appRoutes.post(
   '/members/:id/birthday-prayer',
   requireCaller(['admin', 'leader']),
   route(async (req, res) => {
-    if (!configured.gemini) throw new HttpError(503, 'Birthday prayers need GEMINI_API_KEY on the server.')
+    if (!prayersEnabled()) throw new HttpError(503, 'Birthday prayers need ANTHROPIC_API_KEY on the server.')
     const { data: m } = await db().from('members').select('id, church_id, full_name, dob, gender, department, stage, language').eq('id', req.params.id).maybeSingle()
     if (!m || m.church_id !== req.caller!.churchId) throw new HttpError(404, 'Member not found')
     const { data: church } = await db().from('churches').select('name').eq('id', m.church_id).single()

@@ -19,16 +19,19 @@ import { useGoogleEnabled } from '../lib/providers'
 import { ThemeToggle } from '../theme'
 import { LangMenu } from '../i18n/Flags'
 import {
+  AuthError,
   GoogleNotConfiguredError,
   login,
   NotConnectedError,
   register,
   requestPasswordReset,
+  resendConfirmation,
   signInWithGoogle,
   updatePassword,
   type GoogleProfile,
   type PlanId,
 } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 import './auth.css'
 import { tr, useT } from '../i18n'
 import { CHURCH_CURRENCIES, formatMoney, guessCurrency, planPrice } from '../lib/currency'
@@ -301,8 +304,15 @@ function Submit({ loading, children }: { loading: boolean; children: ReactNode }
   )
 }
 
+const AUTH_MSG = { invalid: 'auth.errInvalidLogin', unconfirmed: 'auth.errNotConfirmed', suspended: 'auth.errSuspended', rate: 'auth.errRateLimit' } as const
 const notConnected = (err: unknown) =>
-  err instanceof NotConnectedError ? tr('auth.notConnected') : err instanceof Error && err.message ? err.message : tr('common.somethingWrong')
+  err instanceof NotConnectedError
+    ? tr('auth.notConnected')
+    : err instanceof AuthError && err.code !== 'other'
+      ? tr(AUTH_MSG[err.code])
+      : err instanceof Error && err.message
+        ? err.message
+        : tr('common.somethingWrong')
 
 /* ───────────────────────── Login ───────────────────────── */
 
@@ -312,6 +322,7 @@ export function Login() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [unconfirmed, setUnconfirmed] = useState(false)
   const { t } = useT()
   const navigate = useNavigate()
   const session = useSession()
@@ -329,10 +340,12 @@ export function Login() {
     if (Object.keys(next).length) return
     setLoading(true)
     setNotice(null)
+    setUnconfirmed(false)
     try {
       await login({ email, password })
       navigate(dest)
     } catch (err) {
+      setUnconfirmed(err instanceof AuthError && err.code === 'unconfirmed')
       setNotice(notConnected(err))
     } finally {
       setLoading(false)
@@ -358,7 +371,24 @@ export function Login() {
     >
       <h2 className="auth-title">{t('site.nav.login')}</h2>
       <form className="auth-form" onSubmit={submit} noValidate>
-        <Notice message={notice} onClose={() => setNotice(null)} />
+        <Notice message={notice} onClose={() => setNotice(null)}>
+          {unconfirmed && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="auth-link inline"
+                onClick={() =>
+                  resendConfirmation(email)
+                    .then(() => (setUnconfirmed(false), setNotice(t('auth.confirmResent', { email }))))
+                    .catch((err) => setNotice(notConnected(err)))
+                }
+              >
+                {t('auth.resendConfirm')}
+              </button>
+            </>
+          )}
+        </Notice>
         <Field
           label={t('common.emailAddress')}
           name="email"
@@ -855,6 +885,26 @@ export function ResetPassword() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const invite = params.get('invite') === '1'
+  // The email link signs the person in (token in the URL). Wait for that session; an expired or used link shows a way out.
+  const [link, setLink] = useState<'checking' | 'ok' | 'expired'>(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1))
+    return hash.get('error') || params.get('error') ? 'expired' : supabase ? 'checking' : 'ok'
+  })
+  useEffect(() => {
+    if (!supabase || link !== 'checking') return
+    let done = false
+    const ok = () => {
+      done = true
+      setLink('ok')
+    }
+    supabase.auth.getSession().then(({ data }) => data.session && ok())
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => s && ok())
+    const timer = setTimeout(() => !done && setLink('expired'), 6000)
+    return () => {
+      sub.subscription.unsubscribe()
+      clearTimeout(timer)
+    }
+  }, [link])
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -864,7 +914,7 @@ export function ResetPassword() {
     setNotice(null)
     try {
       await updatePassword(password)
-      navigate('/dashboard')
+      navigate(window.location.hostname.startsWith('admin.') ? '/admin' : '/dashboard', { replace: true })
     } catch (err) {
       setNotice(notConnected(err))
     } finally {
@@ -875,11 +925,25 @@ export function ResetPassword() {
   return (
     <AuthLayout badge={t('auth.reset.badge')} title={invite ? t('auth.newPw.inviteTitle') : t('auth.newPw.title')} sub={t('auth.newPw.sub')} cards={[{ label: t('auth.reset.s1') }, { label: t('auth.reset.s2') }, { label: t('auth.reset.s3') }]} active={2}>
       <h2 className="auth-title">{invite ? t('auth.newPw.inviteTitle') : t('auth.newPw.title')}</h2>
-      <form className="auth-form" onSubmit={submit} noValidate>
-        <Notice message={notice} onClose={() => setNotice(null)} />
-        <PasswordField value={password} onChange={setPassword} error={error} autoComplete="new-password" meter />
-        <Submit loading={loading}>{t('auth.newPw.save')}</Submit>
-      </form>
+      {link === 'checking' ? (
+        <p className="auth-switch">{t('auth.newPw.checking')}</p>
+      ) : link === 'expired' ? (
+        <div className="auth-form">
+          <Notice message={t('auth.newPw.expired')} onClose={() => undefined} />
+          <Link to="/forgot-password" className="btn-primary" style={{ textAlign: 'center', textDecoration: 'none' }}>
+            {t('auth.newPw.requestNew')}
+          </Link>
+          <p className="auth-switch">
+            <Link to="/login">{t('auth.reset.back')}</Link>
+          </p>
+        </div>
+      ) : (
+        <form className="auth-form" onSubmit={submit} noValidate>
+          <Notice message={notice} onClose={() => setNotice(null)} />
+          <PasswordField value={password} onChange={setPassword} error={error} autoComplete="new-password" meter />
+          <Submit loading={loading}>{t('auth.newPw.save')}</Submit>
+        </form>
+      )}
     </AuthLayout>
   )
 }

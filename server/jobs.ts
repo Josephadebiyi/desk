@@ -9,7 +9,7 @@ import { db } from './db'
 import { configured } from './env'
 import { compose, sendEmails } from './mail'
 import { audienceMembers, sendCampaign, type Audience } from './messaging'
-import { ageOn, birthdayPrayers } from './gemini'
+import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
 
@@ -67,8 +67,8 @@ export async function runDaily() {
 }
 
 /**
- * Birthday greetings, once per person per year, in each member's language. With GEMINI_API_KEY set,
- * every celebrant gets their own AI-written prayer; otherwise the standard greeting.
+ * Birthday greetings, once per person per year, in each member's language. With ANTHROPIC_API_KEY set, Claude writes
+ * every celebrant their own prayer; otherwise the standard greeting.
  * Email when the member has one, otherwise WhatsApp (when configured).
  */
 async function runBirthdays() {

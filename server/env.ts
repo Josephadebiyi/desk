@@ -64,9 +64,6 @@ export const env = {
   googleClientId: v('GOOGLE_CLIENT_ID'),
   googleClientSecret: v('GOOGLE_CLIENT_SECRET'),
 
-  // Gemini (aistudio.google.com → API key) — personalised birthday prayers
-  geminiKey: v('GEMINI_API_KEY'),
-  geminiModel: v('GEMINI_MODEL') || 'gemini-flash-latest',
 
   // Staff console on its own domain, e.g. https://admin.ziondesk.com (optional; used in staff emails)
   adminUrl: (v('ADMIN_URL') || '').replace(/\/$/, ''),
@@ -84,7 +81,7 @@ export const configured = {
   whatsappCloud: Boolean(env.waToken && env.waPhoneId),
   whatsapp: Boolean((env.waToken && env.waPhoneId) || (env.twilioSid && env.twilioToken && env.twilioWhatsappFrom)),
   googleMeet: Boolean(env.googleClientId && env.googleClientSecret),
-  gemini: Boolean(env.geminiKey),
+  prayers: Boolean(process.env.ANTHROPIC_API_KEY),
   admin: env.adminEmails.length > 0,
   flutterwave: Boolean(env.flwSecretKey),
 }

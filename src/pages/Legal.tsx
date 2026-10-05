@@ -19,7 +19,6 @@ const SUBPROCESSORS = [
   { id: 'resend', name: 'Resend (Plus Five Five, Inc.)', where: 'USA' },
   { id: 'flutterwave', name: 'Flutterwave, Inc.', where: 'Nigeria / USA' },
   { id: 'anthropic', name: 'Anthropic, PBC', where: 'USA' },
-  { id: 'gemini', name: 'Google LLC (Gemini API)', where: 'USA' },
   { id: 'google', name: 'Google LLC', where: 'USA' },
   { id: 'meta', name: 'Meta Platforms, Inc. / WhatsApp', where: 'USA / Ireland' },
   { id: 'twilio', name: 'Twilio Inc.', where: 'USA' },

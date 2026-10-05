@@ -64,12 +64,8 @@ How it works:
 4. Deploy. Check `https://YOUR-DOMAIN/api/health` → `"supabase":true,"email":true`.
 5. Optional: Settings → Custom Domain → `app.ziondesk.com`, then update `SITE_URL` and Supabase's Site URL.
 
-## 5. Gemini (optional, ≈3 min)
-
-1. aistudio.google.com → **Get API key** → create a key in a Google Cloud project → `GEMINI_API_KEY`.
-2. In that project, **enable billing**. On the free tier Google may use prompts to improve its products — Ellen's prompts contain member details.
-3. Add `GEMINI_API_KEY` in Render → Environment. The model defaults to `gemini-3.8-flash` (override with `GEMINI_MODEL` if needed).
-4. Deploy, then in ZionDesk **Settings → AI** tick **Gemini** (it is off by default). Ellen uses Claude first when both are on; pick Gemini in Ellen's model menu to use it directly.
+## 5. Birthday prayers
+Nothing to set up: they use the same `ANTHROPIC_API_KEY` as Ellen (Claude).
 
 ## 6. Keys checklist
 
@@ -85,8 +81,6 @@ How it works:
 | `FLW_SECRET_KEY`, `FLW_WEBHOOK_HASH` | Flutterwave → Settings | ✅ for online giving & billing |
 | `FLW_PLAN_*` | `npm run flw:plans` | ✅ for plan billing |
 | `FLW_PLATFORM_FEE` | your choice | optional |
-| `GEMINI_API_KEY` | aistudio.google.com → API keys (turn on billing — free-tier prompts are used by Google to improve its products) | optional |
-| `GEMINI_MODEL` | defaults to `gemini-3.8-flash` | optional override |
 | `OPENAI_*` | OpenAI | optional |
 | `TWILIO_*` | twilio.com | optional (SMS/WhatsApp) |
 | Google OAuth Client ID/Secret | Google Cloud Console → entered in **Supabase**, not Render | for "Continue with Google" |
@@ -156,9 +150,8 @@ Create them in `/admin/promos`. Churches enter them in Settings → Plan.
    Note: `calendar.events` is a sensitive scope — until Google verifies the app, up to 100 test users can connect
    (add them under OAuth consent screen → Audience). Submit for verification before launch.
 
-### Birthday prayers (Gemini)
-- aistudio.google.com → Get API key, on a Google Cloud project **with billing enabled** (paid tier: Google
-  doesn't use prompts to train models, as promised in our Privacy Policy) → `GEMINI_API_KEY`.
+### Birthday prayers (Claude)
+- Uses `ANTHROPIC_API_KEY` (already set for Ellen). Anthropic doesn't train on API data.
 - The daily job writes a unique prayer per celebrant in their language and emails it (or sends it on WhatsApp
   when there's no email). Admins can also generate one from Overview → Birthdays (✨ button).
 - Only first name, age group, ministry, stage and language are sent — never contact details or notes.

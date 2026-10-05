@@ -62,9 +62,32 @@ const need = () => {
   return supabase
 }
 
+/** Sign-in failures the screens explain in the user's language. */
+export class AuthError extends Error {
+  code: 'invalid' | 'unconfirmed' | 'suspended' | 'rate' | 'other'
+  constructor(code: AuthError['code'], message: string) {
+    super(message)
+    this.code = code
+    this.name = 'AuthError'
+  }
+}
+const authError = (e: { message: string; code?: string; status?: number }) => {
+  const m = `${e.code ?? ''} ${e.message}`.toLowerCase()
+  if (m.includes('invalid_credentials') || m.includes('invalid login')) return new AuthError('invalid', e.message)
+  if (m.includes('email_not_confirmed') || m.includes('not confirmed')) return new AuthError('unconfirmed', e.message)
+  if (m.includes('user_banned') || m.includes('banned')) return new AuthError('suspended', e.message)
+  if (e.status === 429 || m.includes('rate limit') || m.includes('too many')) return new AuthError('rate', e.message)
+  return new AuthError('other', e.message)
+}
+
 export async function login({ email, password }: LoginInput): Promise<void> {
-  const { error } = await need().auth.signInWithPassword({ email, password })
-  if (error) throw new Error(error.message)
+  const { error } = await need().auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+  if (error) throw authError(error)
+}
+
+export async function resendConfirmation(email: string): Promise<void> {
+  const { error } = await need().auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: `${site()}/dashboard` } })
+  if (error) throw authError(error)
 }
 
 /** Returns 'ready' when the account and church exist, or 'confirm-email' when the user must click the email link first. */
@@ -84,14 +107,16 @@ export async function register(input: RegisterInput): Promise<'ready' | 'confirm
     // Email sign-up. The church is created right away if no email confirmation is required,
     // otherwise on first sign-in (see SessionProvider).
     const { data, error } = await sb.auth.signUp({
-      email: input.email,
+      email: input.email.trim().toLowerCase(),
       password: input.password ?? '',
       options: {
         emailRedirectTo: `${site()}/dashboard`,
         data: { full_name: input.fullName, ui_language: input.uiLanguage, comm_language: input.communicationLanguage, pending_church: pending, terms_version: TERMS_VERSION },
       },
     })
-    if (error) throw new Error(error.message)
+    if (error) throw authError(error)
+    // Supabase hides whether an address is taken: an existing confirmed account comes back with no identities.
+    if (data.user && !data.user.identities?.length) throw new AuthError('other', 'An account with this email already exists. Sign in or reset your password.')
     if (!data.session) return 'confirm-email'
     s = { session: data.session }
   }
@@ -114,13 +139,17 @@ export async function uploadLogo(churchId: string, file: File) {
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
-  const { error } = await need().auth.resetPasswordForEmail(email, { redirectTo: `${site()}/reset-password` })
-  if (error) throw new Error(error.message)
+  const { error } = await need().auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${site()}/reset-password` })
+  // Never reveal whether an account exists; only surface rate limits.
+  if (error && authError(error).code === 'rate') throw authError(error)
 }
 
+/** Sets the new password and signs out every other device (a reset usually means the old one leaked). */
 export async function updatePassword(password: string): Promise<void> {
-  const { error } = await need().auth.updateUser({ password })
-  if (error) throw new Error(error.message)
+  const sb = need()
+  const { error } = await sb.auth.updateUser({ password })
+  if (error) throw authError(error)
+  await sb.auth.signOut({ scope: 'others' }).catch(() => undefined)
 }
 
 /** Google via Supabase OAuth: redirects to Google and back to `returnTo`. */

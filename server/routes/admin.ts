@@ -525,7 +525,7 @@ adminRoutes.get(
   '/admin/search',
   ...staff,
   route(async (req, res) => {
-    const q = str(req.query.q, 60).replace(/[%,()]/g, '')
+    const q = str(req.query.q, 60).replace(/[%,()"\\*:]/g, '')
     if (q.length < 2) return res.json({ churches: [], users: [] })
     const { data: churches } = await db().from('churches').select('id, name, location, plan_status').or(`name.ilike.%${q}%,email.ilike.%${q}%,location.ilike.%${q}%`).limit(6)
     const { data: users } = await db().from('profiles').select('id, full_name, email').or(`full_name.ilike.%${q}%,email.ilike.%${q}%`).limit(6)
