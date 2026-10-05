@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ZionDesk explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="words-v3.js"></script>
+<style>
+  :root { --p: #6c34ff; --p2: #8457ff; --pd: #5221e6; --lav: #ece7ff; --ink: #111015; --lime: #c4ec62; --muted: #6b6880;
+    --g: 'Inter Tight', Inter, sans-serif; --ui: Inter, sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: var(--W); height: var(--H); overflow: hidden; background: #f7f5ff; }
+  body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .stage { position: absolute; inset: 0; overflow: hidden; perspective: 2200px;
+    background: radial-gradient(55% 45% at 85% 5%, #e3dbff 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, #efe9ff 0%, transparent 70%), linear-gradient(180deg, #faf9ff, #f3f0ff); }
+  .grid { position: absolute; inset: -20%; background-image: linear-gradient(rgba(108,52,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(108,52,255,.06) 1px, transparent 1px); background-size: 64px 64px; }
+  .a { position: absolute; left: 50%; top: 50%; transform-style: preserve-3d; will-change: transform, opacity; }
+  .win { width: var(--DW); height: calc(var(--DW) * .625); border-radius: calc(var(--DW) * .014); overflow: hidden; background: #fff; box-shadow: 0 60px 120px -40px rgba(60,20,160,.45), 0 0 0 1px rgba(108,52,255,.12); }
+  .win img.shot { width: 100%; height: 100%; display: block; }
+  .ov { position: absolute; }
+  .ring { position: absolute; border: 4px solid var(--p); border-radius: 16px; box-shadow: 0 0 0 9999px rgba(20,10,60,.0); }
+  .glow { position: absolute; border-radius: 18px; box-shadow: 0 0 0 4px var(--p), 0 0 40px 6px rgba(108,52,255,.45); }
+  .tag { position: absolute; padding: .45em .9em; border-radius: 99em; background: var(--p); color: #fff; font-family: var(--g); font-weight: 700; white-space: nowrap; box-shadow: 0 12px 30px -10px rgba(108,52,255,.7); }
+  .toast { position: absolute; display: flex; align-items: center; gap: .7em; padding: .8em 1.1em; border-radius: 1em; background: #fff; box-shadow: 0 24px 60px -20px rgba(40,20,120,.55), 0 0 0 1px rgba(108,52,255,.15); font-family: var(--g); white-space: nowrap; }
+  .toast i { width: 2.4em; height: 2.4em; border-radius: .7em; background: var(--p); display: grid; place-items: center; color: #fff; font-style: normal; font-weight: 800; }
+  .toast b { display: block; font-size: 1em; } .toast small { color: var(--muted); font-size: .8em; }
+  .card { position: absolute; padding: 1.4em 1.6em; border-radius: 1.2em; background: #fff; box-shadow: 0 30px 70px -30px rgba(40,20,120,.5); font-family: var(--g); }
+  .phone { width: var(--PW); height: calc(var(--PW) * 2.15); border-radius: calc(var(--PW) * .13); background: #121018; padding: calc(var(--PW) * .03); box-shadow: 0 50px 100px -30px rgba(40,20,120,.6), 0 0 0 2px #2a2633; }
+  .phone .sc { width: 100%; height: 100%; border-radius: calc(var(--PW) * .105); overflow: hidden; position: relative; background: #fff; }
+  .phone .sc img { width: 100%; display: block; }
+  .phone .notch { position: absolute; top: calc(var(--PW) * .025); left: 50%; width: 30%; height: calc(var(--PW) * .07); margin-left: -15%; border-radius: 99em; background: #121018; z-index: 2; }
+  .scan { position: absolute; left: 6%; right: 6%; height: 4px; background: linear-gradient(90deg, transparent, var(--lime), transparent); box-shadow: 0 0 20px 4px rgba(196,236,98,.8); }
+  .title { position: absolute; inset: 0; background: radial-gradient(70% 60% at 50% 40%, #8457ff 0%, #6c34ff 45%, #4a1bd8 100%); display: grid; place-items: center; }
+  .big { font-family: var(--g); font-weight: 900; letter-spacing: -.045em; line-height: .95; text-align: center; color: #fff; }
+  .big .l { color: var(--lime); }
+  .big .w { display: inline-block; }
+  .hl { font-family: var(--g); font-weight: 800; letter-spacing: -.04em; line-height: 1; white-space: nowrap; color: var(--ink); text-shadow: 0 0 24px #f7f5ff, 0 0 10px #f7f5ff, 0 0 4px #fff; }
+  .hl em { font-style: normal; color: var(--p); }
+  .sheet { display: grid; gap: 6px; padding: 18px; background: #fff; border-radius: 14px; box-shadow: 0 40px 80px -30px rgba(40,20,120,.5); }
+  .sheet .r { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; gap: 6px; }
+  .sheet .r i { height: 26px; border-radius: 4px; background: #eef0f3; display: block; font-style: normal; font-size: 13px; color: #9aa; padding: 4px 6px; font-family: monospace; overflow: hidden; }
+  .sheet .r.h i { background: #d9f2df; color: #2f7a45; font-weight: 700; }
+  .sheet .r i.err { background: #ffe1e1; color: #d33; }
+  .counter { font-family: var(--g); font-weight: 900; letter-spacing: -.05em; color: var(--lime); }
+  .chk { display: inline-grid; place-items: center; width: 1em; height: 1em; border-radius: 50%; background: var(--lime); color: #18210a; font-size: .8em; margin-right: .35em; vertical-align: .05em; }
+  .cta { display: inline-flex; align-items: center; gap: .5em; padding: .55em 1.3em; border-radius: 99em; background: var(--p); color: #fff; font-family: var(--g); font-weight: 800; white-space: nowrap; box-shadow: 0 20px 40px -14px rgba(108,52,255,.75), inset 0 2px 0 rgba(255,255,255,.25); }
+  .pill { display: inline-flex; padding: .4em .9em; border-radius: 99em; background: #fff; color: var(--p); font-family: var(--g); font-weight: 700; white-space: nowrap; box-shadow: 0 0 0 1px rgba(108,52,255,.2); }
+  .cursor { width: 34px; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+  .ripple { width: 60px; height: 60px; border-radius: 50%; border: 4px solid var(--p); }
+  .cap { position: absolute; left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 0 .28em; padding: .42em .9em .48em; border-radius: .8em; background: rgba(17,16,21,.86); color: rgba(255,255,255,.5); font-family: var(--g); font-weight: 800; line-height: 1.2; letter-spacing: -.01em; }
+  .cap span.on { color: #fff; } .cap span.k { color: var(--lime); }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flyer { position: absolute; border-radius: 14px; overflow: hidden; background: #1b0f45; }
+  .flyer .art { position: absolute; inset: 0; background: radial-gradient(60% 45% at 80% 15%, #ffcf5a 0%, transparent 60%), radial-gradient(70% 50% at 0% 100%, #8457ff 0%, transparent 65%), linear-gradient(170deg, #2a1470, #120c2b); }
+  .flyer .txt { position: absolute; left: 8%; right: 8%; bottom: 9%; color: #fff; font-family: var(--g); }
+  .flyer small { font-weight: 700; letter-spacing: .3em; font-size: .7em; color: var(--lime); }
+  .flyer h4 { font-family: Georgia, serif; font-weight: 400; font-size: 3.2em; line-height: .95; margin: .2em 0 .25em; }
+  .flyer p { font-size: .8em; opacity: .85; }
+  .shim { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.5) 45%, transparent 65%); background-size: 260% 100%; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="grid" id="grid"></div>
+  <div class="a" id="cam" style="left:0;top:0;width:100%;height:100%">
+
+    <!-- dashboard screens (real screenshots) -->
+    <div class="a win" id="w_overview"><img class="shot" src="shots/overview.png" /></div>
+    <div class="a win" id="w_links"><img class="shot" src="shots/links.png" />
+      <div class="glow ov" id="qrGlow" style="left:43.4%;top:26.5%;width:17.6%;height:45.4%"></div>
+      <div class="tag ov" id="qrTag" style="left:44%;top:20%;font-size:20px">New convert form</div>
+    </div>
+    <div class="a win" id="w_members"><img class="shot" src="shots/members.png" />
+      <div class="toast ov" id="toast" style="right:3%;top:7%;font-size:22px"><i>+1</i><div><b>New convert registered</b><small>Esther Bello · just now · scanned at service</small></div></div>
+      <div class="glow ov" id="pipeGlow" style="left:30.4%;top:15.8%;width:20.4%;height:13.6%"></div>
+      <div class="glow ov" id="rowGlow" style="left:4.4%;top:42.5%;width:91.4%;height:6%"></div>
+    </div>
+    <div class="a win" id="w_giving"><img class="shot" src="shots/giving.png" />
+      <div class="glow ov" id="chartGlow" style="left:4.4%;top:22%;width:48.5%;height:38%"></div>
+      <div class="tag ov" id="liveTag" style="left:40%;top:24%;font-size:20px">● Live</div>
+    </div>
+    <div class="a win" id="w_messaging"><img class="shot" src="shots/messaging.png" />
+      <div class="glow ov" id="chanGlow" style="left:5%;top:31%;width:22%;height:6.5%"></div>
+      <div class="glow ov" id="langGlow" style="left:5%;top:60%;width:34%;height:6.5%"></div>
+    </div>
+    <div class="a win" id="w_design"><img class="shot" src="shots/design.png" />
+      <div class="flyer ov" id="flyer" style="left:63.5%;top:25%;width:24%;height:47%;font-size:14px"><div class="art"></div><div class="txt"><small>GRACE CHAPEL</small><h4>Harvest<br/>Sunday</h4><p>Sun 12 Oct · 9:00 AM</p></div><div class="shim" id="shim"></div></div>
+    </div>
+    <div class="a win" id="w_events"><img class="shot" src="shots/events.png" /></div>
+    <div class="a win" id="w_ai"><img class="shot" src="shots/ai.png" /></div>
+
+    <!-- phones -->
+    <div class="a phone" id="ph_join"><div class="sc"><div class="notch"></div><img src="shots/phone-join.png" /><div class="scan" id="scan"></div></div></div>
+    <div class="a phone" id="ph_give"><div class="sc"><div class="notch"></div><img src="shots/phone-give.png" /></div></div>
+
+    <!-- spreadsheet chaos -->
+    <div class="a sheet" id="sheet"></div>
+
+    <svg class="a cursor" id="cursor" viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.3L9 20z" fill="#111015" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    <div class="a ripple" id="ripple"></div>
+
+    <div class="a hl" id="hl"></div>
+    <img class="a" id="logoC" src="brand/logo-color.webp" />
+  </div>
+
+  <!-- full-bleed purple title cards -->
+  <div class="title" id="title">
+    <div class="a big" id="tBig"></div>
+    <div class="a counter" id="count"></div>
+    <img class="a" id="appIcon" src="brand/app-icon.png" />
+    <img class="a" id="logoL" src="brand/logo-lime.webp" />
+    <div class="a cta" id="cta">Start free trial →</div>
+    <div class="a pill" id="url">ziondesk.com</div>
+    <div class="a" id="fine" style="font-family:var(--g);font-weight:600;color:rgba(255,255,255,.75);white-space:nowrap"></div>
+  </div>
+  <div class="cap" id="cap"></div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+const q = new URLSearchParams(location.search)
+const REEL = q.get('format') === 'reel'
+const W = REEL ? 1080 : 1920, H = REEL ? 1920 : 1080
+const DW = REEL ? 1000 : 1500 // dashboard window width (px) at scale 1
+const PW = REEL ? 380 : 330 // phone width
+const R = document.documentElement.style
+R.setProperty('--W', W + 'px'); R.setProperty('--H', H + 'px'); R.setProperty('--DW', DW + 'px'); R.setProperty('--PW', PW + 'px')
+const WORDS = window.__WORDS__ || []
+const DUR = 30.8
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const P = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, k) => a + (b - a) * k
+const o3 = (k) => 1 - Math.pow(1 - k, 3), o5 = (k) => 1 - Math.pow(1 - k, 5)
+const io = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+const back = (k, s = 1.8) => 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2)
+const $ = (id) => document.getElementById(id)
+const clean = (w) => w.toLowerCase().replace(/[^a-z0-9-]/g, '')
+const T = (word, n = 1) => { let c = 0; for (const x of WORDS) if (clean(x.w) === clean(word) && ++c === n) return x.s; return 0 }
+const Te = (word, n = 1) => { let c = 0; for (const x of WORDS) if (clean(x.w) === clean(word) && ++c === n) return x.e; return 0 }
+
+/** Generic placement (px offsets from centre). */
+function put(el, { x = 0, y = 0, z = 0, s = 1, rx = 0, ry = 0, rz = 0, o = 1, blur = 0 } = {}) {
+  if (o <= 0.002) { el.style.visibility = 'hidden'; el.style.opacity = 0; return }
+  el.style.visibility = 'visible'
+  el.style.transform = `translate(-50%,-50%) translate3d(${x}px,${y}px,${z}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s})`
+  el.style.opacity = o
+  el.style.filter = blur > 0.05 ? `blur(${blur}px)` : ''
+}
+/** Camera on a dashboard window: fx/fy = focus point (fraction of the screenshot) brought to the centre. */
+function view(el, { x = 0, y = 0, z = 0, s = 1, rx = 0, ry = 0, rz = 0, fx = 0.5, fy = 0.5, o = 1, blur = 0 }) {
+  if (o <= 0.002) { el.style.visibility = 'hidden'; el.style.opacity = 0; return }
+  el.style.visibility = 'visible'
+  const dx = (0.5 - fx) * DW, dy = (0.5 - fy) * DW * 0.625
+  el.style.transform = `translate(-50%,-50%) translate3d(${x}px,${y}px,${z}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s}) translate(${dx}px,${dy}px)`
+  el.style.opacity = o
+  el.style.filter = blur > 0.05 ? `blur(${blur}px)` : ''
+}
+const hide = (...ids) => ids.forEach((id) => { const e = $(id); e.style.visibility = 'hidden'; e.style.opacity = 0 })
+const lerpView = (a, b, k) => Object.fromEntries(Object.keys({ ...a, ...b }).map((key) => [key, lerp(a[key] ?? (key === 's' || key === 'o' ? 1 : key === 'fx' || key === 'fy' ? 0.5 : 0), b[key] ?? (key === 's' || key === 'o' ? 1 : key === 'fx' || key === 'fy' ? 0.5 : 0), k)]))
+
+/* spreadsheet content */
+{
+  const rows = [['Name', 'Phone', 'Tithe', 'Visit', 'Notes']]
+  const names = ['A. Okafor', 'K. Mensah', 'G. Wanjiru', 'T. Adeyemi', 'S. Bello', 'M. Kalu', 'J. Brown', 'D. Eze', 'R. Taylor']
+  names.forEach((n, i) => rows.push([n, '0803…' + (100 + i * 7), i % 3 === 1 ? '#REF!' : '₦' + (5 + i) + ',000', i % 4 === 2 ? '??' : 'Sun', i % 2 ? 'call?' : '']))
+  $('sheet').innerHTML = rows.map((r, i) => `<div class="r ${i === 0 ? 'h' : ''}">${r.map((c) => `<i class="${/REF|\?\?/.test(c) ? 'err' : ''}">${c}</i>`).join('')}</div>`).join('')
+  $('sheet').style.width = (REEL ? 900 : 1000) + 'px'
+}
+const ALL = ['w_overview', 'w_links', 'w_members', 'w_giving', 'w_messaging', 'w_design', 'w_events', 'w_ai', 'ph_join', 'ph_give', 'sheet', 'cursor', 'ripple', 'hl', 'logoC', 'tBig', 'count', 'appIcon', 'logoL', 'cta', 'url', 'fine']
+const glows = ['qrGlow', 'qrTag', 'toast', 'pipeGlow', 'rowGlow', 'chartGlow', 'liveTag', 'chanGlow', 'langGlow', 'flyer']
+const fade = (id, o, s = 1) => { const e = $(id); e.style.opacity = o; e.style.transform = `scale(${s})` }
+
+/** Big kinetic headline over the dashboard (light scenes). */
+let NOW = 0
+function headline(html, size, y, t0, t1, out = 0) {
+  const el = $('hl'); if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html }
+  el.style.fontSize = size + 'px'
+  const k = back(P(NOW, t0, t0 + 0.35), 2)
+  put(el, { y: y + lerp(30, 0, k), s: lerp(0.8, 1, k) * (1 - out * 0.2), o: P(NOW, t0 - 0.02, t0 + 0.12) * (1 - out), blur: out * 6 })
+}
+/** Big kinetic words on the purple title card: each .w pops in at data-t. */
+function bigWords(html, size, y, t) {
+  const el = $('tBig'); if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html }
+  el.style.fontSize = size + 'px'
+  put(el, { y })
+  for (const w of el.querySelectorAll('.w')) { const at = +w.dataset.t, k = back(P(t, at - 0.03, at + 0.25), 2.4); w.style.opacity = P(t, at - 0.03, at + 0.06); w.style.transform = `translateY(${lerp(0.35, 0, k)}em) scale(${lerp(0.5, 1, k)})` }
+}
+const Wd = (txt, at, cls = '') => `<span class="w ${cls}" data-t="${at}">${txt}</span>`
+
+/* captions */
+const PHR = []
+{ let cur = []; WORDS.forEach((w, i) => { cur.push(w); const end = /[.?!…]$|\.\.\.$/.test(w.w) || cur.length >= (REEL ? 4 : 6); if (end || i === WORDS.length - 1) { PHR.push(cur); cur = [] } }) }
+const KEY = /^(zionDesk|dashboard|qr|instantly|live|whatsapp|five|ai|ellen|minutes|free|ziondeskcom)$/i
+
+function seek(t) {
+  NOW = t
+  ALL.forEach((id) => hide(id)); glows.forEach((id) => fade(id, 0))
+  const A = REEL
+  const t1 = T('your', 2), t2 = T('meet'), t3 = T('new'), t3b = T('instantly'), t4 = T('track'), t5 = T('see'), t6 = T('send'), t7 = T('create'), t8 = T('set'), t9 = T('start')
+  $('grid').style.transform = `translate(${-(t * 14) % 64}px, ${-(t * 8) % 64}px)`
+  let title = 0 // purple title card opacity
+
+  /* 0 — "Your church is growing." : purple card, counter climbs */
+  if (t < t1) {
+    title = 1
+    bigWords(`${Wd('Your church', T('your'))}<br/>${Wd('is <span class="l">growing.</span>', T('is'))}`, A ? 104 : 140, A ? -120 : -60, t)
+    const n = Math.round(lerp(48, 1248, o3(P(t, 0.1, t1))))
+    const c = $('count'); c.textContent = '+' + n.toLocaleString('en-US') + ' members'; c.style.fontSize = (A ? 64 : 58) + 'px'
+    put(c, { y: A ? 140 : 130, s: back(P(t, 0.2, 0.5)), o: P(t, 0.2, 0.3) })
+  }
+  /* 1 — "Your spreadsheets can't keep up." : sheet shakes and breaks */
+  else if (t < t2 - 0.05) {
+    const k = o5(P(t, t1, t1 + 0.35)), brk = io(P(t, T('up') - 0.05, t2 - 0.05))
+    put($('sheet'), { y: A ? 120 : 70, rz: Math.sin(t * 38) * 1.4 * (1 - brk) - brk * 14, rx: 12, s: lerp(0.8, A ? 1 : 0.95, k) * (1 - brk * 0.3), o: k * (1 - brk), x: brk * -300, blur: brk * 8 })
+    headline(`Your spreadsheets <em>can't keep up.</em>`, A ? 64 : 76, A ? -560 : -380, t1)
+  }
+  /* 2 — "Meet ZionDesk — your whole church, in one dashboard." */
+  else if (t < t3) {
+    const zd = T('zionDesk'), dsh = T('dashboard')
+    if (t < T('your', 3)) {
+      title = 1
+      const k = back(P(t, t2, t2 + 0.45), 2.2)
+      // app icon spins in, then hands over to the full logo
+      const hand = io(P(t, zd - 0.05, zd + 0.25))
+      put($('appIcon'), { y: (A ? -40 : -20) - hand * (A ? 330 : 250), s: k * lerp(A ? 0.42 : 0.36, A ? 0.2 : 0.16, hand), ry: lerp(-360, 0, o3(P(t, t2, t2 + 0.6))), o: P(t, t2 - 0.02, t2 + 0.05) })
+      $('logoL').style.width = (A ? 760 : 700) + 'px'
+      put($('logoL'), { y: A ? 120 : 90, s: lerp(0.7, 1, back(P(t, zd, zd + 0.35))), o: P(t, zd, zd + 0.1) })
+    } else {
+      // the overview flies in from a steep angle, then the camera sweeps across it
+      const k = o5(P(t, T('your', 3) - 0.1, T('your', 3) + 0.7)), sw = io(P(t, T('whole'), t3 - 0.05))
+      const from = { s: A ? 0.55 : 0.6, rx: 58, rz: -28, y: 260, fx: 0.5, fy: 0.5 }
+      const mid = { s: A ? 0.95 : 0.85, rx: 18, ry: -14, rz: -4, y: A ? 60 : 30, fx: 0.5, fy: 0.45 }
+      const end = { s: A ? 1.25 : 1.05, rx: 8, ry: 10, rz: 0, y: A ? 60 : 30, fx: 0.42, fy: 0.42 }
+      view($('w_overview'), lerpView(lerpView(from, mid, k), end, sw))
+      headline(`Your whole church. <em>One dashboard.</em>`, A ? 58 : 64, A ? -660 : -440, T('your', 3))
+    }
+  }
+  /* 3 — QR during service → registered instantly */
+  else if (t < t4) {
+    const scanT = T('scan'), svc = T('service'), inT = T('in', 2)
+    // links page, zoom into the new-convert QR card
+    if (t < svc - 0.1) {
+      const k = o5(P(t, t3 - 0.05, t3 + 0.5)), z = io(P(t, T('first-timers'), scanT + 0.2))
+      view($('w_links'), lerpView({ s: A ? 0.9 : 0.85, rx: 20, ry: 24, y: A ? 40 : 40, x: 300 * (1 - k), fx: 0.5, fy: 0.5, o: k }, { s: A ? 2.6 : 2.2, rx: 6, ry: 6, y: A ? 40 : 40, fx: 0.522, fy: 0.49, o: 1 }, z))
+      fade('qrGlow', P(t, scanT - 0.3, scanT), 1); fade('qrTag', P(t, scanT - 0.3, scanT), 1)
+      headline(`New converts. <em>First-timers.</em>`, A ? 58 : 64, A ? -660 : -440, t3)
+    } else if (t < inT - 0.15) {
+      // phone scans and opens the real registration form
+      const k = back(P(t, svc - 0.1, svc + 0.35), 1.6)
+      put($('ph_join'), { x: A ? 0 : -260, y: A ? 60 : 30, s: k * (A ? 1.25 : 1.15), ry: lerp(-40, A ? -6 : 14, o3(P(t, svc - 0.1, svc + 0.5))), rz: A ? 0 : -4, o: P(t, svc - 0.1, svc) })
+      $('scan').style.top = (8 + ((t - svc) * 160) % 84) + '%'
+      view($('w_links'), { s: A ? 1.4 : 1.25, rx: 14, ry: -16, x: A ? 0 : 330, y: A ? -420 : 20, fx: 0.52, fy: 0.49, o: A ? 0.5 : 1, blur: A ? 3 : 0 })
+      fade('qrGlow', 1)
+      headline(`Scan the QR <em>during service.</em>`, A ? 58 : 64, A ? -680 : -440, svc - 0.1)
+    } else {
+      // they're in — instantly
+      const k = o5(P(t, inT - 0.15, inT + 0.3)), tk = back(P(t, inT + 0.05, inT + 0.4), 2)
+      view($('w_members'), lerpView({ s: A ? 1.6 : 1.1, rx: 10, ry: 16, y: 40, fx: 0.5, fy: 0.3, o: k }, { s: A ? 2.2 : 1.45, rx: 6, ry: -8, y: 40, fx: A ? 0.78 : 0.7, fy: 0.22, o: 1 }, io(P(t, inT, t4))))
+      fade('toast', P(t, inT + 0.05, inT + 0.15), tk)
+      fade('pipeGlow', P(t, t3b - 0.1, t3b + 0.1))
+      headline(`They're in. <em>Instantly.</em>`, A ? 76 : 86, A ? -680 : -440, t3b)
+    }
+  }
+  /* 4 — members, families, follow-ups (side angle, zoom across) */
+  else if (t < t5) {
+    const sw = io(P(t, t4, t5)), k = o5(P(t, t4 - 0.05, t4 + 0.4))
+    view($('w_members'), lerpView({ s: A ? 1.9 : 1.25, rx: 16, ry: -24, rz: 2, y: 30, fx: 0.3, fy: 0.24, o: k }, { s: A ? 2.0 : 1.35, rx: 12, ry: 18, rz: -1, y: 30, fx: 0.55, fy: 0.62 }, sw))
+    fade('rowGlow', P(t, T('follow-up') - 0.2, T('follow-up')))
+    fade('pipeGlow', P(t, t4, t4 + 0.2) * (1 - P(t, T('family'), T('family') + 0.2)))
+    headline(`Every member. Every family. <em>Every follow-up.</em>`, A ? 44 : 58, A ? -680 : -440, t4)
+  }
+  /* 5 — giving live */
+  else if (t < t6) {
+    const k = o5(P(t, t5 - 0.05, t5 + 0.45)), z = io(P(t, t5 + 0.2, T('live') + 0.3))
+    view($('w_giving'), lerpView({ s: A ? 1 : 0.9, rx: 30, rz: 8, y: 80, fx: 0.5, fy: 0.5, o: k }, { s: A ? 2.1 : 1.55, rx: 10, ry: -10, y: 30, fx: 0.3, fy: 0.42 }, z))
+    fade('chartGlow', P(t, T('live') - 0.2, T('live'))); fade('liveTag', P(t, T('live') - 0.1, T('live') + 0.05), back(P(t, T('live') - 0.1, T('live') + 0.3)))
+    const g = T('online')
+    put($('ph_give'), { x: A ? 220 : 520, y: A ? 380 : 60, s: back(P(t, g - 0.1, g + 0.35)) * (A ? 0.9 : 0.95), ry: -16, rz: 4, o: P(t, g - 0.1, g) })
+    headline(`Tithes & offerings, <em>live.</em>`, A ? 64 : 72, A ? -680 : -440, t5)
+  }
+  /* 6 — messaging in five languages */
+  else if (t < t7) {
+    const k = o5(P(t, t6 - 0.05, t6 + 0.45)), z = io(P(t, t6 + 0.1, T('email')))
+    const z2 = io(P(t, T('five') - 0.3, T('languages') + 0.2))
+    let v = lerpView({ s: A ? 1 : 0.9, rx: 14, ry: 30, x: -200 * (1 - k), y: 40, o: k }, { s: A ? 2.6 : 1.9, rx: 8, ry: 8, y: 40, fx: 0.17, fy: 0.34 }, z)
+    v = lerpView(v, { s: A ? 2.4 : 1.8, rx: 8, ry: -8, y: 40, fx: 0.22, fy: 0.63 }, z2)
+    view($('w_messaging'), v)
+    fade('chanGlow', P(t, T('whatsapp') - 0.2, T('whatsapp')) * (1 - z2)); fade('langGlow', z2)
+    headline(`WhatsApp · SMS · Email <em>— 5 languages</em>`, A ? 50 : 62, A ? -680 : -440, t6)
+  }
+  /* 7 — flyers with AI, events, Ellen: quick 3D carousel */
+  else if (t < t8) {
+    const pe = T('plan'), el = T('ellen')
+    const stage = t < pe - 0.05 ? 0 : t < T('ask') - 0.05 ? 1 : 2
+    const ids = ['w_design', 'w_events', 'w_ai']
+    const cuts = [t7 - 0.05, pe - 0.05, T('ask') - 0.05]
+    ids.forEach((id, i) => {
+      const rel = i - stage
+      const enter = o5(P(t, cuts[stage], cuts[stage] + 0.4))
+      const pos = rel === 0 ? lerp(1, 0, enter) : rel - (rel < 0 ? 0 : 1) + (rel > 0 ? 1 - enter : 0) * 0 + rel
+      const xx = (rel === 0 ? (1 - enter) : rel) * (A ? 900 : 1300)
+      const vv = rel === 0
+        ? { s: (A ? 1.15 : 1) * lerp(0.85, 1, enter), rx: 8, ry: lerp(-40, -6, enter), x: xx, y: 40, fx: i === 0 ? 0.55 : 0.5, fy: i === 0 ? 0.48 : 0.45, o: 1 }
+        : { s: A ? 0.8 : 0.7, rx: 8, ry: rel > 0 ? -50 : 50, x: xx, y: 60, o: rel < 0 ? 1 - enter : 0.0 }
+      view($(id), vv)
+    })
+    // zoom punch into the AI flyer preview
+    if (stage === 0) {
+      const z = io(P(t, T('flyers'), T('ai') + 0.3))
+      view($('w_design'), lerpView({ s: A ? 1.15 : 1, rx: 8, ry: -6, y: 40, fx: 0.55, fy: 0.48 }, { s: A ? 2.6 : 1.9, rx: 6, ry: 6, y: 40, fx: 0.755, fy: 0.49 }, z))
+      fade('flyer', P(t, T('ai') - 0.1, T('ai') + 0.2), back(P(t, T('ai') - 0.1, T('ai') + 0.3)))
+      $('shim').style.backgroundPosition = `${lerp(150, -60, P(t, T('ai'), pe))}% 0`
+    }
+    if (stage === 2) {
+      const z = io(P(t, el - 0.2, t8))
+      view($('w_ai'), lerpView({ s: A ? 1.15 : 1, rx: 8, ry: -6, y: 40, fx: 0.5, fy: 0.45 }, { s: A ? 2.4 : 1.7, rx: 4, ry: 4, y: 60, fx: 0.5, fy: 0.3 }, z))
+    }
+    const hl = stage === 0 ? `Flyers <em>made with AI</em>` : stage === 1 ? `Plan <em>events</em>` : `Ask <em>Ellen</em> anything`
+    headline(hl, A ? 70 : 80, A ? -680 : -440, cuts[stage] + 0.05)
+  }
+  /* 8 — set up in minutes, 7 days free, no card */
+  else if (t < t9 - 0.05) {
+    title = 1
+    bigWords(`${Wd('<span class="chk">✓</span>Set up in minutes.', T('set'))}<br/>${Wd('<span class="chk">✓</span><span class="l">7 days free.</span>', T('seven'))}<br/>${Wd('<span class="chk">✓</span>No card needed.', T('no'))}`, A ? 74 : 104, 0, t)
+  }
+  /* 9 — CTA */
+  else {
+    title = 1
+    const k = back(P(t, t9 - 0.05, t9 + 0.4), 2)
+    $('logoL').style.width = (A ? 640 : 560) + 'px'
+    put($('logoL'), { y: A ? -300 : -170, s: k, o: P(t, t9 - 0.05, t9 + 0.05) })
+    const c = $('cta'); c.style.fontSize = (A ? 64 : 56) + 'px'
+    const press = t > T('ziondeskcom') + 0.6 && t < T('ziondeskcom') + 0.75 ? 0.94 : 1
+    put(c, { y: A ? 40 : 60, s: back(P(t, T('free', 2) - 0.1, T('free', 2) + 0.3), 2.2) * press * (1 + Math.sin(t * 7) * 0.012), o: P(t, T('free', 2) - 0.1, T('free', 2)) })
+    const u = $('url'); u.style.fontSize = (A ? 48 : 40) + 'px'
+    put(u, { y: A ? 190 : 175, s: back(P(t, T('ziondeskcom') - 0.05, T('ziondeskcom') + 0.3)), o: P(t, T('ziondeskcom') - 0.05, T('ziondeskcom') + 0.05) })
+    const f = $('fine'); f.textContent = 'Plans from $8/month · Cancel anytime'; f.style.fontSize = (A ? 34 : 28) + 'px'
+    put(f, { y: A ? 300 : 260, o: P(t, T('ziondeskcom') + 0.3, T('ziondeskcom') + 0.6) })
+    const ca = T('ziondeskcom') + 0.6
+    put($('cursor'), { x: lerp(A ? 300 : 360, A ? 60 : 70, io(P(t, T('ziondeskcom'), ca))), y: lerp(A ? 420 : 300, A ? 60 : 80, io(P(t, T('ziondeskcom'), ca))), o: P(t, T('ziondeskcom'), T('ziondeskcom') + 0.2), s: press })
+    put($('ripple'), { x: A ? 60 : 70, y: A ? 60 : 80, s: lerp(0.3, 2.2, P(t, ca, ca + 0.5)), o: (1 - P(t, ca, ca + 0.5)) * (t > ca ? 1 : 0) })
+    // keep cursor/ripple above the title card
+    $('cursor').style.zIndex = 5
+  }
+
+  // title card wipes in/out (diagonal reveal)
+  const tc = $('title')
+  tc.style.opacity = title
+  tc.style.visibility = title ? 'visible' : 'hidden'
+  if (title) { tc.appendChild($('cursor')); tc.appendChild($('ripple')) } else { $('cam').appendChild($('cursor')); $('cam').appendChild($('ripple')) }
+
+  // flash on every scene cut
+  const cuts = [t1, t2, T('your', 3), t3, T('service') - 0.1, T('in', 2) - 0.15, t4, t5, t6, t7, T('plan'), T('ask'), t8, t9]
+  $('flash').style.opacity = Math.max(0, ...cuts.map((c) => 0.35 - Math.abs(t - c) * 4))
+
+  // captions
+  const cap = $('cap')
+  const ph = PHR.find((p) => t >= p[0].s - 0.06 && t <= p[p.length - 1].e + 0.12)
+  if (ph && t < t8 - 0.05) {
+    cap.style.display = 'flex'
+    cap.innerHTML = ph.map((w) => `<span class="${t >= w.s - 0.03 ? (KEY.test(clean(w.w)) ? 'on k' : 'on') : ''}">${w.w.replace(/\.\.\.$/, '…')}</span>`).join(' ')
+    cap.style.fontSize = (A ? 40 : 34) + 'px'; cap.style.bottom = (A ? 300 : 50) + 'px'; cap.style.maxWidth = (A ? 940 : 1400) + 'px'
+  } else cap.style.display = 'none'
+}
+window.seek = seek
+window.DURATION = DUR
+window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map((i) => (i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))))).then(() => true)
+seek(Number(q.get('t') || 0))
+if (q.has('play')) { const t0 = performance.now(); const tick = () => { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(tick) }; tick() }
+</script>
+</body>
+</html>

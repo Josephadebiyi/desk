@@ -9,7 +9,7 @@ const [W, H] = format === 'reel' ? [1080, 1920] : [1920, 1080]
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--allow-file-access-from-files'] })
 const page = await browser.newPage()
 await page.setViewport({ width: W, height: H })
-await page.evaluateOnNewDocument((s) => (window.__SCRIPT__ = s), JSON.parse(readFileSync(join(dir, 'script.json'), 'utf8')).lines)
+await page.evaluateOnNewDocument((s) => (window.__SCRIPT__ = s), [])
 await page.goto(`file://${join(dir, process.env.SCENE || 'scene.html')}?format=${format}`, { waitUntil: 'networkidle0' })
 await page.evaluate(() => window.ready)
 for (const t of process.argv.slice(3).map(Number)) {

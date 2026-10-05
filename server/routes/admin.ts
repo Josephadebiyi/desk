@@ -68,7 +68,7 @@ adminRoutes.post(
     if (error) throw new HttpError(500, error.message)
     await db().from('support_messages').insert({ ticket_id: t.id, author: 'user', author_name: req.caller!.name, body })
     if (configured.email) {
-      const m = plainMail(`New support ticket: ${subject}`, [`From: ${req.caller!.name} <${req.caller!.email}>`, body], { url: `${env.siteUrl}/admin/support?t=${t.id}`, label: 'Open in admin' })
+      const m = plainMail(`New support ticket: ${subject}`, [`From: ${req.caller!.name} <${req.caller!.email}>`, body], { url: `${env.adminUrl || env.siteUrl}/admin/support?t=${t.id}`, label: 'Open in admin' })
       await sendEmail({ to: env.supportEmail, subject: `[Support] ${subject}`, ...m, replyTo: req.caller!.email }).catch((e) => console.error('[support mail]', e))
     }
     res.json({ id: t.id })

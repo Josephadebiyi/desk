@@ -162,3 +162,16 @@ Create them in `/admin/promos`. Churches enter them in Settings → Plan.
 - The daily job writes a unique prayer per celebrant in their language and emails it (or sends it on WhatsApp
   when there's no email). Admins can also generate one from Overview → Birthdays (✨ button).
 - Only first name, age group, ministry, stage and language are sent — never contact details or notes.
+
+### Staff console on its own domain (e.g. `admin.ziondesk.com`)
+It runs on the **same Render service** (same API, database and sign-in). Any hostname starting with
+`admin.` serves only the staff console: `/` → `/admin`, plus `/login` and password reset.
+1. Render → your web service → Settings → Custom Domains → **Add** `admin.ziondesk.com`.
+2. At your DNS provider add the record Render shows (a `CNAME admin → desk-noae.onrender.com`). Wait for the green check (SSL is automatic).
+3. Supabase → Authentication → URL Configuration → **Redirect URLs** → add `https://admin.ziondesk.com/**`
+   (needed for "Continue with Google" and password reset on the admin domain).
+4. Render → Environment: `ADMIN_EMAILS=you@…` (who may enter) and optionally `ADMIN_URL=https://admin.ziondesk.com`
+   (used in "new support ticket" emails). Redeploy.
+5. Open https://admin.ziondesk.com and sign in with a staff email. Non-staff accounts see "Staff only".
+The admin domain is sent with `X-Robots-Tag: noindex` so search engines don't list it.
+Using a domain that doesn't start with `admin.`? Set `VITE_ADMIN_HOST=that.domain.com` in Render and redeploy.

@@ -318,7 +318,7 @@ export function Login() {
   const google = useGoogleEnabled()
   // Only same-site paths (e.g. /admin) are allowed as the post-login destination.
   const [search] = useSearchParams()
-  const dest = /^\/(admin|dashboard)(\/|$)/.test(search.get('next') ?? '') ? search.get('next')! : '/dashboard'
+  const dest = /^\/(admin|dashboard)(\/|$)/.test(search.get('next') ?? '') ? search.get('next')! : window.location.hostname.startsWith('admin.') ? '/admin' : '/dashboard'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -378,7 +378,7 @@ export function Login() {
           {t('auth.noAccount')} <Link to="/register">{t('auth.signUp')}</Link>
         </p>
         {google && <Or />}
-        {google && <GoogleButton label={t('auth.continueGoogle')} returnTo="/dashboard" onProfile={() => setNotice(notConnected(new NotConnectedError()))} onError={setNotice} />}
+        {google && <GoogleButton label={t('auth.continueGoogle')} returnTo={dest} onProfile={() => setNotice(notConnected(new NotConnectedError()))} onError={setNotice} />}
       </form>
     </AuthLayout>
   )

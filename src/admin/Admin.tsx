@@ -343,6 +343,9 @@ export default function Admin() {
   const navigate = useNavigate()
   const [state, setState] = useState<'loading' | 'staff' | 'denied' | 'unconfigured'>('loading')
   useEffect(() => {
+    document.title = 'ZionDesk Admin'
+  }, [])
+  useEffect(() => {
     if (!session.session) return
     api<{ admin: boolean; configured: boolean }>('/admin/me')
       .then((r) => setState(r.admin ? 'staff' : r.configured ? 'denied' : 'unconfigured'))

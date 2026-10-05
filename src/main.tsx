@@ -27,12 +27,48 @@ import { GivePage, JoinPage } from './pages/Public.tsx'
 // Staff console: separate chunk, only downloaded by staff.
 const Admin = lazy(() => import('./admin/Admin.tsx'))
 
+/**
+ * Staff console on its own domain (e.g. admin.ziondesk.com → same Render service).
+ * Any host starting with "admin." (or VITE_ADMIN_HOST) only serves /admin and /login.
+ */
+const ADMIN_HOST = (() => {
+  const h = window.location.hostname
+  const configured = (import.meta.env.VITE_ADMIN_HOST as string | undefined)?.trim()
+  return configured ? h === configured : h.startsWith('admin.')
+})()
+if (ADMIN_HOST) {
+  document.title = 'ZionDesk Admin'
+  const meta = document.createElement('meta')
+  meta.name = 'robots'
+  meta.content = 'noindex, nofollow'
+  document.head.appendChild(meta)
+}
+const adminRoute = (
+  <Route
+    path="/admin/*"
+    element={
+      <Suspense fallback={null}>
+        <Admin />
+      </Suspense>
+    }
+  />
+)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
     <SessionProvider>
     <ThemeProvider>
     <BrowserRouter>
+      {ADMIN_HOST ? (
+        <Routes>
+          {adminRoute}
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      ) : (
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
@@ -75,6 +111,7 @@ createRoot(document.getElementById('root')!).render(
         </Route>
         <Route path="*" element={<App />} />
       </Routes>
+      )}
     </BrowserRouter>
     </ThemeProvider>
     </SessionProvider>

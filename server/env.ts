@@ -63,6 +63,8 @@ export const env = {
   geminiKey: v('GEMINI_API_KEY'),
   geminiModel: v('GEMINI_MODEL') || 'gemini-flash-latest',
 
+  // Staff console on its own domain, e.g. https://admin.ziondesk.com (optional; used in staff emails)
+  adminUrl: (v('ADMIN_URL') || '').replace(/\/$/, ''),
   // Platform admin console (/admin): comma-separated emails of ZionDesk staff
   adminEmails: v('ADMIN_EMAILS').toLowerCase().split(',').map((e) => e.trim()).filter(Boolean),
 
