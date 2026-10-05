@@ -43,6 +43,8 @@ export const env = {
   // Messaging Service (MG…): preferred over a single From number — handles sender pools and STOP opt-outs.
   twilioMessagingService: v('TWILIO_MESSAGING_SERVICE_SID'),
   twilioWhatsappFrom: v('TWILIO_WHATSAPP_FROM'),
+  // Approved WhatsApp Content Template (HX…) with one variable {{1}}: needed for broadcasts outside the 24 h reply window.
+  twilioWhatsappContentSid: v('TWILIO_WHATSAPP_CONTENT_SID'),
 
   // Flutterwave (dashboard → Settings → API keys / Webhooks)
   flwSecretKey: v('FLW_SECRET_KEY') || v('FLUTTERWAVE_SECRET_KEY'),

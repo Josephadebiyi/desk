@@ -58,7 +58,7 @@ export function personalize(raw: string, lang: EmailLang, vars: Record<string, s
   return raw.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m)
 }
 
-async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string) {
+export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string) {
   const from = channel === 'SMS' ? env.twilioSmsFrom : env.twilioWhatsappFrom
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.twilioSid}/Messages.json`, {
     method: 'POST',
@@ -66,7 +66,15 @@ async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string) {
     body: new URLSearchParams(
       channel === 'SMS' && env.twilioMessagingService
         ? { MessagingServiceSid: env.twilioMessagingService, To: to, Body: body }
-        : { From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body },
+        : channel === 'WhatsApp' && env.twilioWhatsappContentSid
+          ? {
+              From: `whatsapp:${from.replace(/^whatsapp:/, '')}`,
+              To: `whatsapp:${to}`,
+              ContentSid: env.twilioWhatsappContentSid,
+              // WhatsApp template variables can't contain new lines or long runs of spaces.
+              ContentVariables: JSON.stringify({ 1: body.replace(/\s*\n+\s*/g, ' · ').replace(/ {4,}/g, ' ').slice(0, 1000) }),
+            }
+          : { From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body },
     ),
   })
   const data = (await res.json().catch(() => ({}))) as { sid?: string; message?: string }

@@ -8,7 +8,7 @@ import { asEmailLang } from '../src/emails/strings'
 import { db } from './db'
 import { configured } from './env'
 import { compose, sendEmails } from './mail'
-import { audienceMembers, sendCampaign, type Audience } from './messaging'
+import { audienceMembers, sendCampaign, twilio, type Audience } from './messaging'
 import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
@@ -105,7 +105,8 @@ async function runBirthdays() {
       } else if (m.whatsapp && configured.whatsapp) {
         const text = withChurchName(`🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]}`, name(churchId))
         try {
-          await sendWhatsApp(m.whatsapp, text, lang)
+          if (configured.whatsappCloud) await sendWhatsApp(m.whatsapp, text, lang)
+          else await twilio('WhatsApp', m.whatsapp.replace(/[^\d+]/g, ''), text)
           rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'sent', provider_id: stamp, body: text })
         } catch (e) {
           rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'failed', provider_id: stamp, error: e instanceof Error ? e.message : 'failed' })

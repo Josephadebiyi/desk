@@ -35,6 +35,10 @@ services:
         sync: false
       - key: TWILIO_MESSAGING_SERVICE_SID
         sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_WHATSAPP_CONTENT_SID
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
