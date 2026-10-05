@@ -49,6 +49,8 @@ import {
   type MemberInput,
   type Stage,
 } from './types'
+import { PhoneInput } from '../components/PhoneInput'
+import { countryFromText } from '../lib/countries'
 
 const PAGE = 15
 
@@ -156,6 +158,7 @@ function MemberForm({
     onSave({ ...f, fullName: f.fullName.trim(), whatsapp: sameWa ? f.phone : f.whatsapp })
   }
 
+  const homeCountry = countryFromText(useWorkspace().settings.location)?.code
   const field = (k: keyof MemberInput, label: string, props: Record<string, unknown> = {}) => (
     <label className={`d-field ${errors[k] ? 'has-error' : ''}`}>
       <span>{label}</span>
@@ -192,15 +195,22 @@ function MemberForm({
         <fieldset>
           <legend>{t('members.contact')}</legend>
           <div className="d-grid">
-            {field('phone', t('members.phone'), { type: 'tel', placeholder: '+234 803 555 0101' })}
+            <label className={`d-field ${errors.phone ? 'has-error' : ''}`}>
+              <span>{t('members.phone')}</span>
+              <span className="d-phone">
+                <PhoneInput value={f.phone} onChange={(v) => set('phone', v)} defaultCountry={homeCountry} name="phone" />
+              </span>
+              {errors.phone && <em>{errors.phone}</em>}
+            </label>
             <div className="d-field">
               <span>{t('members.whatsapp')}</span>
-              <input
-                type="tel"
-                value={sameWa ? f.phone : f.whatsapp}
-                disabled={sameWa}
-                onChange={(e) => set('whatsapp', e.target.value)}
-              />
+              {sameWa ? (
+                <input type="tel" value={f.phone} disabled />
+              ) : (
+                <span className="d-phone">
+                  <PhoneInput value={f.whatsapp} onChange={(v) => set('whatsapp', v)} defaultCountry={homeCountry} name="whatsapp" />
+                </span>
+              )}
               <label className="d-inline-check">
                 <input type="checkbox" checked={sameWa} onChange={(e) => setSameWa(e.target.checked)} /> {t('members.sameAsPhone')}
               </label>

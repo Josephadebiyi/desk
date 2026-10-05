@@ -11,7 +11,9 @@ import { Router } from 'express'
 import { FLYER_SIZE, flyerLimit, type FlyerFormat } from '../../src/lib/plans'
 import { admin, db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
-import { sendEmail } from '../mail'
+import { randomUUID } from 'node:crypto'
+import { sendEmails } from '../mail'
+import { createCheckout } from '../flutterwave'
 
 export const designRoutes = Router()
 
@@ -125,31 +127,130 @@ designRoutes.post(
   }),
 )
 
-/* ───────── Ministry Max: tell the design team about requests and messages ───────── */
+/* ───────── Ministry Max: designer flyer requests ───────── */
+
+/** Designer requests included in Ministry Max each calendar month; extras are paid one by one. */
+export const INCLUDED_REQUESTS = 8
+export const EXTRA_REQUEST = { amount: 10, currency: 'EUR' }
 
 const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+const monthStart = () => {
+  const d = new Date()
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString()
+}
 
+/** Requests that count toward this month's allowance (paid extras and unpaid drafts don't). */
+async function requestsThisMonth(churchId: string) {
+  const { count } = await db().from('design_requests').select('id', { count: 'exact', head: true }).eq('church_id', churchId).eq('extra', false).neq('status', 'Awaiting payment').gte('created_at', monthStart())
+  return count ?? 0
+}
+
+/** Emails the design team and every ZionDesk staff admin about a request or a church's message. */
+export async function notifyDesigners(requestId: string, message = '', from = { name: '', email: '' }) {
+  if (!configured.email) return
+  const { data: r } = await db().from('design_requests').select('*').eq('id', requestId).maybeSingle()
+  if (!r) return
+  const { data: church } = await db().from('churches').select('name, email, phone').eq('id', r.church_id).single()
+  const brief = Object.entries((r.brief ?? {}) as Record<string, string>)
+    .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#666">${esc(k)}</td><td>${esc(v)}</td></tr>`)
+    .join('')
+  const subject = message
+    ? `New message on "${r.title}" — ${church?.name}`
+    : `New flyer request${r.extra ? ' (paid extra €10)' : ''}: "${r.title}" — ${church?.name} (due ${new Date(r.due_at).toUTCString()})`
+  const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#111">
+<h2 style="margin:0 0 8px">${esc(subject)}</h2>
+<p><b>Church:</b> ${esc(church?.name)} · ${esc(church?.email)} · ${esc(church?.phone)}<br/><b>From:</b> ${esc(from.name)} &lt;${esc(from.email)}&gt;</p>
+${message ? `<p style="padding:12px;background:#f4f4f4;border-radius:8px">${esc(message).replace(/\n/g, '<br/>')}</p>` : `<table>${brief}<tr><td style="padding:4px 12px 4px 0;color:#666">Formats</td><td>${esc((r.formats ?? []).join(', '))}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#666">Inspiration</td><td>${(r.inspiration ?? []).length} image(s)</td></tr></table>`}
+<p><a href="${esc(env.adminUrl || env.siteUrl)}/admin/design/${esc(r.id)}" style="display:inline-block;padding:10px 18px;background:#6c34ff;color:#fff;border-radius:999px;text-decoration:none">Open in the staff console</a></p>
+<p style="color:#666">Reply in the staff console so the church sees it in ZionDesk. Request ID: ${esc(r.id)}</p></div>`
+  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+  const to = [...new Set([env.designTeamEmail, ...env.adminEmails].map((e) => e.toLowerCase()).filter(Boolean))]
+  await sendEmails(to.map((e) => ({ to: e, subject, html, text, replyTo: from.email || undefined }))).catch((e) => console.error('[design notify]', e))
+}
+
+designRoutes.get(
+  '/design/requests/quota',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    res.json({ used: await requestsThisMonth(req.caller!.churchId), included: INCLUDED_REQUESTS, extra: EXTRA_REQUEST })
+  }),
+)
+
+/** Creates a request. Within the monthly allowance it goes straight to the designers; beyond it, a €10 checkout. */
+designRoutes.post(
+  '/design/requests',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    const churchId = req.caller!.churchId
+    const { data: church } = await db().from('churches').select('name, plan, plan_status, logo_url').eq('id', churchId).single()
+    if (church?.plan !== 'max' || !['trial', 'active', 'past_due'].includes(church.plan_status)) throw new HttpError(403, 'Design-team requests are part of Ministry Max.')
+    const b = req.body ?? {}
+    const id = /^[0-9a-f-]{36}$/i.test(String(b.id)) ? String(b.id) : randomUUID()
+    const title = String(b.title ?? '').trim().slice(0, 160) || 'Flyer request'
+    const brief = Object.fromEntries(Object.entries((b.brief ?? {}) as Record<string, unknown>).slice(0, 12).map(([k, v]) => [k.slice(0, 40), String(v ?? '').slice(0, 2000)]))
+    const formats = (Array.isArray(b.formats) ? b.formats : []).slice(0, 10).map((f: unknown) => String(f).slice(0, 40))
+    const inspiration = (Array.isArray(b.inspiration) ? b.inspiration : []).slice(0, 8).filter((f: { dataUrl?: string }) => typeof f?.dataUrl !== 'string' || f.dataUrl.length < 4_000_000)
+    const used = await requestsThisMonth(churchId)
+    const extra = used >= INCLUDED_REQUESTS
+    const { error } = await db().from('design_requests').insert({ id, church_id: churchId, title, brief, formats, inspiration, extra, status: extra ? 'Awaiting payment' : 'Submitted', due_at: new Date(Date.now() + 48 * 3600e3).toISOString() })
+    if (error) throw new HttpError(400, error.message)
+    if (!extra) {
+      await db().from('design_request_messages').insert({ request_id: id, church_id: churchId, sender: 'system', text: '__received__' })
+      await notifyDesigners(id, '', { name: req.caller!.name, email: req.caller!.email })
+      return res.json({ id, status: 'Submitted', used: used + 1, included: INCLUDED_REQUESTS })
+    }
+    // Extra request: €10 one-off payment through Flutterwave, tracked in online_payments.
+    const txRef = `zd-design-${randomUUID()}`
+    await db().from('online_payments').insert({ church_id: churchId, kind: 'design_request', design_request_id: id, tx_ref: txRef, amount: EXTRA_REQUEST.amount, currency: EXTRA_REQUEST.currency, name: req.caller!.name, email: req.caller!.email })
+    const link = await createCheckout({
+      txRef,
+      amount: EXTRA_REQUEST.amount,
+      currency: EXTRA_REQUEST.currency,
+      redirectUrl: `${env.apiUrl}/api/payments/return`,
+      customer: { email: req.caller!.email, name: req.caller!.name || church.name },
+      title: 'ZionDesk design team',
+      description: `Extra flyer request: ${title}`,
+      logo: church.logo_url ?? undefined,
+      meta: { kind: 'design_request', church: churchId, request: id },
+    })
+    res.json({ id, status: 'Awaiting payment', link, used, included: INCLUDED_REQUESTS })
+  }),
+)
+
+/** Pay for an extra request that wasn't paid yet (checkout closed). */
+designRoutes.post(
+  '/design/requests/:id/pay',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    const { data: r } = await db().from('design_requests').select('id, church_id, title, status').eq('id', String(req.params.id)).maybeSingle()
+    if (!r || r.church_id !== req.caller!.churchId) throw new HttpError(404, 'Request not found')
+    if (r.status !== 'Awaiting payment') return res.json({ paid: true })
+    const txRef = `zd-design-${randomUUID()}`
+    await db().from('online_payments').insert({ church_id: r.church_id, kind: 'design_request', design_request_id: r.id, tx_ref: txRef, amount: EXTRA_REQUEST.amount, currency: EXTRA_REQUEST.currency, name: req.caller!.name, email: req.caller!.email })
+    const link = await createCheckout({
+      txRef,
+      amount: EXTRA_REQUEST.amount,
+      currency: EXTRA_REQUEST.currency,
+      redirectUrl: `${env.apiUrl}/api/payments/return`,
+      customer: { email: req.caller!.email, name: req.caller!.name },
+      title: 'ZionDesk design team',
+      description: `Extra flyer request: ${r.title}`,
+      meta: { kind: 'design_request', church: r.church_id, request: r.id },
+    })
+    res.json({ link })
+  }),
+)
+
+/** A church's message to its designer. */
 designRoutes.post(
   '/design/requests/:id/notify',
   requireCaller(['admin', 'leader']),
   route(async (req, res) => {
-    const { data: r } = await db().from('design_requests').select('*').eq('id', req.params.id).maybeSingle()
+    const { data: r } = await db().from('design_requests').select('id, church_id, status').eq('id', req.params.id).maybeSingle()
     if (!r || r.church_id !== req.caller!.churchId) throw new HttpError(404, 'Request not found')
-    const { data: church } = await db().from('churches').select('name, email, phone, plan').eq('id', r.church_id).single()
-    if (church?.plan !== 'max') throw new HttpError(403, 'Design-team requests are part of Ministry Max.')
-    if (!configured.email) return res.json({ ok: false })
+    if (r.status === 'Awaiting payment') return res.json({ ok: false })
     const message = typeof req.body?.message === 'string' ? req.body.message.slice(0, 4000) : ''
-    const brief = Object.entries((r.brief ?? {}) as Record<string, string>)
-      .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#666">${esc(k)}</td><td>${esc(v)}</td></tr>`)
-      .join('')
-    const subject = message ? `New message on "${r.title}" — ${church?.name}` : `New flyer request: "${r.title}" — ${church?.name} (due ${new Date(r.due_at).toUTCString()})`
-    const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#111">
-<h2 style="margin:0 0 8px">${esc(subject)}</h2>
-<p><b>Church:</b> ${esc(church?.name)} · ${esc(church?.email)} · ${esc(church?.phone)}<br/><b>Requested by:</b> ${esc(req.caller!.name)} &lt;${esc(req.caller!.email)}&gt;</p>
-${message ? `<p style="padding:12px;background:#f4f4f4;border-radius:8px">${esc(message).replace(/\n/g, '<br/>')}</p>` : `<table>${brief}<tr><td style="padding:4px 12px 4px 0;color:#666">Formats</td><td>${esc((r.formats ?? []).join(', '))}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#666">Inspiration</td><td>${(r.inspiration ?? []).length} image(s) attached in ZionDesk</td></tr></table>`}
-<p style="color:#666">Reply to this email to answer the church directly. Request ID: ${esc(r.id)}</p></div>`
-    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
-    await sendEmail({ to: env.designTeamEmail, subject, html, text, replyTo: req.caller!.email })
+    await notifyDesigners(r.id, message, { name: req.caller!.name, email: req.caller!.email })
     res.json({ ok: true })
   }),
 )

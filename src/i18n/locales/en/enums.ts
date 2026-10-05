@@ -8,7 +8,7 @@ export default {
   mode: { 'In person': 'In person', Online: 'Online', Hybrid: 'Hybrid' },
   method: { Transfer: 'Transfer', Card: 'Card', Cash: 'Cash', Cheque: 'Cheque' },
   expense: { Utilities: 'Utilities', Salaries: 'Salaries', Outreach: 'Outreach', Equipment: 'Equipment', Maintenance: 'Maintenance', Missions: 'Missions', Events: 'Events', Other: 'Other' },
-  request: { Submitted: 'Submitted', 'In design': 'In design', Review: 'Review', Delivered: 'Delivered' },
+  request: { 'Awaiting payment': 'Awaiting payment', Submitted: 'Submitted', 'In design': 'In design', Review: 'Review', Delivered: 'Delivered' },
   campaign: { Queued: 'Queued', Scheduled: 'Scheduled' },
   role: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader' },
   plan: { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' },

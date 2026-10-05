@@ -155,10 +155,12 @@ export interface DesignRequest {
   brief: Record<string, string>
   formats: string[]
   inspiration: { name: string; dataUrl?: string }[]
-  status: 'Submitted' | 'In design' | 'Review' | 'Delivered'
+  status: 'Awaiting payment' | 'Submitted' | 'In design' | 'Review' | 'Delivered'
   createdAt: string
   dueAt: string
   messages: RequestMessage[]
+  /** Finished files from the ZionDesk design team. */
+  deliverables?: { name: string; url: string }[]
 }
 
 export interface TeamMember {
@@ -455,10 +457,17 @@ export function WorkspaceProvider({ children, demo = false }: { children: ReactN
         }
         setRequests((all) => [created, ...all])
         if (live) {
-          db.addRequest(churchId, created)
-          db.postRequestMessage(churchId, created.id, uid(), '__received__')
-          // Let the ZionDesk design team know (by email). Small delay so the row exists first.
-          setTimeout(() => callApi(`/design/requests/${created.id}/notify`, {}).catch((e) => console.error('[design notify]', e)), 1500)
+          // The server checks the monthly allowance: included requests go straight to the designers,
+          // extra ones open a €10 checkout first.
+          callApi<{ status: DesignRequest['status']; link?: string }>('/design/requests', { id: created.id, title: created.title, brief: created.brief, formats: created.formats, inspiration: created.inspiration })
+            .then((r) => {
+              if (r.link) window.location.href = r.link
+              else void reload()
+            })
+            .catch((e) => {
+              setRequests((all) => all.filter((x) => x.id !== created.id))
+              window.alert(e instanceof Error ? e.message : String(e))
+            })
         }
         return created
       },

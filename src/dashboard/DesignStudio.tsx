@@ -9,6 +9,8 @@ import { tr, useT } from '../i18n'
 import { AiFlyer } from './AiFlyer'
 import { AskAI, fmtDate, Kpi, PageHead, PlanGate, Tabs } from './kit'
 import { useWorkspace, type DesignRequest } from './workspace'
+import { api } from '../lib/api'
+import { remote } from '../lib/supabase'
 
 /* ───────────────────────── Create ───────────────────────── */
 
@@ -199,8 +201,20 @@ async function shrink(file: File): Promise<string | undefined> {
   }
 }
 
+/** This month's designer-request allowance (Ministry Max: 8 included, then €10 each). */
+function useRequestQuota() {
+  const [q, setQ] = useState<{ used: number; included: number } | null>(null)
+  useEffect(() => {
+    if (!remote) return
+    api<{ used: number; included: number }>('/design/requests/quota').then(setQ).catch(() => setQ(null))
+  }, [])
+  return q
+}
+
 function BriefChat({ onDone, onCancel }: { onDone: (r: DesignRequest) => void; onCancel: () => void }) {
   const { addRequest } = useWorkspace()
+  const quota = useRequestQuota()
+  const extra = !!quota && quota.used >= quota.included
   const { t } = useT()
   const [step, setStep] = useState(0)
   const [lines, setLines] = useState<ChatLine[]>([{ from: 'ai', text: QUESTIONS[0].ask }])
@@ -392,8 +406,9 @@ function BriefChat({ onDone, onCancel }: { onDone: (r: DesignRequest) => void; o
               )
             }
           >
-            <Send size={15} /> {t('design.sendTeam')}
+            <Send size={15} /> {extra ? t('design.payAndSend') : t('design.sendTeam')}
           </button>
+          {quota && <p className="brief-quota">{extra ? t('design.extraCost', { included: quota.included }) : t('design.quota', { used: quota.used, included: quota.included })}</p>}
         </div>
       )}
     </div>
@@ -416,7 +431,12 @@ function useCountdown(due: string) {
 }
 
 function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }) {
-  const { postRequestMessage } = useWorkspace()
+  const { postRequestMessage, reload } = useWorkspace()
+  // Designer replies and status changes appear without refreshing the page.
+  useEffect(() => {
+    const id = setInterval(() => void reload(), 30_000)
+    return () => clearInterval(id)
+  }, [reload])
   const { t } = useT()
   const [text, setText] = useState('')
   const left = useCountdown(req.dueAt)
@@ -438,6 +458,25 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
             </span>
           ))}
         </div>
+        {req.status === 'Awaiting payment' && (
+          <div className="req-pay">
+            <p>{t('design.awaitingPay')}</p>
+            <button
+              type="button"
+              className="d-btn d-btn-ink"
+              onClick={() =>
+                api<{ link?: string }>(`/design/requests/${req.id}/pay`, {})
+                  .then((r) => {
+                    if (r.link) window.location.href = r.link
+                    else void reload()
+                  })
+                  .catch((e) => window.alert(e instanceof Error ? e.message : String(e)))
+              }
+            >
+              {t('design.payNow')}
+            </button>
+          </div>
+        )}
         <p className="req-due">
           <Clock size={15} /> {t('design.deliveryBy')} {fmtDate(req.dueAt, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · <b>{left}</b>
         </p>
@@ -453,6 +492,16 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
             <dd>{req.formats.map(fmtLabel).join(', ')}</dd>
           </div>
         </dl>
+        {(req.deliverables?.length ?? 0) > 0 && (
+          <div className="req-ready">
+            <b>{t('design.ready')}</b>
+            {req.deliverables!.map((f) => (
+              <a key={f.url} href={f.url} target="_blank" rel="noreferrer" download className="d-btn d-btn-lime">
+                <Download size={15} /> {f.name}
+              </a>
+            ))}
+          </div>
+        )}
         {req.inspiration.length > 0 && (
           <div className="brief-imgs">
             {req.inspiration.map((f, i) => (f.dataUrl ? <img key={i} src={f.dataUrl} alt={f.name} /> : <span key={i}>{f.name}</span>))}
@@ -509,7 +558,9 @@ function RequestCard({ r, onOpen }: { r: DesignRequest; onOpen: () => void }) {
 function DesignTeam() {
   const { requests } = useWorkspace()
   const { t } = useT()
-  const [mode, setMode] = useState<'list' | 'new' | string>('list')
+  const [params] = useSearchParams()
+  const [mode, setMode] = useState<'list' | 'new' | string>(params.get('request') && params.get('paid') !== '1' ? params.get('request')! : 'list')
+  const quota = useRequestQuota()
   const open = requests.find((r) => r.id === mode)
 
   if (mode === 'new') return <BriefChat onCancel={() => setMode('list')} onDone={(r) => setMode(r.id)} />
@@ -527,6 +578,23 @@ function DesignTeam() {
           <Plus size={15} /> {t('design.requestFlyer')}
         </button>
       </div>
+      {params.get('paid') === '1' && <p className="d-hint-box st-billing-ok">{t('design.paid')}</p>}
+      {quota && <p className="brief-quota">{quota.used >= quota.included ? t('design.extraCost', { included: quota.included }) : t('design.quota', { used: quota.used, included: quota.included })}</p>}
+      <section className="d-panel dt-how">
+        <h3>{t('design.how.title')}</h3>
+        <ol>
+          {[1, 2, 3, 4].map((n) => (
+            <li key={n}>
+              <span>{n}</span>
+              <div>
+                <b>{t(`design.how.s${n}`)}</b>
+                <p>{t(`design.how.s${n}d`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="dt-how-note">{t('design.how.note')}</p>
+      </section>
       {requests.length ? (
         <div className="req-cards">
           {requests.map((r) => (

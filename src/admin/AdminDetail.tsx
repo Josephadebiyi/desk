@@ -688,6 +688,7 @@ export function SearchBox() {
 }
 
 interface Alerts {
+  design?: { id: string; title: string; status: string; due_at: string; church: string }[]
   tickets: { id: string; subject: string; name: string; updated_at: string; priority: string }[]
   pastDue: { id: string; name: string; plan_renews_at: string }[]
   trialsEnding: { id: string; name: string; trial_ends_at: string }[]
@@ -703,7 +704,7 @@ export function AlertsMenu() {
     const t = setInterval(load, 60_000)
     return () => clearInterval(t)
   }, [])
-  const n = (a?.tickets.length ?? 0) + (a?.pastDue.length ?? 0) + (a?.trialsEnding.length ?? 0)
+  const n = (a?.tickets.length ?? 0) + (a?.pastDue.length ?? 0) + (a?.trialsEnding.length ?? 0) + (a?.design?.length ?? 0)
   const go = (to: string) => {
     setOpen(false)
     navigate(to)
@@ -723,6 +724,16 @@ export function AlertsMenu() {
                 <b>{t.subject}</b>
                 <small>
                   Ticket from {t.name || 'a user'} · {fmtDay(t.updated_at)}
+                </small>
+              </span>
+            </button>
+          ))}
+          {a?.design?.map((r) => (
+            <button key={r.id} type="button" onClick={() => go(`/admin/design/${r.id}`)}>
+              <span className="dot open" /> <span>
+                <b>{r.title}</b>
+                <small>
+                  Flyer for {r.church} · {r.status} · due {fmtDay(r.due_at)}
                 </small>
               </span>
             </button>

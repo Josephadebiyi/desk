@@ -33,10 +33,12 @@ import {
 } from '../lib/auth'
 import { isAdminHost } from '../lib/site'
 import { getSignupCode, normalizeCode } from '../lib/signupCode'
+import { CountrySelect, PhoneInput } from '../components/PhoneInput'
+import { countryByCode } from '../lib/countries'
 import { supabase } from '../lib/supabase'
 import './auth.css'
 import { tr, useT } from '../i18n'
-import { CHURCH_CURRENCIES, formatMoney, guessCurrency, planPrice } from '../lib/currency'
+import { CHURCH_CURRENCIES, currencyForRegion, formatMoney, guessCurrency, guessRegion, planPrice } from '../lib/currency'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -504,6 +506,8 @@ export function Register() {
   const [org, setOrg] = useState({
     organization: '',
     location: '',
+    country: guessRegion(),
+    city: '',
     phone: '',
     denomination: '',
     noDenominations: false,
@@ -552,7 +556,7 @@ export function Register() {
     e.preventDefault()
     const err: Record<string, string> = {}
     if (!org.organization.trim()) err.organization = t('auth.errOrg')
-    if (!org.location.trim()) err.location = t('auth.errLocation')
+    if (!org.city.trim() || !org.country) err.location = t('auth.errLocation')
     if (!org.noDenominations && !org.denomination.trim()) err.denomination = t('auth.errDenomination')
     if (!org.churchSize) err.churchSize = t('auth.errSize')
     if (!org.role) err.role = t('auth.errRole')
@@ -573,6 +577,7 @@ export function Register() {
         email: google?.email || acct.email,
         password: google ? undefined : acct.password,
         ...org,
+        location: [org.city.trim(), countryByCode(org.country, locale)?.name ?? ''].filter(Boolean).join(', '),
         currency: org.currency,
         logo,
         plan,
@@ -698,25 +703,31 @@ export function Register() {
                   error={errors.organization}
                 />
                 <div className="af-row">
+                  <label className="af">
+                    <span className="af-label">{t('auth.country')}</span>
+                    <span className="af-box">
+                      <CountrySelect
+                        value={org.country}
+                        onChange={(c) => setOrg({ ...org, country: c, currency: currencyForRegion(c) ?? org.currency })}
+                      />
+                    </span>
+                  </label>
                   <Field
-                    label={t('settings.profile.location')}
-                    name="location"
-                    placeholder={t('auth.locationPh')}
+                    label={t('auth.city')}
+                    name="city"
+                    placeholder={t('auth.cityPh')}
                     autoComplete="address-level2"
-                    value={org.location}
-                    onChange={(e) => setOrg({ ...org, location: e.target.value })}
+                    value={org.city}
+                    onChange={(e) => setOrg({ ...org, city: e.target.value })}
                     error={errors.location}
                   />
-                  <Field
-                    label={t('auth.churchPhone')}
-                    name="phone"
-                    type="tel"
-                    placeholder="+234 803 555 0101"
-                    autoComplete="tel"
-                    value={org.phone}
-                    onChange={(e) => setOrg({ ...org, phone: e.target.value })}
-                  />
                 </div>
+                <label className="af">
+                  <span className="af-label">{t('auth.churchPhone')}</span>
+                  <span className="af-box">
+                    <PhoneInput key={org.country} value={org.phone} defaultCountry={org.country} name="phone" onChange={(v) => setOrg({ ...org, phone: v })} />
+                  </span>
+                </label>
                 <Field
                   label={t('settings.profile.denomination')}
                   name="denomination"

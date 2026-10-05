@@ -9,7 +9,7 @@ const enums: Dict['enums'] = {
   mode: { 'In person': 'Presencial', Online: 'Online', Hybrid: 'Híbrido' },
   method: { Transfer: 'Transferência', Card: 'Cartão', Cash: 'Numerário', Cheque: 'Cheque' },
   expense: { Utilities: 'Serviços', Salaries: 'Salários', Outreach: 'Evangelismo', Equipment: 'Equipamento', Maintenance: 'Manutenção', Missions: 'Missões', Events: 'Eventos', Other: 'Outros' },
-  request: { Submitted: 'Enviado', 'In design': 'Em design', Review: 'Revisão', Delivered: 'Entregue' },
+  request: { 'Awaiting payment': 'A aguardar pagamento', Submitted: 'Enviado', 'In design': 'Em design', Review: 'Revisão', Delivered: 'Entregue' },
   campaign: { Queued: 'Em fila', Scheduled: 'Agendado' },
   role: { admin: 'Administrador', finance: 'Finanças', leader: 'Líder de ministério' },
   plan: { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' },

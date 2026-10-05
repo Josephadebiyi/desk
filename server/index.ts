@@ -23,6 +23,7 @@ import { authHookRoutes } from './routes/authHook'
 import { whatsappRoutes } from './routes/whatsapp'
 import { publicRoutes } from './routes/public'
 import { validUnsubscribe } from './lifecycle'
+import { engageRoutes } from './routes/engage'
 
 const app = express()
 app.set('trust proxy', 1) // Render sits behind a proxy; needed for per-IP rate limits
@@ -145,6 +146,7 @@ app.use('/api', appRoutes)
 app.use('/api', accountRoutes)
 app.use('/api', googleRoutes)
 app.use('/api', adminRoutes)
+app.use('/api', engageRoutes)
 
 /* Render Cron Jobs call these with Authorization: Bearer $CRON_SECRET */
 const cron = (fn: () => Promise<unknown>) =>

@@ -22,7 +22,8 @@ import Reports from './dashboard/Reports.tsx'
 import Settings from './dashboard/Settings.tsx'
 import Help from './dashboard/Help.tsx'
 import Links from './dashboard/Links.tsx'
-import { GivePage, JoinPage } from './pages/Public.tsx'
+import Attendance from './dashboard/Attendance.tsx'
+import { CheckinPage, GivePage, JoinPage } from './pages/Public.tsx'
 import { isAdminHost } from './lib/site'
 import { captureSignupCode } from './lib/signupCode'
 
@@ -87,6 +88,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/acceptable-use" element={<Legal page="aup" />} />
         <Route path="/join/:slug" element={<JoinPage />} />
         <Route path="/give/:slug" element={<GivePage />} />
+        <Route path="/checkin/:slug" element={<CheckinPage />} />
         <Route
           path="/admin/*"
           element={
@@ -108,6 +110,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
           <Route path="links" element={<Links />} />
+          <Route path="attendance" element={<Attendance />} />
           <Route path="*" element={<Placeholder />} />
         </Route>
         <Route path="*" element={<App />} />

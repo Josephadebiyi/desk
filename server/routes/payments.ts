@@ -19,6 +19,7 @@ import { compose, sendEmail } from '../mail'
 import { billingCurrency, chargeCurrency, PLAN_PRICES, planPrice, type FlwCurrency } from '../../src/lib/currency'
 import type { PlanKey } from '../../src/lib/plans'
 import { sendBillingEmail } from '../lifecycle'
+import { notifyDesigners } from './design'
 
 export const paymentRoutes = Router()
 
@@ -161,6 +162,11 @@ async function complete(ref: { id?: string; txRef?: string }) {
         }),
       ).catch((e) => console.error('[receipt]', e))
     }
+  } else if (p.kind === 'design_request') {
+    // Paid extra flyer request → straight to the designers, due 48 hours from now.
+    await db().from('design_requests').update({ status: 'Submitted', due_at: new Date(Date.now() + 48 * 3600e3).toISOString() }).eq('id', p.design_request_id).eq('status', 'Awaiting payment')
+    await db().from('design_request_messages').insert({ request_id: p.design_request_id, church_id: p.church_id, sender: 'system', text: '__received__' })
+    await notifyDesigners(p.design_request_id, '', { name: p.name, email: p.email })
   } else {
     await db()
       .from('churches')
@@ -198,6 +204,10 @@ paymentRoutes.get(
       }
     }
     if (p?.kind === 'subscription') return res.redirect(`${env.siteUrl}/dashboard/settings?tab=plan&billing=${ok ? 'success' : 'failed'}`)
+    if (p?.kind === 'design_request') {
+      const { data: d } = await db().from('online_payments').select('design_request_id').eq('tx_ref', txRef).maybeSingle()
+      return res.redirect(`${env.siteUrl}/dashboard/design?tab=team&request=${d?.design_request_id ?? ''}&paid=${ok ? 1 : 0}`)
+    }
     res.redirect(`${env.siteUrl}/give/${church?.slug ?? ''}?paid=${ok ? 1 : 0}`)
   }),
 )

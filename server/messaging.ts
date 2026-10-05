@@ -13,6 +13,7 @@ import { configured, env } from './env'
 import { compose, sendEmails } from './mail'
 import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
+import { logOutbound } from './inbox'
 
 const TPL: Record<EmailLang, Record<string, string>> = { en: enTpl, es: esTpl, fr: frTpl, de: deTpl, pt: ptTpl }
 const LOCALE: Record<EmailLang, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
@@ -58,7 +59,8 @@ export function personalize(raw: string, lang: EmailLang, vars: Record<string, s
   return raw.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m)
 }
 
-export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string) {
+/** `freeform`: a reply inside WhatsApp's 24-hour window (no template needed). */
+export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string, opts: { freeform?: boolean } = {}) {
   const from = channel === 'SMS' ? env.twilioSmsFrom : env.twilioWhatsappFrom
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.twilioSid}/Messages.json`, {
     method: 'POST',
@@ -66,7 +68,7 @@ export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: stri
     body: new URLSearchParams(
       channel === 'SMS' && env.twilioMessagingService
         ? { MessagingServiceSid: env.twilioMessagingService, To: to, Body: body }
-        : channel === 'WhatsApp' && env.twilioWhatsappContentSid
+        : channel === 'WhatsApp' && env.twilioWhatsappContentSid && !opts.freeform
           ? {
               From: `whatsapp:${from.replace(/^whatsapp:/, '')}`,
               To: `whatsapp:${to}`,
@@ -144,6 +146,7 @@ export async function sendCampaign(campaignId: string, byName: string) {
         }
       }
       rows.push({ church_id: c.church_id, campaign_id: c.id, member_id: m.id, channel, language: lang, to_address: to, status, provider_id: providerId ?? null, error: err })
+      if (status === 'sent') await logOutbound({ churchId: c.church_id, memberId: m.id, name: m.full_name, to, channel, body: text, providerId, byName })
       comms.push({ church_id: c.church_id, member_id: m.id, date: today, channel, summary: text.slice(0, 90), by_name: byName })
     }
   }

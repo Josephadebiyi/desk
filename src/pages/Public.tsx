@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Check, Copy, CreditCard, HandHeart, Heart, Landmark, Sparkles, UserPlus, Users } from 'lucide-react'
+import { CalendarCheck, Check, Copy, CreditCard, HandHeart, Heart, Landmark, PartyPopper, Sparkles, UserPlus, Users } from 'lucide-react'
 import { createContext, useContext, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { MemberStoreProvider, useMembers } from '../dashboard/store'
@@ -14,6 +14,8 @@ import { ThemeToggle, useTheme } from '../theme'
 import './public.css'
 import { giftPresets } from '../lib/currency'
 import { apiUrl } from '../lib/api'
+import { PhoneInput } from '../components/PhoneInput'
+import { countryFromText } from '../lib/countries'
 
 /**
  * Public, no-login pages opened from shared links and QR codes:
@@ -232,6 +234,18 @@ function JoinForm() {
     </label>
   )
 
+  // Phone numbers in international format, defaulting to the church's country.
+  const homeCountry = countryFromText(settings.location)?.code
+  const phoneField = (k: 'phone' | 'whatsapp', label: string) => (
+    <label className={`pub-field ${errors[k] ? 'has-error' : ''}`}>
+      <span>{label}</span>
+      <span className="pub-phone">
+        <PhoneInput value={f[k]} onChange={(v) => set(k, v)} defaultCountry={homeCountry} name={k} invalid={!!errors[k]} />
+      </span>
+      {errors[k] && <em>{errors[k]}</em>}
+    </label>
+  )
+
   return (
     <motion.form className="pub-card" onSubmit={submit} noValidate initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <span className={`pub-badge is-${type}`}>
@@ -242,7 +256,7 @@ function JoinForm() {
 
       <div className="pub-grid">
         {field('fullName', t('pub.fullName'), { autoComplete: 'name', placeholder: t('pub.fullNamePh') })}
-        {field('phone', t('pub.phone'), { type: 'tel', autoComplete: 'tel', placeholder: '+234 803 555 0101' })}
+        {phoneField('phone', t('pub.phone'))}
         {field('email', t('pub.email'), { type: 'email', autoComplete: 'email', placeholder: 'name@example.com' })}
         <label className="pub-field">
           <span>{t('pub.gender')}</span>
@@ -255,7 +269,7 @@ function JoinForm() {
             ))}
           </select>
         </label>
-        {!f.sameWa && field('whatsapp', t('pub.whatsapp'), { type: 'tel' })}
+        {!f.sameWa && phoneField('whatsapp', t('pub.whatsapp'))}
         {type !== 'newcomer' && (
           <label className="pub-field">
             <span>{t('pub.dob')}</span>
@@ -556,15 +570,143 @@ function Unknown() {
   return <Done title={t('pub.notFound')} body={t('pub.notFoundBody')} />
 }
 
-function Public({ kind }: { kind: 'join' | 'give' }) {
+function Public({ kind }: { kind: 'join' | 'give' | 'checkin' }) {
   const { slug } = useParams()
   const { settings } = usePub()
   // Preview build: one workspace per browser. With the backend this looks the church up by slug.
   const known = !!settings.churchName && (!slug || slug === settings.givingSlug)
-  return <Frame>{!known ? <Unknown /> : kind === 'join' ? <JoinForm /> : <GiveForm />}</Frame>
+  return <Frame>{!known ? <Unknown /> : kind === 'join' ? <JoinForm /> : kind === 'checkin' ? <CheckinForm /> : <GiveForm />}</Frame>
 }
 
-function PublicPage({ kind }: { kind: 'join' | 'give' }) {
+/* ───────────────────────── Sunday check-in ───────────────────────── */
+
+function CheckinForm() {
+  const { slug = '' } = useParams()
+  const { t } = useT()
+  const { settings } = usePub()
+  const key = `ziondesk-checkin-${slug}`
+  const [saved, setSaved] = useState<{ token: string; firstName: string } | null>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(key) ?? 'null')
+    } catch {
+      return null
+    }
+  })
+  const [byEmail, setByEmail] = useState(false)
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'missing'>('idle')
+  const [name, setName] = useState('')
+  const [error, setError] = useState('')
+
+  const send = async (body: Record<string, string>) => {
+    if (!remote) return setError(t('pub.checkin.previewOnly'))
+    setState('busy')
+    setError('')
+    try {
+      const res = await fetch(apiUrl('/checkin'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, date: today(), ...body }) })
+      const data = (await res.json().catch(() => ({}))) as { found?: boolean; firstName?: string; token?: string; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Request failed')
+      if (!data.found) {
+        if (body.token) {
+          localStorage.removeItem(key)
+          setSaved(null)
+          return setState('idle')
+        }
+        return setState('missing')
+      }
+      setName(data.firstName ?? '')
+      try {
+        localStorage.setItem(key, JSON.stringify({ token: data.token, firstName: data.firstName }))
+      } catch {
+        /* private mode */
+      }
+      setState('done')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+      setState('idle')
+    }
+  }
+
+  if (state === 'done')
+    return (
+      <Done title={t('pub.checkin.done', { name })} body={t('pub.checkin.doneSub')}>
+        <PartyPopper size={26} aria-hidden />
+      </Done>
+    )
+  if (state === 'missing')
+    return (
+      <Done title={t('pub.checkin.notFound')} body={t('pub.checkin.notFoundSub')}>
+        <div className="pub-row-actions">
+          <Link className="btn btn-primary" to={`/join/${slug}?type=newcomer`}>
+            {t('pub.checkin.register')}
+          </Link>
+          <button type="button" className="btn btn-outline" onClick={() => setState('idle')}>
+            {t('pub.checkin.tryAgain')}
+          </button>
+        </div>
+      </Done>
+    )
+
+  return (
+    <motion.form
+      className="pub-card"
+      noValidate
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (saved) return void send({ token: saved.token })
+        if (byEmail ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) : phone.replace(/\D/g, '').length < 7) return setError(t('pub.checkin.errContact'))
+        void send(byEmail ? { email: email.trim() } : { phone })
+      }}
+    >
+      <span className="pub-badge is-member">
+        <CalendarCheck size={20} />
+      </span>
+      <h1>{saved ? t('pub.checkin.back', { name: saved.firstName }) : t('pub.checkin.title', { church: settings.churchName })}</h1>
+      <p className="pub-sub">{t('pub.checkin.sub')}</p>
+      {!saved && (
+        <div className="pub-grid">
+          {byEmail ? (
+            <label className="pub-field">
+              <span>{t('pub.email')}</span>
+              <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
+            </label>
+          ) : (
+            <label className="pub-field">
+              <span>{t('pub.phone')}</span>
+              <span className="pub-phone">
+                <PhoneInput value={phone} onChange={setPhone} defaultCountry={countryFromText(settings.location)?.code} name="phone" />
+              </span>
+            </label>
+          )}
+          <button type="button" className="pub-link" onClick={() => setByEmail(!byEmail)}>
+            {byEmail ? t('pub.checkin.usePhone') : t('pub.checkin.useEmail')}
+          </button>
+        </div>
+      )}
+      {error && <p className="pub-err">{error}</p>}
+      <button type="submit" className="pub-go" disabled={state === 'busy'}>
+        {state === 'busy' ? <span className="spinner" /> : <CalendarCheck size={18} />} {saved ? t('pub.checkin.tap') : t('pub.checkin.submit')}
+      </button>
+      {saved && (
+        <button
+          type="button"
+          className="pub-link"
+          onClick={() => {
+            localStorage.removeItem(key)
+            setSaved(null)
+          }}
+        >
+          {t('pub.checkin.notYou')}
+        </button>
+      )}
+    </motion.form>
+  )
+}
+
+function PublicPage({ kind }: { kind: 'join' | 'give' | 'checkin' }) {
   const { slug = '' } = useParams()
   if (remote)
     return (
@@ -585,3 +727,4 @@ function PublicPage({ kind }: { kind: 'join' | 'give' }) {
 
 export const JoinPage = () => <PublicPage kind="join" />
 export const GivePage = () => <PublicPage kind="give" />
+export const CheckinPage = () => <PublicPage kind="checkin" />

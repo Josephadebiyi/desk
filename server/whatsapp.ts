@@ -24,9 +24,9 @@ async function post(body: unknown) {
 }
 
 /** Sends `text` to an international number (+234…). Uses the approved template when configured. */
-export async function sendWhatsApp(to: string, text: string, lang = 'en'): Promise<string | undefined> {
+export async function sendWhatsApp(to: string, text: string, lang = 'en', opts: { freeform?: boolean } = {}): Promise<string | undefined> {
   const number = to.replace(/[^\d]/g, '')
-  if (env.waTemplate) {
+  if (env.waTemplate && !opts.freeform) {
     // Template parameters can't contain new lines or more than 4 spaces in a row.
     const param = text.replace(/\s*\n+\s*/g, ' · ').replace(/ {4,}/g, ' ').slice(0, 1000)
     return post({

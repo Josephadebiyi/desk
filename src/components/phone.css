@@ -1,0 +1,6 @@
+.phone-in { display: flex; align-items: stretch; width: 100%; min-width: 0; }
+.phone-cc { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: none; padding: 0 10px 0 2px; margin-right: 8px; border-right: 1px solid rgba(17, 16, 21, 0.12); font-size: 14px; font-weight: 600; white-space: nowrap; color: inherit; }
+.phone-cc::after { content: ''; width: 6px; height: 6px; margin-left: 4px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); opacity: 0.55; }
+.phone-cc select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+.phone-in input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: inherit; padding: 0; }
+[data-theme='dark'] .phone-cc { border-right-color: rgba(255, 255, 255, 0.16); }

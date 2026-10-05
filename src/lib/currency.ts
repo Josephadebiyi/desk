@@ -65,6 +65,24 @@ const TZ_REGION: Record<string, string> = {
 }
 
 /** Best guess of the visitor's currency (browser region, then time zone); USD when unsure. */
+/** Local currency for a country, when ZionDesk supports it. */
+export const currencyForRegion = (region: string): string | undefined => REGION_CURRENCY[region]
+
+/** The visitor's country (ISO code), from their time zone or browser language. */
+export function guessRegion(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (TZ_REGION[tz]) return TZ_REGION[tz]
+    for (const l of navigator.languages ?? [navigator.language]) {
+      const region = new Intl.Locale(l).maximize().region
+      if (region) return region
+    }
+  } catch {
+    /* fall through */
+  }
+  return 'US'
+}
+
 export function guessCurrency(): string {
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone

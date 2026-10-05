@@ -30,6 +30,7 @@ import { LanguagePopup } from '../i18n/LanguagePopup'
 import { LangMenu } from '../i18n/Flags'
 import './dashboard.css'
 import { apiUrl } from '../lib/api'
+import { useInboxUnread } from './Inbox'
 
 const TRIAL_KEY = 'ziondesk-trial'
 const TRIAL_DAYS = 7
@@ -38,6 +39,7 @@ const NAV = [
   { to: '/dashboard', key: 'overview', end: true },
   { to: '/dashboard/ai', key: 'ai' },
   { to: '/dashboard/members', key: 'members' },
+  { to: '/dashboard/attendance', key: 'attendance' },
   { to: '/dashboard/giving', key: 'giving' },
   { to: '/dashboard/messaging', key: 'messaging' },
   { to: '/dashboard/events', key: 'events' },
@@ -212,6 +214,7 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
   const session = useSession()
   const me = session.remote ? session.name || session.email : 'Pastor Mike'
   const { t } = useT()
+  const unread = useInboxUnread(!preview && Boolean(session.session && session.church))
   const [menu, setMenu] = useState(false)
   return (
     <div className={`dash ${preview ? 'is-preview' : ''}`}>
@@ -229,8 +232,9 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
                 {t(`dash.nav.${n.key}`)}
               </span>
             ) : (
-              <NavLink key={n.to} to={n.to} end={n.end} onClick={() => setMenu(false)}>
+              <NavLink key={n.to} to={n.key === 'messaging' && unread ? `${n.to}?tab=inbox` : n.to} end={n.end} onClick={() => setMenu(false)}>
                 {t(`dash.nav.${n.key}`)}
+                {n.key === 'messaging' && unread > 0 && <i className="m-badge">{unread}</i>}
               </NavLink>
             ),
           )}

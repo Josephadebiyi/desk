@@ -21,8 +21,9 @@ import reports from './reports'
 import help from './help'
 import auth from './auth'
 import legal from './legal'
+import att from './att'
 
-const en = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal }
+const en = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att }
 
 export type Dict = typeof en
 export default en

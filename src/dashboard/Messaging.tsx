@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarClock, Check, Info, Languages, Mail, MessageCircle, MessageSquareText, PencilLine, RotateCcw, Send, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { AskAI, audienceLabel, audienceMembers, AudiencePicker, fmtDate, Kpi, Modal, NoAccess, PageHead, tEnum, today } from './kit'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import Inbox, { useInboxUnread } from './Inbox'
+import { AskAI, audienceLabel, audienceMembers, AudiencePicker, fmtDate, Kpi, Modal, NoAccess, PageHead, Tabs, tEnum, today } from './kit'
 import { useMembers } from './store'
 import { can } from './types'
 import { useWorkspace, type Audience, type Channel } from './workspace'
@@ -80,7 +81,36 @@ function TemplateEditor({ onClose }: { onClose: () => void }) {
   )
 }
 
+/** Messaging: compose & send, or the inbox of member replies. */
 export default function Messaging() {
+  const [sp, setSp] = useSearchParams()
+  const { t } = useT()
+  const unread = useInboxUnread()
+  const tab = sp.get('tab') === 'inbox' ? 'inbox' : 'send'
+  return (
+    <>
+      <div className="m-switch">
+        <Tabs
+          value={tab}
+          onChange={(v) => setSp(v === 'inbox' ? { tab: 'inbox' } : {})}
+          tabs={[
+            { id: 'send', label: t('msg.new') },
+            { id: 'inbox', label: <>{t('att.inbox.tab')}{unread > 0 && <i className="m-badge">{unread}</i>}</> },
+          ]}
+        />
+      </div>
+      {tab === 'inbox' ? (
+        <div className="d-page">
+          <Inbox />
+        </div>
+      ) : (
+        <Compose />
+      )}
+    </>
+  )
+}
+
+function Compose() {
   const { members, role, logCommunicationMany } = useMembers()
   const { settings, campaigns, addCampaign, templates } = useWorkspace()
   const { t, lang: uiLang } = useT()

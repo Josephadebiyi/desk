@@ -551,7 +551,8 @@ adminRoutes.get(
     const { data: tickets } = await db().from('support_tickets').select('id, subject, name, updated_at, priority').eq('status', 'open').order('updated_at', { ascending: false }).limit(8)
     const { data: pastDue } = await db().from('churches').select('id, name, plan_renews_at').eq('plan_status', 'past_due').limit(8)
     const { data: trials } = await db().from('churches').select('id, name, trial_ends_at').eq('plan_status', 'trial').lte('trial_ends_at', new Date(Date.now() + 2 * 864e5).toISOString()).limit(8)
-    res.json({ tickets: tickets ?? [], pastDue: pastDue ?? [], trialsEnding: trials ?? [] })
+    const { data: design } = await db().from('design_requests').select('id, title, status, due_at, churches(name)').in('status', ['Submitted', 'In design', 'Review']).order('due_at').limit(8)
+    res.json({ tickets: tickets ?? [], pastDue: pastDue ?? [], trialsEnding: trials ?? [], design: (design ?? []).map((r) => ({ id: r.id, title: r.title, status: r.status, due_at: r.due_at, church: (r.churches as unknown as { name: string } | null)?.name ?? '' })) })
   }),
 )
 
@@ -644,5 +645,103 @@ adminRoutes.post(
     await sendEmails(people.map((p) => composeNewsletter(p, subject, text)))
     await db().from('newsletters').insert({ subject, body: text, audience, sent_count: people.length, created_by: req.caller!.email })
     res.json({ ok: true, sent: people.length })
+  }),
+)
+
+/* ───────── design team: Ministry Max flyer requests ───────── */
+const REQUEST_STATUSES = ['Submitted', 'In design', 'Review', 'Delivered']
+
+async function tellChurchTeam(churchId: string, subject: string, paragraphs: string[], requestId: string) {
+  if (!configured.email) return
+  const { data: team } = await db().from('church_users').select('user_id').eq('church_id', churchId).in('role', ['admin', 'leader'])
+  const { data: people } = await db().from('profiles').select('email').in('id', (team ?? []).map((t) => t.user_id))
+  const m = plainMail(subject, paragraphs, { url: `${env.siteUrl}/dashboard/design?tab=team&request=${requestId}`, label: 'Open the request' })
+  const to = (people ?? []).map((p) => p.email).filter(Boolean)
+  if (to.length) await sendEmails(to.map((e) => ({ to: e, subject, html: m.html, text: m.text }))).catch((e) => console.error('[design email]', e))
+}
+
+adminRoutes.get(
+  '/admin/design-requests',
+  ...staff,
+  route(async (req, res) => {
+    let q = db().from('design_requests').select('id, church_id, title, status, due_at, created_at, formats, churches(name, plan), design_request_messages(id, sender, at)').order('created_at', { ascending: false }).limit(200)
+    if (REQUEST_STATUSES.includes(String(req.query.status))) q = q.eq('status', String(req.query.status))
+    const { data } = await q
+    res.json({
+      requests: (data ?? []).map((r) => {
+        const msgs = (r.design_request_messages ?? []) as { sender: string; at: string }[]
+        const last = msgs.sort((a, b) => b.at.localeCompare(a.at))[0]
+        return { ...r, design_request_messages: undefined, messages: msgs.length, waiting: last?.sender === 'you' }
+      }),
+    })
+  }),
+)
+
+adminRoutes.get(
+  '/admin/design-requests/:id',
+  ...staff,
+  route(async (req, res) => {
+    const { data: r } = await db().from('design_requests').select('*, churches(name, email, phone, plan)').eq('id', String(req.params.id)).maybeSingle()
+    if (!r) throw new HttpError(404, 'Request not found')
+    const { data: messages } = await db().from('design_request_messages').select('*').eq('request_id', r.id).order('at')
+    // Inspiration images are stored inline (data URLs) or as files in the "inspiration" bucket.
+    const all = (r.inspiration ?? []) as { name: string; path?: string; dataUrl?: string }[]
+    const files = all.filter((f) => f.path)
+    const { data: signed } = files.length ? await db().storage.from('inspiration').createSignedUrls(files.map((f) => f.path!), 3600) : { data: [] }
+    const inspiration = all.map((f) => ({ name: f.name, url: f.dataUrl ?? signed?.[files.indexOf(f)]?.signedUrl ?? '' })).filter((f) => f.url)
+    res.json({ request: { ...r, inspiration: undefined }, messages: messages ?? [], inspiration })
+  }),
+)
+
+adminRoutes.patch(
+  '/admin/design-requests/:id',
+  ...staff,
+  route(async (req, res) => {
+    const status = String(req.body?.status ?? '')
+    if (!REQUEST_STATUSES.includes(status)) throw new HttpError(400, 'Unknown status')
+    const { data: r } = await db().from('design_requests').update({ status }).eq('id', String(req.params.id)).select('id, church_id, title').single()
+    if (r) {
+      await db().from('design_request_messages').insert({ request_id: r.id, church_id: r.church_id, sender: 'system', text: `Status: ${status}` })
+      await tellChurchTeam(r.church_id, `Your flyer “${r.title}” is now: ${status}`, [`Our design team updated your request “${r.title}”.`, 'Open it in ZionDesk to see the latest and reply to your designer.'], r.id)
+    }
+    res.json({ ok: true })
+  }),
+)
+
+adminRoutes.post(
+  '/admin/design-requests/:id/message',
+  ...staff,
+  route(async (req, res) => {
+    const text = str(req.body?.text, 4000)
+    if (!text) throw new HttpError(400, 'Type a message.')
+    const { data: r } = await db().from('design_requests').select('id, church_id, title').eq('id', String(req.params.id)).single()
+    if (!r) throw new HttpError(404, 'Request not found')
+    await db().from('design_request_messages').insert({ request_id: r.id, church_id: r.church_id, sender: 'designer', text })
+    await tellChurchTeam(r.church_id, `Your designer replied about “${r.title}”`, [text], r.id)
+    res.json({ ok: true })
+  }),
+)
+
+/** Upload a finished design (PNG / JPG / PDF, up to 12 MB) — marks the request Delivered and emails the church. */
+adminRoutes.post(
+  '/admin/design-requests/:id/deliver',
+  ...staff,
+  route(async (req, res) => {
+    const { data: r } = await db().from('design_requests').select('id, church_id, title, deliverables').eq('id', String(req.params.id)).single()
+    if (!r) throw new HttpError(404, 'Request not found')
+    const type = str(req.body?.contentType, 60)
+    if (!['image/png', 'image/jpeg', 'application/pdf', 'image/webp'].includes(type)) throw new HttpError(400, 'Upload a PNG, JPG, WEBP or PDF.')
+    const buf = Buffer.from(str(req.body?.data, 20_000_000), 'base64')
+    if (!buf.length || buf.length > 12 * 1024 * 1024) throw new HttpError(400, 'The file must be under 12 MB.')
+    const name = str(req.body?.name, 120).replace(/[^\w.-]+/g, '-') || 'flyer'
+    const path = `${r.church_id}/${r.id}/${Date.now()}-${name}`
+    const { error } = await db().storage.from('deliverables').upload(path, buf, { contentType: type, upsert: false })
+    if (error) throw new HttpError(500, error.message)
+    const url = db().storage.from('deliverables').getPublicUrl(path).data.publicUrl
+    const deliverables = [...((r.deliverables ?? []) as { name: string; url: string }[]), { name, url }]
+    await db().from('design_requests').update({ deliverables, status: 'Delivered' }).eq('id', r.id)
+    await db().from('design_request_messages').insert({ request_id: r.id, church_id: r.church_id, sender: 'designer', text: `Your design is ready: ${name}` })
+    await tellChurchTeam(r.church_id, `Your flyer “${r.title}” is ready 🎉`, ['Your designer delivered your flyer. Download it in ZionDesk → Design Studio → Design team.', 'Need a change? Reply in the request and we’ll update it.'], r.id)
+    res.json({ ok: true, deliverables })
   }),
 )

@@ -605,7 +605,7 @@ export function Support() {
 
 interface PaymentRow {
   id: string
-  kind: 'gift' | 'subscription'
+  kind: 'gift' | 'subscription' | 'design_request'
   amount: number
   currency: string
   plan: string | null
@@ -621,18 +621,18 @@ interface PaymentRow {
 export function Payments() {
   const navigate = useNavigate()
   const [rows, setRows] = useState<PaymentRow[] | null>(null)
-  const [kind, setKind] = useState<'' | 'subscription' | 'gift'>('')
+  const [kind, setKind] = useState<'' | 'subscription' | 'gift' | 'design_request'>('')
   useEffect(() => {
     api<{ payments: PaymentRow[] }>('/admin/payments').then((r) => setRows(r.payments)).catch(() => setRows([]))
   }, [])
   const list = (rows ?? []).filter((p) => !kind || p.kind === kind)
   return (
     <>
-      <Head title="Payments" sub="Latest Flutterwave checkouts — subscriptions and online gifts.">
+      <Head title="Payments" sub="Latest Flutterwave checkouts — subscriptions, extra flyer requests and online gifts.">
         <div className="adm-toolbar">
-          {(['', 'subscription', 'gift'] as const).map((k) => (
+          {(['', 'subscription', 'gift', 'design_request'] as const).map((k) => (
             <button key={k || 'all'} type="button" className={`adm-chip ${kind === k ? 'is-on' : ''}`} onClick={() => setKind(k)}>
-              {k || 'all'}
+              {k === 'design_request' ? 'extra flyers' : k || 'all'}
             </button>
           ))}
         </div>
@@ -656,7 +656,7 @@ export function Payments() {
                   <td>{fmtDay(p.created_at)}</td>
                   <td>{p.churches?.name ?? '—'}</td>
                   <td>
-                    {p.kind === 'subscription' ? PLAN_LABEL[p.plan ?? ''] ?? 'Subscription' : `Gift · ${p.fund ?? ''}`}
+                    {p.kind === 'subscription' ? PLAN_LABEL[p.plan ?? ''] ?? 'Subscription' : p.kind === 'design_request' ? 'Extra flyer request' : `Gift · ${p.fund ?? ''}`}
                     {p.promo_code && <small>promo {p.promo_code}</small>}
                   </td>
                   <td>{formatMoney(Number(p.amount), p.currency)}</td>

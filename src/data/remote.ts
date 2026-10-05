@@ -252,6 +252,7 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
       status: x.status as DesignRequest['status'],
       createdAt: x.created_at as string,
       dueAt: x.due_at as string,
+      deliverables: (x.deliverables as { name: string; url: string }[] | undefined) ?? [],
       messages: reqMsgs.filter((m) => m.request_id === x.id).map((m) => ({ id: m.id, from: m.sender, text: m.text, at: m.at })),
     })),
     team: [
@@ -261,7 +262,7 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
       }),
       ...ok(inv, [] as { id: string; name: string; email: string; role: Role }[]).map((x) => ({ id: `invite:${x.id}`, name: x.name, email: x.email, role: x.role, status: 'Invited' as const })),
     ],
-    links: ok(links, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({ id: x.id as string, type: x.type as ShareLink['type'], label: x.label as string, branch: x.branch as string, fund: x.fund as string, createdAt: x.created_at as string })),
+    links: ok(links, [] as Record<string, never>[]).filter((x: Record<string, unknown>) => x.type !== 'checkin').map((x: Record<string, unknown>) => ({ id: x.id as string, type: x.type as ShareLink['type'], label: x.label as string, branch: x.branch as string, fund: x.fund as string, createdAt: x.created_at as string })),
     claims: ok(claims, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({
       id: x.id as string,
       date: x.date as string,

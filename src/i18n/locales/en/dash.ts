@@ -1,5 +1,6 @@
 export default {
   nav: {
+    attendance: 'Attendance',
     overview: 'Overview',
     ai: 'Ask Ellen',
     members: 'Members',

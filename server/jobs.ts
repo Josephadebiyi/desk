@@ -14,6 +14,7 @@ import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
 import { runSignupReminders, runWelcomeFallback } from './lifecycle'
+import { runFollowups } from './attendance'
 
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 
@@ -67,7 +68,8 @@ export async function runDaily() {
   const billing = await runBilling().catch((e) => (console.error('[billing]', e), null))
   const birthdays = await runBirthdays().catch((e) => (console.error('[birthdays]', e), 0))
   const signupReminders = await runSignupReminders().catch((e) => (console.error('[signup reminders]', e), null))
-  return { birthdays, billing, promos, signupReminders }
+  const followups = await runFollowups().catch((e) => (console.error('[followups]', e), null))
+  return { birthdays, billing, promos, signupReminders, followups }
 }
 
 /**
