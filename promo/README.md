@@ -1,23 +1,27 @@
-# ZionDesk launch film (30 s)
+# ZionDesk launch reel (31 s)
 
-Two sizes from one source: **1920×1080** (YouTube, website, LinkedIn) and **1080×1920** (Instagram Reels, TikTok, Shorts, WhatsApp Status).
+Story-driven SaaS reel in the style of the Instagram references: light canvas, glossy 3D clay objects,
+a mascot, word-by-word kinetic type synced to the voice, captions, and sound design on every action.
+Two sizes from one source: **1920×1080** and **1080×1920** (Reels/TikTok/Shorts).
 
 | File | What it is |
 |---|---|
-| `script.json` | Voice-over lines with their timings + voice direction (edit the words here) |
-| `scene.html` | All visuals — animated dashboard, push-ins, right-to-left moves, 3D spins; open `scene.html?play` (or `?format=reel&play`) in Chrome to preview |
-| `music.py` | Original Afro-house cue (120 BPM), synthesized — no licensing |
-| `voice.mjs` | Voice-over: Gemini TTS (light Nigerian accent) → ElevenLabs → macOS placeholder |
-| `render.mjs` | Renders frames with headless Chrome → ffmpeg |
-| `build.sh` | Everything: music, voice, both renders, ducking + -14 LUFS mix |
+| `reel.html` | All visuals, driven by the voice-over's word timings (`words.json`). Preview: open `reel.html?play` (or `?format=reel&play`) in Chrome |
+| `words.json` | Word-level timings of the voice-over (ElevenLabs Scribe), remapped to the tightened take |
+| `audio/` | ElevenLabs voice-over (ayo jeje, Nigerian male), music (re-cut on bar lines: drop on "Meet ZionDesk"), sound effects |
+| `assets/` | 3D mascot, paperwork and coins (generated, background removed with `cutout.py`) |
+| `mix.py` | Sound-design cue sheet + ducked mix at -14 LUFS |
+| `render.mjs` | Headless Chrome frames → ffmpeg |
+| `build.sh` | Everything → `out/ZionDesk-reel-1920x1080.mp4` and `out/ZionDesk-reel-1080x1920.mp4` |
 
 ```bash
-npm run promo        # → promo/out/ZionDesk-launch-1920x1080.mp4 and -1080x1920.mp4
+npm run promo
 ```
 
-**The voice.** Put `GEMINI_API_KEY` in `.env` (the same key used for birthday prayers) and run `npm run promo`.
-Optional: `GEMINI_TTS_VOICE` (default `Fenrir`, energetic male; also try `Orus`, `Puck`, `Charon`).
-Or `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` for an African-accented male voice from ElevenLabs' library.
-Or record a voice actor to `promo/out/vo.wav` (30 s, lines at the times in `script.json`) and run only the mix step in `build.sh`.
+Script: "Pastor… be honest. Your church runs on WhatsApp groups, notebooks… and three different spreadsheets.
+First-timers slip away. Offerings get counted twice. Meet ZionDesk. Every member, every family — in one place.
+Tithes and offerings, counted and receipted — in naira, cedis or dollars. Messages on WhatsApp and email, in five
+languages. Need a flyer for Sunday? Ellen designs it… in seconds. Less paperwork. More people. ZionDesk. Start your
+free trial today."
 
-**The music** is original. For a commercial launch you can swap in a licensed track as `out/music.wav` (120 BPM, drop at 3.5 s).
+The earlier dark version (`scene.html`, `music.py`, `voice.mjs`) is kept for reference.

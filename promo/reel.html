@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ZionDesk launch reel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter+Tight:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="words.js"></script>
+<style>
+  :root { --lime: #c4ec62; --lime-ink: #18210a; --purple: #6c34ff; --ink: #111015; --muted: #8b8a98; --bg: #f6f5f1; --lav: #e9e5ff;
+    --serif: 'DM Serif Display', Georgia, serif; --g: 'Inter Tight', Inter, sans-serif; --ui: Inter, sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: var(--W); height: var(--H); overflow: hidden; background: var(--bg); }
+  body { font-family: var(--ui); color: var(--ink); font-size: var(--u); -webkit-font-smoothing: antialiased; }
+  .stage { position: absolute; inset: 0; overflow: hidden; perspective: 1600px;
+    background: radial-gradient(60% 50% at 85% 10%, #ece8ff 0%, transparent 70%), radial-gradient(50% 45% at 5% 95%, #eef9d6 0%, transparent 70%), var(--bg); }
+  .cam { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .a { position: absolute; left: 50%; top: 50%; transform-style: preserve-3d; will-change: transform, opacity; }
+  .hide { display: none; }
+
+  /* glossy orbs like the reference */
+  .orb { width: calc(var(--u) * 5); height: calc(var(--u) * 5); border-radius: 50%; }
+  .orb.l { background: radial-gradient(circle at 32% 28%, #f3ffd0 0%, #c4ec62 38%, #8fbf2a 100%); box-shadow: 0 calc(var(--u)*.8) calc(var(--u)*1.6) -0.6em rgba(120,160,30,.45); }
+  .orb.p { background: radial-gradient(circle at 32% 28%, #d9ccff 0%, #8457ff 40%, #4b1fd6 100%); box-shadow: 0 calc(var(--u)*.8) calc(var(--u)*1.6) -0.6em rgba(80,40,200,.45); }
+
+  /* kinetic type */
+  .line { font-family: var(--g); font-weight: 600; letter-spacing: -.035em; white-space: nowrap; display: flex; gap: .26em; align-items: center; color: var(--ink); }
+  .line .w { display: inline-block; }
+  .it { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; color: var(--purple); }
+  .lime-u { background: linear-gradient(transparent 62%, var(--lime) 62% 92%, transparent 92%); padding: 0 .08em; }
+  .chip { display: inline-flex; align-items: center; gap: .32em; padding: .14em .46em .16em .2em; border-radius: 99em; background: #fff; box-shadow: 0 .08em .3em -0.05em rgba(30,20,80,.18), inset 0 0 0 .03em rgba(0,0,0,.05); }
+  .chip i { width: 1em; height: 1em; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .62em; color: #fff; }
+  .ico-wa { background: #25d366; } .ico-nb { background: #f5c542; } .ico-sh { background: #1f9d55; }
+
+  /* cards & UI */
+  .card { background: #fff; border-radius: calc(var(--u)*2.4); box-shadow: 0 calc(var(--u)*2.4) calc(var(--u)*5) calc(var(--u)*-2.2) rgba(40,30,90,.35), 0 0 0 1px rgba(17,16,21,.04); color: var(--ink); }
+  .avatar { border-radius: 50%; display: grid; place-items: center; font-family: var(--g); font-weight: 700; color: var(--ink); }
+  .tile { width: calc(var(--u)*12); height: calc(var(--u)*8); padding: calc(var(--u)*.9); display: grid; grid-template-columns: repeat(4,1fr); gap: calc(var(--u)*.35); border-radius: calc(var(--u)*1.2); background: #fff; box-shadow: 0 calc(var(--u)*1) calc(var(--u)*2.4) calc(var(--u)*-1) rgba(30,20,80,.3); }
+  .tile b { border-radius: calc(var(--u)*.25); background: #eceaf6; } .tile b:nth-child(4n+1) { background: #d7f0c2; }
+  .numpill { padding: calc(var(--u)*1.2) calc(var(--u)*3.2); border-radius: calc(var(--u)*4); background: linear-gradient(180deg, #8457ff, #5a26f0); color: #fff; font-family: var(--g); font-weight: 800; font-size: calc(var(--u)*9); letter-spacing: -.04em; white-space: nowrap; box-shadow: 0 calc(var(--u)*2) calc(var(--u)*4) calc(var(--u)*-1.5) rgba(90,40,240,.6), inset 0 calc(var(--u)*.3) 0 rgba(255,255,255,.25); }
+  .chips { display: flex; gap: calc(var(--u)*1); }
+  .cchip { padding: calc(var(--u)*.7) calc(var(--u)*1.4); border-radius: 99em; background: #fff; font-family: var(--g); font-weight: 600; font-size: calc(var(--u)*1.9); color: #4b4860; box-shadow: 0 0 0 1px rgba(17,16,21,.06); white-space: nowrap; }
+  .cchip.on { background: var(--ink); color: #fff; }
+  .stamp { padding: calc(var(--u)*.6) calc(var(--u)*1.6); border: calc(var(--u)*.45) solid currentColor; border-radius: calc(var(--u)*1); font-family: var(--g); font-weight: 800; font-size: calc(var(--u)*3); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .stamp.red { color: #ef4444; } .stamp.green { color: #2f9e5b; }
+  .phone { width: calc(var(--u)*34); height: calc(var(--u)*66); border-radius: calc(var(--u)*5); background: #0f0d16; padding: calc(var(--u)*1.1); box-shadow: 0 calc(var(--u)*4) calc(var(--u)*8) calc(var(--u)*-2) rgba(30,20,80,.45); }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: calc(var(--u)*4); overflow: hidden; background: #efe7dd; }
+  .wa-head { height: calc(var(--u)*8.5); background: #075e54; color: #fff; display: flex; align-items: flex-end; gap: calc(var(--u)*1); padding: 0 calc(var(--u)*1.6) calc(var(--u)*1.3); }
+  .wa-head .lg { width: calc(var(--u)*4); height: calc(var(--u)*4); border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+  .wa-head .lg img { width: 55%; }
+  .wa-head b { font-size: calc(var(--u)*1.7); display: block; } .wa-head small { font-size: calc(var(--u)*1.15); opacity: .8; }
+  .bubble { position: absolute; left: calc(var(--u)*1.6); right: calc(var(--u)*5); background: #fff; border-radius: calc(var(--u)*.5) calc(var(--u)*1.8) calc(var(--u)*1.8) calc(var(--u)*1.8); padding: calc(var(--u)*1) calc(var(--u)*1.3); font-size: calc(var(--u)*1.6); line-height: 1.35; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .bubble .fl { display: block; font-size: .78em; font-weight: 700; color: #075e54; }
+  .flag { width: calc(var(--u)*6); height: calc(var(--u)*6); border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 calc(var(--u)*.35) #fff, 0 calc(var(--u)*1) calc(var(--u)*2) calc(var(--u)*-.6) rgba(30,20,80,.35); }
+  .flag svg { width: 100%; height: 100%; display: block; }
+  .prompt { width: calc(var(--u)*56); padding: calc(var(--u)*1.6) calc(var(--u)*2); display: flex; align-items: center; gap: calc(var(--u)*1.2); font-size: calc(var(--u)*2.2); }
+  .prompt .spark { width: calc(var(--u)*4.4); height: calc(var(--u)*4.4); border-radius: 50%; background: conic-gradient(from 90deg, var(--purple), var(--lime), var(--purple)); display: grid; place-items: center; flex-shrink: 0; }
+  .prompt .spark i { width: 78%; height: 78%; border-radius: 50%; background: #fff; display: grid; place-items: center; font-style: normal; font-size: calc(var(--u)*1.8); }
+  .prompt .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--purple); vertical-align: middle; margin-left: 2px; }
+  .flyer { width: calc(var(--u)*30); height: calc(var(--u)*37.5); border-radius: calc(var(--u)*2); overflow: hidden; position: relative; background: #1b0f45; box-shadow: 0 calc(var(--u)*3) calc(var(--u)*7) calc(var(--u)*-2) rgba(30,20,80,.55); }
+  .flyer .art { position: absolute; inset: 0; background: radial-gradient(60% 45% at 80% 15%, #ffcf5a 0%, transparent 60%), radial-gradient(70% 50% at 0% 100%, #8457ff 0%, transparent 65%), linear-gradient(170deg, #2a1470, #120c2b); }
+  .flyer .rays { position: absolute; left: 50%; top: 18%; width: 200%; aspect-ratio: 1; margin-left: -100%; transform-origin: 50% 0; background: repeating-conic-gradient(from 0deg at 50% 0, rgba(255,215,120,.18) 0 6deg, transparent 6deg 18deg); }
+  .flyer .txt { position: absolute; left: 8%; right: 8%; bottom: 9%; color: #fff; }
+  .flyer small { font-family: var(--g); font-weight: 700; letter-spacing: .3em; font-size: calc(var(--u)*1.05); color: var(--lime); }
+  .flyer h4 { font-family: var(--serif); font-weight: 400; font-size: calc(var(--u)*5.6); line-height: .95; margin: .2em 0 .25em; }
+  .flyer p { font-size: calc(var(--u)*1.35); opacity: .85; }
+  .shim { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.45) 45%, transparent 65%); background-size: 260% 100%; }
+  .skel { position: absolute; inset: 0; background: #ece9f7; display: grid; align-content: end; gap: 6%; padding: 9%; }
+  .skel i { display: block; height: 5%; border-radius: 99em; background: #dcd7f1; } .skel i:first-child { height: 14%; width: 70%; }
+  .logo { width: calc(var(--u)*16); height: calc(var(--u)*16); border-radius: calc(var(--u)*4.4); background: var(--ink); display: grid; place-items: center; box-shadow: 0 calc(var(--u)*2.4) calc(var(--u)*5) calc(var(--u)*-1.6) rgba(17,16,21,.55), inset 0 calc(var(--u)*.3) 0 rgba(255,255,255,.12); }
+  .logo img { width: 58%; }
+  .wordmark { font-family: var(--g); font-weight: 800; font-size: calc(var(--u)*11); letter-spacing: -.05em; white-space: nowrap; display: flex; }
+  .wordmark span { display: inline-block; }
+  .cta { display: inline-flex; align-items: center; gap: .5em; padding: .55em 1.3em; border-radius: 99em; background: var(--ink); color: #fff; font-family: var(--g); font-weight: 700; font-size: calc(var(--u)*3); white-space: nowrap; box-shadow: 0 calc(var(--u)*1.6) calc(var(--u)*3) calc(var(--u)*-1) rgba(17,16,21,.45); }
+  .cta b { color: var(--lime); }
+  .url { font-family: var(--g); font-weight: 600; font-size: calc(var(--u)*2.2); color: var(--muted); white-space: nowrap; }
+  .check { width: calc(var(--u)*9); height: calc(var(--u)*9); border-radius: 50%; background: radial-gradient(circle at 32% 28%, #f3ffd0 0%, #c4ec62 40%, #8fbf2a 100%); display: grid; place-items: center; box-shadow: 0 calc(var(--u)*1.2) calc(var(--u)*2.4) calc(var(--u)*-.8) rgba(120,160,30,.55); }
+  .check svg { width: 55%; }
+  .cursor { width: calc(var(--u)*3.2); filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .ripple { width: calc(var(--u)*5); height: calc(var(--u)*5); border-radius: 50%; border: calc(var(--u)*.3) solid var(--purple); }
+  .cap { position: absolute; left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 0 .28em; padding: .42em .9em .48em; border-radius: .9em; background: rgba(17,16,21,.88); color: rgba(255,255,255,.55); font-family: var(--g); font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+  .cap span.on { color: #fff; } .cap span.hi { color: var(--lime); font-family: var(--serif); font-style: italic; font-weight: 400; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .members { width: calc(var(--u)*50); padding: calc(var(--u)*2.2); }
+  .members h3 { font-family: var(--g); font-weight: 600; font-size: calc(var(--u)*2.4); letter-spacing: -.02em; display: flex; justify-content: space-between; align-items: center; }
+  .members h3 span { font-size: calc(var(--u)*1.3); font-weight: 600; color: #fff; background: var(--ink); padding: .5em 1em; border-radius: 99em; }
+  .mrow { display: grid; grid-template-columns: calc(var(--u)*4.4) 1fr auto; gap: calc(var(--u)*1.2); align-items: center; padding: calc(var(--u)*.9) calc(var(--u)*1); border-radius: calc(var(--u)*1.4); margin-top: calc(var(--u)*.9); }
+  .mrow .avatar { width: calc(var(--u)*4.4); height: calc(var(--u)*4.4); font-size: calc(var(--u)*1.5); }
+  .mrow b { font-size: calc(var(--u)*1.7); display: block; } .mrow small { color: #6f6d7c; font-size: calc(var(--u)*1.3); }
+  .mrow em { font-style: normal; font-size: calc(var(--u)*1.25); font-weight: 600; padding: .45em .9em; border-radius: 99em; background: var(--ink); color: #fff; }
+  .mrow em.l { background: var(--lime); color: var(--lime-ink); }
+  .scrib { overflow: visible; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="cam" id="cam">
+    <div id="orbs"></div>
+
+    <!-- shared kinetic headline -->
+    <div class="a line" id="h1"></div>
+    <div class="a line" id="h2"></div>
+
+    <!-- S1/S2 chaos -->
+    <img class="a" id="paper" src="assets/paperwork.png" style="width:calc(var(--u)*34)" alt="" />
+    <div id="tiles"></div>
+
+    <!-- S3 problem -->
+    <div id="crowd"></div>
+    <img class="a" id="coins" src="assets/coins.png" style="width:calc(var(--u)*24)" alt="" />
+    <div class="a card" id="off1" style="padding:calc(var(--u)*1.6) calc(var(--u)*2.4)"><small style="color:#8b8a98;font-size:calc(var(--u)*1.4)">Sunday offering</small><div style="font-family:var(--g);font-weight:800;font-size:calc(var(--u)*5);letter-spacing:-.04em">₦250,000</div></div>
+    <div class="a card" id="off2" style="padding:calc(var(--u)*1.6) calc(var(--u)*2.4)"><small style="color:#8b8a98;font-size:calc(var(--u)*1.4)">Sunday offering</small><div style="font-family:var(--g);font-weight:800;font-size:calc(var(--u)*5);letter-spacing:-.04em">₦250,000</div></div>
+    <div class="a stamp red" id="x2">Counted ×2</div>
+
+    <!-- S4 reveal -->
+    <div class="a logo" id="logo"><img src="mark.png" alt="" /></div>
+    <div class="a wordmark" id="word"></div>
+
+    <!-- S5 members -->
+    <div class="a card members" id="members">
+      <h3>Members &amp; families <span>+ Add member</span></h3>
+      <div id="mrows"></div>
+    </div>
+
+    <!-- S6 giving -->
+    <div class="a numpill" id="num">₦1,284,500</div>
+    <svg class="a scrib" id="scrib" viewBox="0 0 600 220"><path id="scribPath" d="M70 120 C 60 40, 300 10, 470 30 C 600 45, 590 170, 430 196 C 280 220, 60 205, 40 130 C 30 85, 120 50, 220 44" fill="none" stroke="#111015" stroke-width="5" stroke-linecap="round"/></svg>
+    <div class="a chips" id="curs"></div>
+    <div class="a stamp green" id="rcpt">Receipted ✓</div>
+
+    <!-- S7 messaging -->
+    <div class="a phone" id="phone"><div class="screen" id="screen"><div class="wa-head"><span class="lg"><img src="mark.png" alt="" /></span><div><b>Covenant Chapel</b><small>via ZionDesk · WhatsApp</small></div></div></div></div>
+    <div id="flags"></div>
+
+    <!-- S8 AI flyer -->
+    <div class="a card prompt" id="prompt"><span class="spark"><i>✦</i></span><span id="ptext"></span><span class="caret" id="caret"></span></div>
+    <div class="a flyer" id="flyer">
+      <div class="skel" id="skel"><i></i><i></i><i style="width:60%"></i></div>
+      <div id="flyerArt" style="position:absolute;inset:0"><div class="art"></div><div class="rays" id="rays"></div><div class="txt"><small>COVENANT CHAPEL</small><h4>Harvest<br/>Sunday</h4><p>Sun 12 Oct · 9:00 AM · Bring a friend</p></div></div>
+      <div class="shim" id="shim"></div>
+    </div>
+
+    <!-- S9/S10 -->
+    <div class="a check" id="check"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#18210a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="a cta" id="cta">Start your free trial <b>→</b></div>
+    <div class="a url" id="url">ziondesk.com · 7 days free</div>
+
+    <img class="a" id="mascot" src="assets/mascot.png" style="width:calc(var(--u)*18)" alt="" />
+    <svg class="a cursor" id="cursor" viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.3L9 20z" fill="#111015" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    <div class="a ripple" id="ripple"></div>
+  </div>
+  <div class="cap" id="cap"></div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+const q = new URLSearchParams(location.search)
+const REEL = q.get('format') === 'reel'
+const W = REEL ? 1080 : 1920, H = REEL ? 1920 : 1080
+const U = 10.8 // 1 layout unit in px (both formats are 1080 on the short side)
+const R = document.documentElement.style
+R.setProperty('--W', W + 'px'); R.setProperty('--H', H + 'px'); R.setProperty('--u', U + 'px')
+const WORDS = window.__WORDS__ || []
+
+/* ── helpers ── */
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const P = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, k) => a + (b - a) * k
+const o3 = (k) => 1 - Math.pow(1 - k, 3)
+const o5 = (k) => 1 - Math.pow(1 - k, 5)
+const io = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+const back = (k, s = 1.9) => 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2)
+const elastic = (k) => (k === 0 || k === 1 ? k : Math.pow(2, -10 * k) * Math.sin((k * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1)
+const $ = (id) => document.getElementById(id)
+const clean = (w) => w.toLowerCase().replace(/[^a-z0-9-]/g, '')
+/** Start time of the n-th occurrence of a spoken word. */
+const T = (word, n = 1) => { let c = 0; for (const x of WORDS) if (clean(x.w) === clean(word) && ++c === n) return x.s; return 0 }
+const Te = (word, n = 1) => { let c = 0; for (const x of WORDS) if (clean(x.w) === clean(word) && ++c === n) return x.e; return 0 }
+/** Place an absolutely-centred element: x/y/z in layout units, plus transforms. */
+function put(el, { x = 0, y = 0, z = 0, s = 1, sx = 1, sy = 1, rx = 0, ry = 0, rz = 0, o = 1, blur = 0 } = {}) {
+  if (o <= 0.001) { el.style.opacity = 0; el.style.visibility = 'hidden'; return }
+  el.style.visibility = 'visible'
+  el.style.transform = `translate(-50%,-50%) translate3d(${x * U}px,${y * U}px,${z * U}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s * sx},${s * sy})`
+  el.style.opacity = o
+  el.style.filter = blur > 0.02 ? `blur(${blur * U}px)` : ''
+}
+const off = (...els) => els.forEach((e) => put(e, { o: 0 }))
+/** pop-in scale with overshoot, k=0..1 */
+const pop = (t, at, d = 0.38) => back(P(t, at, at + d))
+
+/* ── static content ── */
+const ORBS = Array.from({ length: 9 }, (_, i) => ({ c: i % 3 === 0 ? 'p' : 'l', x: [-70, 66, -52, 74, -80, 40, -30, 86, 10][i], y: [-36, -30, 30, 26, -6, -44, 46, 4, 44][i], s: [1, 0.6, 0.8, 1.2, 0.5, 0.7, 0.55, 0.9, 0.45][i], ph: i * 1.7 }))
+$('orbs').innerHTML = ORBS.map((o, i) => `<div class="a orb ${o.c}" id="orb${i}"></div>`).join('')
+$('tiles').innerHTML = Array.from({ length: 6 }, (_, i) => `<div class="a tile" id="tile${i}">${'<b></b>'.repeat(12)}</div>`).join('')
+const PEOPLE = [['AO', '#dcd8fd'], ['KM', '#d3e8fb'], ['GW', '#ddf5d3'], ['TA', '#fde3d6'], ['SE', '#fff1b8']]
+$('crowd').innerHTML = PEOPLE.map(([i, bg], k) => `<div class="a avatar" id="pp${k}" style="width:calc(var(--u)*9);height:calc(var(--u)*9);font-size:calc(var(--u)*2.6);background:${bg};box-shadow:0 0 0 calc(var(--u)*.5) #fff, 0 calc(var(--u)*1.4) calc(var(--u)*3) calc(var(--u)*-1) rgba(30,20,80,.35)">${i}</div>`).join('')
+const MROWS = [['AO', 'Ada Okafor', 'First visit · Sunday', 'New', 'l', '#dcd8fd'], ['KM', 'Kwame Mensah', 'Worker · Ushering', 'Worker', '', '#d3e8fb'], ['TA', 'Tunde & Bisi Adeyemi', 'Family · 4 people', 'Family', '', '#fde3d6'], ['GW', 'Grace Wanjiru', 'Member · Choir', 'Member', '', '#ddf5d3']]
+$('mrows').innerHTML = MROWS.map(([i, n, s, tag, c, bg], k) => `<div class="mrow" id="mr${k}" style="background:${bg}66"><span class="avatar" style="background:${bg}">${i}</span><span><b>${n}</b><small>${s}</small></span><em class="${c}">${tag}</em></div>`).join('')
+const CURS = [['₦', 'Naira', 'naira'], ['GH₵', 'Cedis', 'cedis'], ['$', 'Dollars', 'dollars']]
+$('curs').innerHTML = CURS.map(([s, n], k) => `<span class="cchip" id="cc${k}">${s} ${n}</span>`).join('')
+const MSGS = [['English', 'Welcome home, Ada! 🙏 See you Sunday at 9.'], ['Français', 'Bienvenue, Amélie ! À dimanche, 9 h.'], ['Português', 'Bem-vindo, João! Até domingo às 9h. 🙌']]
+MSGS.forEach(([l, m], i) => { const b = document.createElement('div'); b.className = 'bubble'; b.id = 'bub' + i; b.innerHTML = `<span class="fl">${l}</span>${m}`; b.style.top = (11 + i * 10.5) * U + 'px'; $('screen').appendChild(b) })
+const FLAG = {
+  en: '<svg viewBox="0 0 60 60"><rect width="60" height="60" fill="#012169"/><path d="M0 0l60 60M60 0L0 60" stroke="#fff" stroke-width="12"/><path d="M0 0l60 60M60 0L0 60" stroke="#C8102E" stroke-width="5"/><path d="M30 0v60M0 30h60" stroke="#fff" stroke-width="18"/><path d="M30 0v60M0 30h60" stroke="#C8102E" stroke-width="10"/></svg>',
+  es: '<svg viewBox="0 0 60 60"><rect width="60" height="60" fill="#AA151B"/><rect y="15" width="60" height="30" fill="#F1BF00"/></svg>',
+  fr: '<svg viewBox="0 0 60 60"><rect width="20" height="60" fill="#002395"/><rect x="20" width="20" height="60" fill="#fff"/><rect x="40" width="20" height="60" fill="#ED2939"/></svg>',
+  de: '<svg viewBox="0 0 60 60"><rect width="60" height="20" fill="#000"/><rect y="20" width="60" height="20" fill="#DD0000"/><rect y="40" width="60" height="20" fill="#FFCE00"/></svg>',
+  pt: '<svg viewBox="0 0 60 60"><rect width="60" height="60" fill="#FF0000"/><rect width="24" height="60" fill="#006600"/><circle cx="24" cy="30" r="9" fill="#FFCC00"/></svg>',
+}
+$('flags').innerHTML = Object.keys(FLAG).map((l, i) => `<div class="a flag" id="fl${i}">${FLAG[l]}</div>`).join('')
+$('word').innerHTML = 'ZionDesk'.split('').map((c) => `<span>${c}</span>`).join('')
+const scribLen = $('scribPath').getTotalLength()
+$('scribPath').style.strokeDasharray = scribLen
+
+/* ── headline builder: words appear on the beat they're spoken ── */
+let lastH = { h1: '', h2: '' }
+function headline(id, html, size) {
+  const el = $(id)
+  if (lastH[id] !== html) { el.innerHTML = html; lastH[id] = html }
+  el.style.fontSize = size * U + 'px'
+}
+/** reveal each .w child at data-t, with a little pop */
+function revealWords(id, t) {
+  for (const w of $(id).querySelectorAll('.w')) {
+    const at = Number(w.dataset.t)
+    const k = back(P(t, at - 0.04, at + 0.26), 2.2)
+    w.style.opacity = P(t, at - 0.04, at + 0.08)
+    w.style.transform = `translateY(${lerp(0.45, 0, k)}em) scale(${lerp(0.6, 1, k)})`
+  }
+}
+const W_ = (txt, word, n = 1, cls = '') => `<span class="w ${cls}" data-t="${T(word, n)}">${txt}</span>`
+
+/* ── captions: phrase groups, current word highlighted ── */
+const HI = /^(honest|whatsapp|zion|zionDesk|one|receipted|dollars|five|seconds|people|today|twice|away)/i
+const PHRASES = []
+{
+  let cur = []
+  WORDS.forEach((w, i) => {
+    cur.push(w)
+    const end = /[.?!…]$|\.\.\.$/.test(w.w) || (cur.length >= (REEL ? 4 : 6) && /,$/.test(w.w)) || cur.length >= (REEL ? 5 : 7)
+    if (end || i === WORDS.length - 1) { PHRASES.push(cur); cur = [] }
+  })
+}
+
+/* ── timeline ── */
+function seek(t) {
+  const A = REEL // layout switch
+  // background orbs drift and bob
+  ORBS.forEach((o, i) => put($('orb' + i), { x: o.x * (A ? 0.55 : 1) + Math.sin(t * 0.7 + o.ph) * 2, y: o.y * (A ? 1.9 : 1) + Math.cos(t * 0.9 + o.ph) * 2.4, s: o.s * (1 + Math.sin(t * 1.3 + o.ph) * 0.04), z: -20 - (i % 3) * 10, o: 0.95 }))
+  // camera: slow push-in per scene + punch on cuts
+  const cuts = [T('your'), T('first-timers'), T('meet') - 0.05, T('every'), T('tithes'), T('messages'), T('need'), T('less'), T('zionDesk', 2) - 0.1]
+  const since = Math.min(...cuts.map((c) => (t >= c ? t - c : 99)))
+  const punch = since < 0.35 ? Math.sin((since / 0.35) * Math.PI) * 0.025 : 0
+  $('cam').style.transform = `scale(${(REEL ? 1.14 : 1.16) * (1 + Math.min(since, 4) * 0.008 + punch)})`
+  $('flash').style.opacity = cuts.some((c) => Math.abs(t - c) < 0.05) ? 0.14 : 0
+
+  const all = ['h1', 'h2', 'paper', 'coins', 'off1', 'off2', 'x2', 'logo', 'word', 'members', 'num', 'scrib', 'curs', 'rcpt', 'phone', 'prompt', 'flyer', 'check', 'cta', 'url', 'cursor', 'ripple']
+  all.forEach((id) => off($(id)))
+  for (let i = 0; i < 6; i++) off($('tile' + i))
+  for (let i = 0; i < 5; i++) { off($('pp' + i)); off($('fl' + i)) }
+
+  const t2 = T('your'), t3 = T('first-timers'), t4 = T('meet'), t5 = T('every'), t6 = T('tithes'), t7 = T('messages'), t8 = T('need'), t9 = T('less'), t10 = T('zionDesk', 2)
+  let m = { x: A ? 0 : 58, y: A ? 52 : 24, s: 1, o: 0, rz: 0 } // mascot default
+
+  /* S1 — hook */
+  if (t < t2) {
+    headline('h1', `${W_('Pastor,', 'pastor')} ${W_('be', 'be')} ${W_('honest.', 'honest', 1, 'it')}`, A ? 9 : 11)
+    revealWords('h1', t)
+    const out = io(P(t, t2 - 0.25, t2))
+    put($('h1'), { y: A ? -6 : -4, x: -out * 30, o: 1 - out, blur: out * 0.8 })
+    // mascot slides up from the bottom, side-eye tilt
+    const k = back(P(t, 0.9, 1.5))
+    m = { x: A ? 18 : 40, y: lerp(A ? 110 : 70, A ? 26 : 22, k), s: 0.9, rz: lerp(-20, -10, k) + Math.sin(t * 4) * 2, o: 1 }
+  }
+
+  /* S2 — chaos: WhatsApp groups, notebooks, spreadsheets */
+  else if (t < t3) {
+    const nb = T('notebooks'), three = T('three')
+    headline('h1', `${W_('Your', 'your')} ${W_('church', 'church')} ${W_('runs', 'runs')} ${W_('on', 'on')}`, A ? 6.2 : 6.4)
+    headline('h2', `${W_('<span class="chip"><i class="ico-wa">✆</i>WhatsApp</span>', 'whatsapp')} ${W_('<span class="chip"><i class="ico-nb">✎</i>notebooks…</span>', 'notebooks')} ${W_('<span class="chip"><i class="ico-sh">▦</i>3 spreadsheets</span>', 'three')}`, A ? 4.2 : 5)
+    revealWords('h1', t); revealWords('h2', t)
+    const out = io(P(t, t3 - 0.25, t3))
+    put($('h1'), { y: A ? -60 : -33, x: -out * 40, o: 1 - out })
+    put($('h2'), { y: A ? -50 : -23, x: -out * 40, o: 1 - out, s: A ? 0.88 : 1 })
+    // paperwork drops in and wobbles
+    const pk = back(P(t, nb - 0.1, nb + 0.4), 2.4)
+    put($('paper'), { x: A ? 0 : -18, y: lerp(-80, A ? 4 : 12, pk) + out * 40, rz: lerp(-25, -4, pk) + Math.sin(t * 6) * (t > nb + 0.4 ? 1.5 : 0), s: (A ? 1.15 : 1) * lerp(0.7, 1, pk), o: P(t, nb - 0.1, nb) * (1 - out) })
+    // spreadsheet tiles fly in from the right and pile up messily
+    for (let i = 0; i < 6; i++) {
+      const at = three + i * 0.12, k = o5(P(t, at, at + 0.45))
+      const tx = A ? [-26, 22, -10, 28, -30, 12][i] : [16, 36, 24, 46, 30, 52][i]
+      const ty = A ? [34, 30, 46, 46, 22, 58][i] : [-6, 2, 16, 12, 28, 26][i]
+      put($('tile' + i), { x: lerp(140, tx, k) - out * 60, y: ty, rz: lerp(40, [-12, 9, -6, 14, -18, 6][i], k), s: A ? 1.05 : 1, o: P(t, at, at + 0.1) * (1 - out) })
+    }
+    m = { x: A ? 30 : 64, y: A ? 60 : 30, s: 0.8, rz: Math.sin(t * 9) * 6, o: 1 - out } // mascot shakes nervously
+  }
+
+  /* S3 — problem: first-timers slip away, offerings counted twice */
+  else if (t < t4 - 0.05) {
+    const sl = T('slip'), of = T('offerings'), tw = T('twice')
+    const phase2 = t >= of - 0.1
+    if (!phase2) {
+      headline('h1', `${W_('First-timers', 'first-timers')} ${W_('slip away.', 'slip', 1, 'it')}`, A ? 7.6 : 8)
+      revealWords('h1', t)
+      put($('h1'), { y: A ? -40 : -26 })
+      for (let i = 0; i < 5; i++) {
+        const k = back(P(t, t3 + i * 0.08, t3 + 0.35 + i * 0.08))
+        const leaving = i === 4 ? io(P(t, sl, sl + 0.7)) : 0
+        put($('pp' + i), { x: (i - 2) * (A ? 17 : 13) + leaving * 90, y: (A ? 6 : 8) + leaving * 6, rz: leaving * 90, s: k * (1 - leaving * 0.3), o: P(t, t3 + i * 0.08, t3 + i * 0.08 + 0.1) * (1 - leaving * 0.9) })
+      }
+      m = { x: A ? -20 : -50, y: A ? 40 : 26, s: 0.75, rz: -8, o: 1 }
+    } else {
+      headline('h1', `${W_('Offerings', 'offerings')} ${W_('get', 'get')} ${W_('counted', 'counted', 1)} ${W_('twice.', 'twice', 1, 'it')}`, A ? 6.4 : 7)
+      revealWords('h1', t)
+      const out = io(P(t, t4 - 0.3, t4 - 0.05))
+      put($('h1'), { y: A ? -44 : -28, o: 1 - out })
+      const k1 = back(P(t, of, of + 0.35)), k2 = o5(P(t, tw - 0.25, tw + 0.1))
+      put($('off1'), { x: -k2 * (A ? 2 : 6), y: (A ? 0 : 4) - k2 * 3, rz: -4 * k2, s: k1 * (A ? 1.1 : 1), o: P(t, of, of + 0.1) * (1 - out) })
+      put($('off2'), { x: k2 * (A ? 4 : 10), y: (A ? 0 : 4) + k2 * 6, rz: 6 * k2, s: k1 * (A ? 1.1 : 1), o: k2 * (1 - out) })
+      const sk = back(P(t, tw, tw + 0.25), 3)
+      put($('x2'), { x: A ? 8 : 18, y: A ? 14 : 16, rz: -12, s: lerp(2.2, 1, sk), o: P(t, tw, tw + 0.06) * (1 - out) })
+      put($('coins'), { x: A ? -18 : -40, y: (A ? 30 : 6) + Math.sin(t * 3) * 1.5, rz: Math.sin(t * 2) * 8, s: 0.8 * k1, o: P(t, of, of + 0.15) * (1 - out) })
+      m = { x: A ? 26 : 52, y: A ? 44 : 26, s: 0.7, rz: 10 + Math.sin(t * 20) * 3 * P(t, tw, tw + 0.3) * (1 - P(t, tw + 0.3, tw + 0.6)), o: 1 - out }
+    }
+  }
+
+  /* S4 — reveal */
+  else if (t < t5) {
+    const zd = T('zionDesk')
+    const k = P(t, zd - 0.05, zd + 0.6)
+    put($('logo'), { y: A ? -18 : -14, ry: lerp(-540, 0, o3(k)), s: back(P(t, zd - 0.05, zd + 0.4), 2.6), o: P(t, zd - 0.1, zd) })
+    ;[...$('word').children].forEach((el, i) => { const kk = back(P(t, zd + 0.1 + i * 0.04, zd + 0.45 + i * 0.04), 2.4); el.style.transform = `translateY(${lerp(0.6, 0, kk)}em) rotateX(${lerp(80, 0, kk)}deg)`; el.style.opacity = P(t, zd + 0.1 + i * 0.04, zd + 0.2 + i * 0.04) })
+    put($('word'), { y: A ? 4 : 8, s: A ? 0.82 : 1 })
+    headline('h1', `${W_('Meet', 'meet', 1, 'it')}`, A ? 6 : 6)
+    revealWords('h1', t)
+    put($('h1'), { y: A ? -36 : -32, o: 1 - P(t, zd, zd + 0.2) })
+    const out = io(P(t, t5 - 0.2, t5))
+    if (out > 0) { put($('logo'), { y: (A ? -18 : -14) - out * 30, s: 1 - out * 0.5, o: 1 - out }); put($('word'), { y: (A ? 4 : 8) + out * 20, o: 1 - out }) }
+    const jump = Math.abs(Math.sin(P(t, zd, zd + 1.0) * Math.PI * 2)) * 6
+    m = { x: A ? 24 : 46, y: (A ? 30 : 22) - jump, s: 0.8, rz: 0, o: 1 - out }
+  }
+
+  /* S5 — members */
+  else if (t < t6) {
+    const pl = T('place'), fam = T('family')
+    headline('h1', `${W_('Every member,', 'every', 1)} ${W_('every family', 'every', 2)} ${W_('in <span class="lime-u">one place.</span>', 'one')}`, A ? 3.9 : 5.6)
+    revealWords('h1', t)
+    const out = io(P(t, t6 - 0.25, t6))
+    put($('h1'), { y: A ? -54 : -31, x: -out * 40, o: 1 - out })
+    const ck = o5(P(t, t5 - 0.05, t5 + 0.5))
+    put($('members'), { x: lerp(120, A ? 0 : -6, ck) - out * 120, y: A ? 2 : 6, ry: lerp(-30, 0, ck), s: A ? 1.3 : 1.1, o: ck })
+    for (let i = 0; i < 4; i++) { const k = o3(P(t, t5 + 0.35 + i * 0.22, t5 + 0.7 + i * 0.22)); const r = $('mr' + i); r.style.opacity = k; r.style.transform = `translateX(${lerp(5, 0, k) * U}px)` }
+    // cursor clicks "+ Add member"
+    const ca = fam - 0.1, ck2 = io(P(t, ca - 0.6, ca))
+    put($('cursor'), { x: lerp(A ? 30 : 50, A ? 16 : 18, ck2) - out * 120, y: lerp(A ? 40 : 30, A ? -20 : -14, ck2), o: P(t, ca - 0.6, ca - 0.4) * (1 - out), s: t > ca && t < ca + 0.12 ? 0.85 : 1 })
+    put($('ripple'), { x: A ? 16 : 18, y: A ? -20 : -14, s: lerp(0.3, 1.6, P(t, ca, ca + 0.4)), o: (1 - P(t, ca, ca + 0.4)) * (t > ca ? 1 : 0) })
+    const ok = back(P(t, pl, pl + 0.35), 2.4)
+    put($('check'), { x: A ? 22 : 30, y: A ? 26 : 22, s: ok * (A ? 0.9 : 1), rz: lerp(-30, 0, ok), o: P(t, pl, pl + 0.05) * (1 - out) })
+    m = { x: A ? -26 : -52, y: A ? 40 : 24, s: 0.7, rz: -6 + Math.sin(t * 5) * 3, o: P(t, t5, t5 + 0.3) * (1 - out) }
+  }
+
+  /* S6 — giving: big number, scribble circle, receipt stamp, currencies */
+  else if (t < t7) {
+    const rc = T('receipted'), na = T('naira'), ce = T('cedis'), dl = T('dollars')
+    headline('h1', `${W_('Tithes &amp; offerings,', 'tithes')} ${W_('counted', 'counted', 2)} ${W_('&amp; <span class="it">receipted</span>', 'receipted')}`, A ? 4.1 : 5.6)
+    revealWords('h1', t)
+    const out = io(P(t, t7 - 0.25, t7))
+    put($('h1'), { y: A ? -50 : -31, x: -out * 40, o: 1 - out })
+    const nk = back(P(t, t6, t6 + 0.45), 2)
+    const val = Math.round(1284500 * o3(P(t, t6 + 0.1, t6 + 1.3)) / 100) * 100
+    const cur = t >= dl ? '$' : t >= ce ? 'GH₵' : '₦'
+    const shown = cur === '₦' ? val : cur === 'GH₵' ? Math.round(val / 105) : Math.round(val / 1550)
+    $('num').textContent = cur + shown.toLocaleString('en-US')
+    put($('num'), { y: A ? -14 : -8, s: nk * (A ? 0.82 : 1) * (1 + (t > na - 0.02 && t < na + 0.15 ? 0.05 : 0) + (t > ce - 0.02 && t < ce + 0.15 ? 0.05 : 0) + (t > dl - 0.02 && t < dl + 0.15 ? 0.05 : 0)), rz: lerp(-6, -2, nk), o: P(t, t6, t6 + 0.1) * (1 - out), x: -out * 40 })
+    // hand-drawn circle around the number
+    const dk = io(P(t, T('counted', 2), T('counted', 2) + 0.55))
+    $('scribPath').style.strokeDashoffset = scribLen * (1 - dk)
+    $('scrib').style.width = (A ? 74 : 66) * U + 'px'
+    put($('scrib'), { y: A ? -14 : -8, rz: -3, o: (dk > 0 ? 1 : 0) * (1 - out), x: -out * 40 })
+    const sk = back(P(t, rc, rc + 0.25), 3)
+    put($('rcpt'), { x: A ? 16 : 32, y: A ? 2 : 6, rz: -10, s: lerp(2.4, 1, sk) * (A ? 0.85 : 1), o: P(t, rc, rc + 0.05) * (1 - out) })
+    put($('curs'), { y: A ? 14 : 18, s: A ? 1.2 : 1.1, o: P(t, na - 0.2, na) * (1 - out), x: -out * 40 })
+    ;[na, ce, dl].forEach((at, i) => { const c = $('cc' + i); const on = t >= at && (i === 2 || t < [na, ce, dl][i + 1]); c.classList.toggle('on', on); c.style.transform = `scale(${on ? 1 + 0.08 * (1 - P(t, at, at + 0.25)) : 1})` })
+    put($('coins'), { x: A ? -20 : -46, y: (A ? 34 : 14) + Math.sin(t * 3) * 1.6, rz: Math.sin(t * 2.2) * 10 + t * 8, s: back(P(t, t6 + 0.2, t6 + 0.6)) * 0.9, o: P(t, t6 + 0.2, t6 + 0.3) * (1 - out) })
+    m = { x: A ? 26 : 52, y: A ? 40 : 24, s: 0.72, rz: 6, o: 1 - out }
+  }
+
+  /* S7 — WhatsApp + email in five languages */
+  else if (t < t8) {
+    const fv = T('five')
+    headline('h1', `${W_('WhatsApp &amp; email,', 'messages')} ${W_('in <span class="it">five</span> languages.', 'five')}`, A ? 4.4 : 5.6)
+    revealWords('h1', t)
+    const out = io(P(t, t8 - 0.25, t8))
+    put($('h1'), { y: A ? -58 : -32, x: -out * 40, o: 1 - out })
+    const pk = o5(P(t, t7 - 0.05, t7 + 0.55))
+    put($('phone'), { x: (A ? 0 : -20) - out * 100, y: lerp(90, A ? 6 : 3, pk), ry: lerp(-30, -8, pk), rz: lerp(10, 0, pk), s: A ? 0.9 : 0.66, o: pk })
+    MSGS.forEach((_, i) => { const at = t7 + 0.4 + i * 0.5, k = back(P(t, at, at + 0.35)); const b = $('bub' + i); b.style.opacity = P(t, at, at + 0.08); b.style.transform = `translateX(${lerp(14, 0, k) * U}px) scale(${lerp(0.8, 1, k)})` })
+    for (let i = 0; i < 5; i++) {
+      const at = fv + i * 0.08, k = back(P(t, at, at + 0.35), 2.4)
+      const fx = A ? (i - 2) * 13 : 22 + (i % 3) * 13 + (i > 2 ? 6 : 0), fy = A ? 56 : i > 2 ? 16 : 2
+      put($('fl' + i), { x: fx - out * 100, y: fy, s: k * (A ? 1.15 : 1.1), rz: lerp(-90, 0, k), o: P(t, at, at + 0.05) })
+    }
+    m = { x: A ? 30 : 56, y: A ? 30 : 28, s: 0.7, rz: Math.sin(t * 6) * 5, o: 1 - out }
+  }
+
+  /* S8 — AI flyer */
+  else if (t < t9) {
+    const el = T('ellen'), sec = T('seconds')
+    headline('h1', `${W_('Need a flyer for Sunday?', 'need')}`, A ? 6 : 6.4)
+    headline('h2', `${W_('<span class="it">Ellen</span> designs it', 'ellen')} ${W_('in <span class="lime-u">seconds.</span>', 'seconds')}`, A ? 5.4 : 5.6)
+    revealWords('h1', t); revealWords('h2', t)
+    const out = io(P(t, t9 - 0.25, t9))
+    put($('h1'), { y: A ? -66 : -32, x: -out * 40, o: (1 - P(t, el - 0.1, el)) })
+    put($('h2'), { y: A ? -66 : -32, x: -out * 40, o: P(t, el - 0.1, el) * (1 - out) })
+    const pk = o5(P(t, t8, t8 + 0.4))
+    put($('prompt'), { y: A ? -44 : -18, s: (A ? 0.9 : 0.9) * lerp(0.9, 1, pk), o: pk * (1 - out), x: (A ? 0 : -20) - out * 40 })
+    const full = 'Flyer for Harvest Sunday, 9 AM'
+    $('ptext').textContent = full.slice(0, Math.round(full.length * P(t, t8 + 0.3, el - 0.1)))
+    $('caret').style.opacity = Math.floor(t * 3) % 2 ? 1 : 0.2
+    const fk = o3(P(t, el, el + 0.8))
+    put($('flyer'), { y: A ? 18 : 10, ry: lerp(-200, -8, fk), s: lerp(0.5, A ? 1.25 : 1, fk) * (1 + io(P(t, sec, t9)) * 0.06), o: P(t, el, el + 0.1) * (1 - out), x: (A ? 0 : 30) - out * 60 })
+    $('skel').style.opacity = 1 - P(t, el + 0.9, sec - 0.1)
+    $('flyerArt').style.opacity = P(t, el + 0.9, sec - 0.1)
+    $('shim').style.backgroundPosition = `${lerp(150, -60, P(t, el + 0.2, sec))}% 0`
+    $('rays').style.transform = `rotate(${t * 22}deg)`
+    m = { x: A ? -24 : -44, y: A ? 40 : 22, s: 0.72, rz: -8, o: 1 - out }
+  }
+
+  /* S9 — less paperwork, more people */
+  else if (t < t10 - 0.1) {
+    const mp = T('more')
+    headline('h1', `${W_('Less paperwork.', 'less')} ${W_('More <span class="it">people.</span>', 'more')}`, A ? 6.6 : 8)
+    revealWords('h1', t)
+    const out = io(P(t, t10 - 0.35, t10 - 0.1))
+    put($('h1'), { y: A ? -40 : -26, o: 1 - out, s: (A ? 0.82 : 1) + out * 0.2, blur: out })
+    const gone = io(P(t, T('paperwork') + 0.2, mp - 0.05))
+    put($('paper'), { x: A ? -18 : -40, y: A ? 14 : 14, s: (1 - gone) * 0.75 * back(P(t, t9 - 0.1, t9 + 0.3)), rz: gone * 120, o: (1 - gone) * P(t, t9 - 0.1, t9) })
+    for (let i = 0; i < 5; i++) {
+      const at = mp + i * 0.07, k = back(P(t, at, at + 0.4), 2.6), ang = (i / 5) * Math.PI * 2 - Math.PI / 2
+      const rx = A ? 26 : 22, ry = A ? 22 : 16
+      put($('pp' + i), { x: Math.cos(ang) * rx * k + (A ? 0 : 20), y: Math.sin(ang) * ry * k + (A ? 30 : 14), s: k * 0.8, o: P(t, at, at + 0.05) * (1 - out) })
+    }
+    m = { x: A ? 0 : 20, y: A ? 30 : 14, s: 0.85 * (1 + Math.max(0, Math.sin(P(t, mp, mp + 0.6) * Math.PI)) * 0.15), rz: 0, o: 1 - out }
+  }
+
+  /* S10 — end card */
+  else {
+    const k = P(t, t10 - 0.1, t10 + 0.6)
+    put($('logo'), { y: A ? -40 : -24, ry: lerp(-360, 0, o3(k)), s: back(P(t, t10 - 0.1, t10 + 0.35), 2.4) * (A ? 0.9 : 0.8), o: P(t, t10 - 0.1, t10) })
+    ;[...$('word').children].forEach((el, i) => { const kk = back(P(t, t10 + i * 0.035, t10 + 0.35 + i * 0.035), 2.4); el.style.transform = `translateY(${lerp(0.6, 0, kk)}em)`; el.style.opacity = P(t, t10 + i * 0.035, t10 + 0.1 + i * 0.035) })
+    put($('word'), { y: A ? -18 : -6, s: A ? 0.8 : 0.85 })
+    const st = T('start')
+    const ck = back(P(t, st, st + 0.4), 2.2)
+    const press = t > T('today') && t < T('today') + 0.15 ? 0.94 : 1
+    put($('cta'), { y: A ? 4 : 12, s: ck * press * (A ? 1.05 : 1), o: P(t, st, st + 0.05) })
+    put($('url'), { y: A ? 14 : 21, o: P(t, st + 0.3, st + 0.6) })
+    const ca = T('today') - 0.05
+    put($('cursor'), { x: lerp(A ? 30 : 40, A ? 8 : 10, io(P(t, st + 0.2, ca))), y: lerp(A ? 30 : 30, A ? 6 : 14, io(P(t, st + 0.2, ca))), o: P(t, st + 0.2, st + 0.4), s: press })
+    put($('ripple'), { x: A ? 8 : 10, y: A ? 6 : 14, s: lerp(0.3, 1.8, P(t, ca, ca + 0.45)), o: (1 - P(t, ca, ca + 0.45)) * (t > ca ? 1 : 0) })
+    const wave = Math.sin(t * 7) * 6
+    m = { x: A ? 0 : 54, y: A ? 44 : 2, s: A ? 0.95 : 0.95, rz: wave * 0.4, o: P(t, t10, t10 + 0.3) }
+  }
+
+  // mascot: idle breathing (squash & stretch)
+  const br = Math.sin(t * 5.2) * 0.025
+  put($('mascot'), { x: m.x, y: m.y, s: m.s, sx: 1 + br, sy: 1 - br, rz: m.rz, o: m.o })
+
+  // captions
+  const cap = $('cap')
+  const ph = PHRASES.find((p) => t >= p[0].s - 0.08 && t <= p[p.length - 1].e + 0.15)
+  if (ph && !(t >= T('zionDesk', 2) - 0.1) && !(t >= T('meet') - 0.05 && t < T('every'))) {
+    cap.style.display = 'flex'
+    cap.innerHTML = ph.map((w) => `<span class="${t >= w.s - 0.03 ? 'on' : ''} ${HI.test(clean(w.w)) && t >= w.s - 0.03 ? 'hi' : ''}">${w.w.replace(/\.\.\.$/, '…')}</span>`).join(' ')
+    cap.style.fontSize = (REEL ? 38 : 32) + 'px'
+    cap.style.bottom = (REEL ? 300 : 54) + 'px'
+    cap.style.maxWidth = (REEL ? 900 : 1300) + 'px'
+  } else cap.style.display = 'none'
+}
+window.seek = seek
+window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map((i) => (i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))))).then(() => true)
+window.DURATION = 31
+seek(Number(q.get('t') || 0))
+if (q.has('play')) { const t0 = performance.now(); const tick = () => { seek(((performance.now() - t0) / 1000) % 31); requestAnimationFrame(tick) }; tick() }
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@ const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH
 const page = await browser.newPage()
 await page.setViewport({ width: W, height: H })
 await page.evaluateOnNewDocument((s) => (window.__SCRIPT__ = s), JSON.parse(readFileSync(join(dir, 'script.json'), 'utf8')).lines)
-await page.goto(`file://${join(dir, 'scene.html')}?format=${format}`, { waitUntil: 'networkidle0' })
+await page.goto(`file://${join(dir, process.env.SCENE || 'scene.html')}?format=${format}`, { waitUntil: 'networkidle0' })
 await page.evaluate(() => window.ready)
 for (const t of process.argv.slice(3).map(Number)) {
   await page.evaluate((tt) => window.seek(tt), t)

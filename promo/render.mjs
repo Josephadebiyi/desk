@@ -23,7 +23,7 @@ const browser = await puppeteer.launch({ executablePath: CHROME, headless: true,
 const page = await browser.newPage()
 await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 })
 await page.evaluateOnNewDocument((s) => (window.__SCRIPT__ = s), script)
-await page.goto(`file://${join(dir, 'scene.html')}?format=${format}`, { waitUntil: 'networkidle0' })
+await page.goto(`file://${join(dir, process.env.SCENE || 'scene.html')}?format=${format}`, { waitUntil: 'networkidle0' })
 await page.evaluate(() => window.ready)
 
 const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', outFile], { stdio: ['pipe', 'inherit', 'inherit'] })
