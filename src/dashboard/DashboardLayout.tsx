@@ -29,6 +29,7 @@ import { useT } from '../i18n'
 import { LanguagePopup } from '../i18n/LanguagePopup'
 import { LangMenu } from '../i18n/Flags'
 import './dashboard.css'
+import { apiUrl } from '../lib/api'
 
 const TRIAL_KEY = 'ziondesk-trial'
 const TRIAL_DAYS = 7
@@ -82,7 +83,7 @@ function AnnouncementBar() {
   const [a, setA] = useState<{ text: string; tone: string; link: string; at?: string } | null>(null)
   const [hidden, setHidden] = useState(false)
   useEffect(() => {
-    fetch('/api/announcement')
+    fetch(apiUrl('/announcement'))
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return

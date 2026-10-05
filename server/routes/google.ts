@@ -15,7 +15,7 @@ import { configured, env } from '../env'
 export const googleRoutes = Router()
 
 const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/calendar.events']
-const redirectUri = () => `${env.siteUrl}/api/google/callback`
+const redirectUri = () => `${env.apiUrl}/api/google/callback`
 const secret = () => env.cronSecret || env.supabaseServiceKey || 'dev'
 
 /** state = churchId.userId.expiry.signature — so the callback can't be forged. */

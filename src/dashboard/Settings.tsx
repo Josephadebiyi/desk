@@ -1,7 +1,7 @@
 import { Camera, Check, CreditCard, Database, Download, Languages, Mail, MessageCircle, MessageSquareText, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { api, apiChurch } from '../lib/api'
+import { api, apiChurch, apiUrl } from '../lib/api'
 import { updatePassword, uploadLogo } from '../lib/auth'
 import { useSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
@@ -91,7 +91,7 @@ function LanguageSettings() {
 /** Downloads a JSON export from the API (signed-in). */
 async function download(path: string, name: string) {
   const token = supabase ? (await supabase.auth.getSession()).data.session?.access_token : undefined
-  const res = await fetch(`/api${path}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(path.startsWith('/church') ? { 'x-church-id': apiChurch() } : {}) } })
+  const res = await fetch(apiUrl(path), { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(path.startsWith('/church') ? { 'x-church-id': apiChurch() } : {}) } })
   if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Request failed (${res.status})`)
   const url = URL.createObjectURL(await res.blob())
   const a = document.createElement('a')
@@ -775,7 +775,7 @@ function Integrations() {
   const loadGoogle = () => api<{ configured: boolean; connected: boolean; email: string }>('/google/status').then(setGoogle).catch(() => {})
   useEffect(() => {
     if (!live) return
-    fetch('/api/health')
+    fetch(apiUrl('/health'))
       .then((r) => r.json())
       .then((h) => setStatus({ sms: !!h.sms, whatsapp: !!h.whatsapp, email: !!h.email, payments: !!h.flutterwave }))
       .catch(() => {})

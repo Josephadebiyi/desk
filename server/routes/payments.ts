@@ -66,7 +66,7 @@ paymentRoutes.post(
       txRef,
       amount,
       currency,
-      redirectUrl: `${env.siteUrl}/api/payments/return`,
+      redirectUrl: `${env.apiUrl}/api/payments/return`,
       customer: { email, name, phone: str(b.phone, 40) },
       title: church.name,
       description: fund,
@@ -193,8 +193,8 @@ paymentRoutes.get(
         console.error('[payment return]', e)
       }
     }
-    if (p?.kind === 'subscription') return res.redirect(`/dashboard/settings?tab=plan&billing=${ok ? 'success' : 'failed'}`)
-    res.redirect(`/give/${church?.slug ?? ''}?paid=${ok ? 1 : 0}`)
+    if (p?.kind === 'subscription') return res.redirect(`${env.siteUrl}/dashboard/settings?tab=plan&billing=${ok ? 'success' : 'failed'}`)
+    res.redirect(`${env.siteUrl}/give/${church?.slug ?? ''}?paid=${ok ? 1 : 0}`)
   }),
 )
 
@@ -344,7 +344,7 @@ paymentRoutes.post(
       txRef,
       amount,
       currency,
-      redirectUrl: `${env.siteUrl}/api/payments/return`,
+      redirectUrl: `${env.apiUrl}/api/payments/return`,
       customer: { email: req.caller!.email, name: prof?.full_name || church!.name },
       title: `ZionDesk ${PLAN_NAME[plan]}`,
       description: church!.name,

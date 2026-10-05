@@ -15,6 +15,11 @@ export const env = {
   port: Number(v('PORT') || 8787),
   // Render sets RENDER_EXTERNAL_URL automatically; SITE_URL only needed for a custom domain.
   siteUrl: (v('SITE_URL') || v('RENDER_EXTERNAL_URL') || 'http://localhost:5173').replace(/\/$/, ''),
+  // Where THIS API server is reachable (payment returns, Google callback). On Render it's known automatically.
+  // Set API_URL only for a custom API domain, e.g. https://api.ziondesk.com
+  apiUrl: (v('API_URL') || v('RENDER_EXTERNAL_URL') || v('SITE_URL') || 'http://localhost:8787').replace(/\/$/, ''),
+  // Extra browser origins allowed to call the API (comma-separated). The site, www and admin domains are always allowed.
+  corsOrigins: v('CORS_ORIGINS').split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean),
 
   // Supabase (Project Settings → API)
   supabaseUrl: v('SUPABASE_URL') || v('VITE_SUPABASE_URL'),

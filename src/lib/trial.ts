@@ -4,6 +4,7 @@
  * and emails the trial-dashboard + sign-up links. When the API isn't deployed (local
  * dev), we fall back to "preview" so the flow can be tested without sending email.
  */
+import { apiUrl } from './api'
 export const TRIAL_DAYS = 7
 
 export interface TrialResult {
@@ -20,7 +21,7 @@ function preview(email: string): TrialResult {
 export async function startTrial(email: string, lang = 'en'): Promise<TrialResult> {
   let res: Response
   try {
-    res = await fetch('/api/start-trial', {
+    res = await fetch(apiUrl('/start-trial'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, lang }),

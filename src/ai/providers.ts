@@ -1,5 +1,5 @@
 import type { ProviderId, ProviderPref } from './types'
-import { api } from '../lib/api'
+import { api, apiUrl } from '../lib/api'
 
 /**
  * AI provider abstraction. Each provider declares what it is good at; AUTO routes a task
@@ -64,7 +64,7 @@ export function pickProvider(task: Task, pref: ProviderPref, status: ProviderSta
 /** Asks the server which providers have keys. Fails soft (all false) when the API isn't deployed. */
 export async function fetchProviderAvailability(): Promise<ProviderStatus['available']> {
   try {
-    const res = await fetch('/api/ai')
+    const res = await fetch(apiUrl('/ai'))
     if (!res.headers.get('content-type')?.includes('application/json')) throw new Error('not deployed')
     const data = (await res.json()) as { providers?: ProviderStatus['available'] }
     return { claude: !!data.providers?.claude, gemini: !!data.providers?.gemini, openai: !!data.providers?.openai }

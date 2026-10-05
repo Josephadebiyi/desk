@@ -13,6 +13,7 @@ import { Flag, LangMenu } from '../i18n/Flags'
 import { ThemeToggle, useTheme } from '../theme'
 import './public.css'
 import { giftPresets } from '../lib/currency'
+import { apiUrl } from '../lib/api'
 
 /**
  * Public, no-login pages opened from shared links and QR codes:
@@ -57,7 +58,7 @@ function LocalPub({ children }: { children: ReactNode }) {
 }
 
 async function post(path: string, body: unknown) {
-  const res = await fetch(`/api/public/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  const res = await fetch(apiUrl(`/public/${path}`), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   const data = (await res.json().catch(() => ({}))) as { error?: string }
   if (!res.ok) throw new Error(data.error ?? 'Request failed')
 }
@@ -65,7 +66,7 @@ async function post(path: string, body: unknown) {
 function RemotePub({ slug, children }: { slug: string; children: ReactNode }) {
   const [settings, setSettings] = useState<PubSettings | null | 'missing'>(null)
   useEffect(() => {
-    fetch(`/api/public/church/${encodeURIComponent(slug)}`)
+    fetch(apiUrl(`/public/church/${encodeURIComponent(slug)}`))
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((c) => setSettings({ churchName: c.name, location: c.location, branches: c.branches, departments: c.departments, funds: c.funds, currency: c.currency, onlineCurrency: c.onlineCurrency, payout: c.payout, givingSlug: c.slug, onlineGiving: c.onlineGiving }))
       .catch(() => setSettings('missing'))
@@ -77,7 +78,7 @@ function RemotePub({ slug, children }: { slug: string; children: ReactNode }) {
     register: (m, type) => post('register', { slug, type, ...m, consent: true }),
     claim: (c) => post('give-claim', { slug, ...c }),
     giveOnline: async (g) => {
-      const res = await fetch('/api/public/give-online', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, ...g }) })
+      const res = await fetch(apiUrl('/public/give-online'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, ...g }) })
       const data = (await res.json().catch(() => ({}))) as { link?: string; error?: string }
       if (!res.ok || !data.link) throw new Error(data.error ?? 'Request failed')
       return data.link

@@ -15,7 +15,8 @@
     "flw:plans": "tsx scripts/flw-plans.ts",
     "promo": "bash promo/build.sh",
     "promo:voice": "node promo/voice.mjs",
-    "promo:stills": "node promo/stills.mjs"
+    "promo:stills": "node promo/stills.mjs",
+    "build:hostinger": "VITE_API_URL=${VITE_API_URL:-https://desk-noae.onrender.com} vite build && cd dist && rm -f ../ziondesk-hostinger.zip && zip -qr ../ziondesk-hostinger.zip . -x '*.DS_Store' && echo '→ ziondesk-hostinger.zip (upload its contents to public_html)'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
