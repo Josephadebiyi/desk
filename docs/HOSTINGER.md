@@ -44,7 +44,7 @@ In Render → your service → Settings → Custom Domains, **remove `ziondesk.c
 
 ## 5. Update the links that point at the API
 - **Flutterwave** → Settings → Webhooks: `https://desk-noae.onrender.com/api/payments/webhook` (same secret hash).
-- **Supabase** → Authentication → **Send Email hook** (if enabled): `https://desk-noae.onrender.com/api/auth/send-email`.
+- **Supabase** → Authentication → **Send Email hook** (if enabled): `https://desk-noae.onrender.com/api/auth/email-hook`.
 - **Supabase** → Authentication → URL Configuration: Site URL `https://ziondesk.com`; Redirect URLs `https://ziondesk.com/**`
   (and `https://admin.ziondesk.com/**` if you use the admin domain).
 - **Google Cloud** OAuth client (Google Meet): redirect URI `https://desk-noae.onrender.com/api/google/callback`.
