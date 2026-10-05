@@ -54,7 +54,7 @@ publicRoutes.get(
       funds: c.funds,
       logoUrl: c.logo_url,
       // Online giving needs a connected payout account, and the church can switch it off.
-      onlineGiving: Boolean(c.flw_subaccount_id) && (p as Record<string, unknown>).online !== false,
+      onlineGiving: env.onlineGiving && Boolean(c.flw_subaccount_id) && (p as Record<string, unknown>).online !== false,
       // Only what a giver needs to make a transfer.
       payout: {
         method: p.method ?? 'none',

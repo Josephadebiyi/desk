@@ -220,6 +220,7 @@ const BADGE: Record<MethodType, { bg: string; fg: string; text: string }> = {
 export function MethodLogo({ type, size = 'md' }: { type: MethodType; size?: 'sm' | 'md' }) {
   const b = BADGE[type]
   const h = size === 'sm' ? 22 : 30
+  if (type === 'bizum') return <img src="/brand/pay/bizum.png" alt="" aria-hidden width={h} height={h} style={{ width: h, height: h, borderRadius: 8, flex: 'none', display: 'inline-block' }} />
   return (
     <span
       aria-hidden
@@ -234,8 +235,8 @@ export function MethodLogo({ type, size = 'md' }: { type: MethodType; size?: 'sm
         color: b.fg,
         fontWeight: 800,
         fontSize: size === 'sm' ? 10 : 12,
-        letterSpacing: type === 'bizum' ? '-0.02em' : '0.04em',
-        fontFamily: type === 'bizum' || type === 'paypal' || type === 'zelle' ? 'Inter, Arial, sans-serif' : 'inherit',
+        letterSpacing: '0.04em',
+        fontFamily: type === 'paypal' || type === 'zelle' ? 'Inter, Arial, sans-serif' : 'inherit',
         fontStyle: type === 'paypal' ? 'italic' : 'normal',
         flex: 'none',
       }}

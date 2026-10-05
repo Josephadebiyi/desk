@@ -46,6 +46,7 @@ paymentRoutes.post(
   '/public/give-online',
   route(async (req, res) => {
     limit(req, 10)
+    if (!env.onlineGiving) throw new HttpError(403, 'Online giving isn’t available yet — please use the church’s payment details.')
     const b = req.body ?? {}
     const { data: church } = await db().from('churches').select('id, name, slug, currency, funds, logo_url, flw_subaccount_id').eq('slug', str(b.slug, 60)).maybeSingle()
     if (!church) throw new HttpError(404, 'Church not found')

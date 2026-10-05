@@ -17,6 +17,7 @@ import { LANGS, useT } from '../i18n'
 import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, PLAN_PRICES, planPrice, priceWithLocal } from '../lib/currency'
 import { Flag, LangCards } from '../i18n/Flags'
 import { getSignupCode } from '../lib/signupCode'
+import { ONLINE_GIVING } from '../lib/features'
 
 const ROLES: Role[] = ['admin', 'finance', 'leader']
 
@@ -840,7 +841,7 @@ function Integrations() {
           )}
         </section>
       )}
-      {items.filter((i) => !(live && i.id === 'meet')).map((i) => (
+      {items.filter((i) => !(live && i.id === 'meet') && (ONLINE_GIVING || i.id !== 'payments')).map((i) => (
         <section key={i.name} className="d-panel st-int">
           <span className="st-int-ico">{i.icon}</span>
           <div>

@@ -37,6 +37,8 @@ export const env = {
   supportEmail: v('SUPPORT_EMAIL') || v('DESIGN_TEAM_EMAIL') || 'hello@ziondesk.com',
 
   // Optional SMS / WhatsApp (Twilio). Leave empty to keep those channels in "queued" state.
+  /** Online giving through ZionDesk Payments (off for now: churches use their own payment details). */
+  onlineGiving: v('ONLINE_GIVING') === '1',
   twilioSid: v('TWILIO_ACCOUNT_SID'),
   twilioToken: v('TWILIO_AUTH_TOKEN'),
   twilioSmsFrom: v('TWILIO_SMS_FROM'),

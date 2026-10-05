@@ -17,6 +17,7 @@ import { apiUrl } from '../lib/api'
 import { PhoneInput } from '../components/PhoneInput'
 import { countryFromText } from '../lib/countries'
 import { manualMethods, METHODS as GIVE_METHODS, MethodLogo, publicLabel } from '../lib/giveMethods'
+import { ONLINE_GIVING } from '../lib/features'
 
 /**
  * Public, no-login pages opened from shared links and QR codes:
@@ -407,7 +408,7 @@ function GiveForm() {
   const p = settings.payout
   const methods = manualMethods(p)
   const hasBank = methods.length > 0
-  const online = remote ? !!settings.onlineGiving : p.method === 'ziondesk'
+  const online = ONLINE_GIVING && (remote ? !!settings.onlineGiving : p.method === 'ziondesk')
   const paidParam = params.get('paid')
   const [method, setMethod] = useState<'online' | 'bank'>(online ? 'online' : 'bank')
   const presetFund = params.get('fund') ?? ''
