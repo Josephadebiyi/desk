@@ -9,6 +9,7 @@ import { useWorkspace } from './workspace'
 import { PayoutConnect } from './PayoutConnect'
 import { getLocale, useT } from '../i18n'
 import { Link } from 'react-router-dom'
+import { publicOrigin } from '../lib/site'
 
 const METHODS = ['Transfer', 'Card', 'Cash', 'Cheque']
 const EXPENSE_CATS = ['Utilities', 'Salaries', 'Outreach', 'Equipment', 'Maintenance', 'Missions', 'Events', 'Other']
@@ -185,7 +186,7 @@ function GivingPageSetup() {
   const [saved, setSaved] = useState(false)
   const [qr, setQr] = useState('')
   const [copied, setCopied] = useState(false)
-  const link = `${window.location.origin}/give/${settings.givingSlug}`
+  const link = `${publicOrigin()}/give/${settings.givingSlug}`
 
   useEffect(() => {
     QRCode.toDataURL(link, { margin: 1, width: 600, color: { dark: '#17112e', light: '#ffffff' } }).then(setQr).catch(() => {})

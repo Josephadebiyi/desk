@@ -8,13 +8,14 @@ import { can } from './types'
 import { useWorkspace, type LinkType, type ShareLink } from './workspace'
 import { LANGS, useT } from '../i18n'
 import { Flag } from '../i18n/Flags'
+import { publicOrigin } from '../lib/site'
 
 const TYPE_ICON: Record<LinkType, typeof Users> = { member: Users, newcomer: UserPlus, convert: Sparkles, giving: HandHeart }
 const TYPE_TONE: Record<LinkType, string> = { member: 'ink', newcomer: 'purple', convert: 'lavender', giving: 'lime' }
 
 /** Public URL for a link. Everything the page needs is in the query string, so it works without login. */
 export function linkUrl(slug: string, l: Pick<ShareLink, 'type' | 'branch' | 'fund' | 'id'>) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ziondesk.com'
+  const origin = publicOrigin()
   const q = new URLSearchParams()
   if (l.type === 'giving') {
     if (l.fund) q.set('fund', l.fund)

@@ -7,6 +7,7 @@ import { LANGS, useT, type Lang } from '../i18n'
 import { api } from '../lib/api'
 import { FLYER_SIZE, flyerLimit, type FlyerFormat } from '../lib/plans'
 import { useWorkspace } from './workspace'
+import { publicOrigin } from '../lib/site'
 
 const STYLES = ['modern', 'elegant', 'bold', 'minimal', 'youthful', 'warm'] as const
 
@@ -49,7 +50,7 @@ export function AiFlyer() {
   const [format, setFormat] = useState<FlyerFormat>('portrait')
   const [language, setLanguage] = useState<Lang>(lang)
   const [withQr, setWithQr] = useState(false)
-  const [qrLink, setQrLink] = useState(`${window.location.origin}/give/${settings.givingSlug}`)
+  const [qrLink, setQrLink] = useState(`${publicOrigin()}/give/${settings.givingSlug}`)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{ svg: string; png: string; w: number; h: number } | null>(null)

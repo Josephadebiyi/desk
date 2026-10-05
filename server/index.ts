@@ -28,6 +28,11 @@ app.set('trust proxy', 1) // Render sits behind a proxy; needed for per-IP rate 
 app.disable('x-powered-by')
 
 // The auth hook needs the raw body for its signature, so it's mounted before the JSON parser.
+// www.ziondesk.com → ziondesk.com (one canonical address for links, cookies and SEO).
+app.use((req, res, next) => {
+  if (req.hostname.startsWith('www.')) return res.redirect(301, `https://${req.hostname.slice(4)}${req.originalUrl}`)
+  next()
+})
 // Staff console domain (admin.*): keep it out of search engines.
 app.use((req, res, next) => {
   if (req.hostname.startsWith('admin.')) res.setHeader('X-Robots-Tag', 'noindex, nofollow')
@@ -38,7 +43,7 @@ app.use('/api/whatsapp', whatsappRoutes) // raw body for signature checks
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
 
 // Which settings are present (names only — never values), plus the deployed commit.
-const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLUTTERWAVE_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'FLUTTERWAVE_WEBHOOK_SECRET_HASH', 'FLUTTERWAVE_BASE_URL', 'ANTHROPIC_API_KEY', 'CRON_SECRET', 'WHATSAPP_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_APP_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GEMINI_API_KEY', 'ADMIN_EMAILS', 'ADMIN_URL']
+const ENV_NAMES = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_AUTH_HOOK_SECRET', 'RESEND_API_KEY', 'FLW_SECRET_KEY', 'FLUTTERWAVE_SECRET_KEY', 'FLW_PUBLIC_KEY', 'FLW_WEBHOOK_HASH', 'FLUTTERWAVE_WEBHOOK_SECRET_HASH', 'FLUTTERWAVE_BASE_URL', 'ANTHROPIC_API_KEY', 'CRON_SECRET', 'WHATSAPP_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_APP_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GEMINI_API_KEY', 'ADMIN_EMAILS', 'ADMIN_URL', 'SITE_URL']
 app.get('/api/health', (_req, res) =>
   res.json({
     ok: true,
