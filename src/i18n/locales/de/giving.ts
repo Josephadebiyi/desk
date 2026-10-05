@@ -45,7 +45,15 @@ const giving: Dict['giving'] = {
     overview: 'Überblick',
     gifts: 'Spenden',
     expenses: 'Ausgaben',
-    page: 'Spendenseite & QR',
+    page: 'Wie ihr Spenden empfangt',
+  },
+  setup: {
+    onlineTitle: 'Online-Spenden — ZionDesk Payments',
+    onlineText: 'Karten und Mobile Money auf eurer Spendenseite, ausgezahlt auf das Gemeindekonto. Ausschalten, um nur eure eigenen Zahlungsdaten zu zeigen.',
+    manualTitle: 'Eure eigenen Zahlungsdaten',
+    manualText: 'Füge die Wege hinzu, wie Menschen direkt geben können – sie erscheinen auf eurer Spendenseite mit Kopier-Buttons. Zuerst vorgeschlagen für {currency}.',
+    instructions: 'Zusätzlicher Hinweis für Spender (optional)',
+    instructionsPh: 'z. B. Name + „Zehnter“ als Verwendungszweck angeben.',
   },
   page: {
     how: 'Wie du Spenden empfängst',

@@ -51,7 +51,7 @@ export function renderEmail({ kind, lang, vars, url, siteUrl, unsubscribeUrl }: 
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 30px rgba(60,30,140,.08);">
   <tr><td style="padding:22px 32px;background:#ffffff;border-bottom:1px solid #efedf6;">
-    <img src="${esc(siteUrl)}/brand/logo-color.webp" alt="ZionDesk" height="34" style="display:block;height:34px;border:0;" />
+    <img src="${esc(siteUrl)}/brand/logo-color.png" alt="ZionDesk" height="34" style="display:block;height:34px;border:0;" />
   </td></tr>
   <tr><td style="background:${PURPLE};background-image:linear-gradient(135deg,#7b45ff 0%,#5a24e8 100%);padding:30px 32px 32px;">
     <span style="display:inline-block;margin:0 0 12px;padding:5px 12px;border-radius:999px;background:${LIME};font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#18210a;">${fill(c.eyebrow, v)}</span>

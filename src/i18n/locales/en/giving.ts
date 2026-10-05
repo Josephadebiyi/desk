@@ -44,7 +44,15 @@ export default {
     overview: 'Overview',
     gifts: 'Gifts',
     expenses: 'Expenses',
-    page: 'Giving page & QR',
+    page: 'How you receive offerings',
+  },
+  setup: {
+    onlineTitle: 'Online giving — ZionDesk Payments',
+    onlineText: 'Cards and mobile money on your giving page, paid out to your church bank account. Turn it off to show only your own payment details.',
+    manualTitle: 'Your own payment details',
+    manualText: 'Add the ways people can give to you directly — they’re shown on your giving page with copy buttons. Suggested first for {currency}.',
+    instructions: 'Extra note for givers (optional)',
+    instructionsPh: 'e.g. Use your name + “Tithe” as the reference.',
   },
   page: {
     how: 'How you receive gifts',

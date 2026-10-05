@@ -1016,3 +1016,15 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .st-eur { display: block; font-size: 12px; opacity: 0.6; }
 .st-renew { display: grid; gap: 6px; margin: 12px 0; padding: 14px 16px; border-radius: 18px; background: var(--surface); box-shadow: 0 1px 0 var(--line-2); }
 .st-renew small { font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+/* Giving setup: online + manual methods */
+.g-block { display: grid; gap: 8px; padding: 14px; border-radius: 18px; background: var(--bg); }
+.g-block-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.g-suggest { display: flex; flex-wrap: wrap; gap: 6px; }
+.g-add { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; border: 1px dashed var(--line-2); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.g-add.is-suggested { border-style: solid; border-color: var(--purple); }
+.g-add:hover { background: var(--bg); }
+.g-mcard { display: grid; gap: 10px; padding: 12px; border-radius: 16px; background: var(--surface); box-shadow: 0 1px 0 var(--line-2); }
+.g-mcard-head { display: flex; align-items: center; gap: 10px; }
+.g-mcard-head > div { flex: 1; display: grid; }
+.g-mcard-head small { font-size: 12px; color: var(--muted); }

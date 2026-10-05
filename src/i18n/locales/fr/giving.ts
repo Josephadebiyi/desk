@@ -45,7 +45,15 @@ const giving: Dict['giving'] = {
     overview: 'Aperçu',
     gifts: 'Dons',
     expenses: 'Dépenses',
-    page: 'Page de dons et QR',
+    page: 'Comment vous recevez les offrandes',
+  },
+  setup: {
+    onlineTitle: 'Dons en ligne — ZionDesk Payments',
+    onlineText: 'Cartes et mobile money sur votre page de dons, versés sur le compte bancaire de l’église. Désactivez pour n’afficher que vos propres coordonnées.',
+    manualTitle: 'Vos propres coordonnées de paiement',
+    manualText: 'Ajoutez les moyens de vous donner directement — ils s’affichent sur votre page de dons avec des boutons de copie. Suggérés en premier pour {currency}.',
+    instructions: 'Note pour les donateurs (facultatif)',
+    instructionsPh: 'ex. Indiquez votre nom + « Dîme » en référence.',
   },
   page: {
     how: 'Comment vous recevez les dons',

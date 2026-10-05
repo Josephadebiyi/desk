@@ -36,7 +36,7 @@ export function renderWelcomeEmail({ lang = 'en', email, dashboardUrl, signupUrl
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:24px;overflow:hidden;">
   <tr><td style="background:#111015;padding:28px 32px;">
-    <img src="${esc(siteUrl)}/brand/logo-lime.webp" alt="ZionDesk" height="40" style="display:block;height:40px;" />
+    <img src="${esc(siteUrl)}/brand/logo-lime.png" alt="ZionDesk" height="40" style="display:block;height:40px;" />
   </td></tr>
   <tr><td style="background:#c4ec62;padding:28px 32px;">
     <p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#18210a;">${w.eyebrow}</p>

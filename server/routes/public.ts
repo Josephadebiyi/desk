@@ -53,9 +53,20 @@ publicRoutes.get(
       departments: c.departments,
       funds: c.funds,
       logoUrl: c.logo_url,
-      onlineGiving: Boolean(c.flw_subaccount_id),
+      // Online giving needs a connected payout account, and the church can switch it off.
+      onlineGiving: Boolean(c.flw_subaccount_id) && (p as Record<string, unknown>).online !== false,
       // Only what a giver needs to make a transfer.
-      payout: { method: p.method ?? 'none', bankName: p.bankName ?? '', accountName: p.accountName ?? '', accountNumber: p.accountNumber ?? '', routing: p.routing ?? '', instructions: p.instructions ?? '' },
+      payout: {
+        method: p.method ?? 'none',
+        bankName: p.bankName ?? '',
+        accountName: p.accountName ?? '',
+        accountNumber: p.accountNumber ?? '',
+        routing: p.routing ?? '',
+        instructions: p.instructions ?? '',
+        manual: (Array.isArray((p as Record<string, unknown>).manual) ? ((p as Record<string, unknown>).manual as { id: string; type: string; fields: Record<string, string> }[]) : [])
+          .slice(0, 12)
+          .map((m) => ({ id: String(m.id).slice(0, 40), type: String(m.type).slice(0, 20), fields: Object.fromEntries(Object.entries(m.fields ?? {}).slice(0, 8).map(([k, v]) => [k.slice(0, 30), String(v).slice(0, 120)])) })),
+      },
     })
   }),
 )

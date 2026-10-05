@@ -45,7 +45,15 @@ const giving: Dict['giving'] = {
     overview: 'Resumen',
     gifts: 'Ofrendas',
     expenses: 'Gastos',
-    page: 'Página de ofrendas y QR',
+    page: 'Cómo recibes las ofrendas',
+  },
+  setup: {
+    onlineTitle: 'Ofrendas en línea — ZionDesk Payments',
+    onlineText: 'Tarjetas y dinero móvil en tu página de ofrendas, pagados en la cuenta bancaria de tu iglesia. Desactívalo para mostrar solo tus propios datos de pago.',
+    manualTitle: 'Tus propios datos de pago',
+    manualText: 'Añade las formas en que la gente puede darte directamente: se muestran en tu página de ofrendas con botones para copiar. Sugeridas primero para {currency}.',
+    instructions: 'Nota adicional para los donantes (opcional)',
+    instructionsPh: 'p. ej. Usa tu nombre + «Diezmo» como concepto.',
   },
   page: {
     how: 'Cómo recibes las ofrendas',

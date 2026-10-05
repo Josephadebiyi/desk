@@ -104,3 +104,7 @@
 .pub-link { justify-self: start; border: 0; background: none; padding: 0; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--purple); cursor: pointer; }
 .pub-card > .pub-link { justify-self: center; margin-top: 4px; }
 .pub-row-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; }
+.pub-method { margin-bottom: 10px; }
+.pub-method-head { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; }
+.pub-method-head b { font-size: 15px; }
+.pub-logo { flex-shrink: 0; width: 42px; height: 42px; border-radius: 14px; object-fit: contain; background: #fff; border: 1px solid var(--line-2); }

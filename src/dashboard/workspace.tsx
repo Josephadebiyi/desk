@@ -5,6 +5,7 @@ import type { Lang } from '../i18n'
 import { useSession } from '../lib/session'
 import { api as callApi } from '../lib/api'
 import { loadWorkspace, ws as db } from '../data/remote'
+import type { ManualMethod } from '../lib/giveMethods'
 
 /**
  * Church workspace data (everything except members): settings, events, messages,
@@ -35,6 +36,10 @@ export interface Settings {
     /** Sort code / routing / IBAN / SWIFT — whatever the country uses. */
     routing: string
     instructions: string
+    /** Show online card / mobile-money giving (ZionDesk Payments) on the giving page. */
+    online?: boolean
+    /** Manual ways to give: bank transfer, IBAN, Bizum, M-Pesa… */
+    manual?: ManualMethod[]
   }
   givingSlug: string
   /** Live: church bank connected to Flutterwave for online giving (masked details, no secrets). */

@@ -4,12 +4,13 @@ import QRCode from 'qrcode'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { AskAI, Bars, downloadCsv, fmtDate, Kpi, Modal, money, NoAccess, PageHead, PlanGate, Tabs, tEnum, today } from './kit'
 import { useMembers } from './store'
-import { can } from './types'
+import { can, uid } from './types'
 import { useWorkspace } from './workspace'
 import { PayoutConnect } from './PayoutConnect'
 import { getLocale, useT } from '../i18n'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { publicOrigin } from '../lib/site'
+import { formatIban, manualMethods, METHODS as GIVE_METHODS, MethodLogo, suggestedMethods, validateMethods, type ManualMethod, type MethodType } from '../lib/giveMethods'
 
 const METHODS = ['Transfer', 'Card', 'Cash', 'Cheque']
 const EXPENSE_CATS = ['Utilities', 'Salaries', 'Outreach', 'Equipment', 'Maintenance', 'Missions', 'Events', 'Other']
@@ -192,9 +193,28 @@ function GivingPageSetup() {
     QRCode.toDataURL(link, { margin: 1, width: 600, color: { dark: '#17112e', light: '#ffffff' } }).then(setQr).catch(() => {})
   }, [link])
 
+  const [online, setOnline] = useState(settings.payout.online ?? settings.payout.method === 'ziondesk')
+  const [manual, setManual] = useState<ManualMethod[]>(() => manualMethods(settings.payout))
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const addMethod = (type: MethodType) => setManual([...manual, { id: uid(), type, fields: {} }])
   const save = (e: FormEvent) => {
     e.preventDefault()
-    updateSettings({ payout, givingSlug: slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || settings.givingSlug })
+    const errs = validateMethods(manual)
+    setErrors(errs)
+    if (Object.keys(errs).length) return
+    // The first bank-type method also fills the older flat fields (receipts, older pages).
+    const firstBank = manual.find((m) => m.fields.accountNumber || m.fields.iban)
+    const payoutOut = {
+      ...payout,
+      online,
+      manual,
+      method: (online ? 'ziondesk' : manual.length ? 'bank' : 'none') as typeof payout.method,
+      bankName: firstBank?.fields.bankName ?? '',
+      accountName: firstBank?.fields.accountName ?? '',
+      accountNumber: firstBank?.fields.accountNumber ?? firstBank?.fields.iban ?? '',
+      routing: firstBank?.fields.routing ?? firstBank?.fields.sortCode ?? firstBank?.fields.bic ?? '',
+    }
+    updateSettings({ payout: payoutOut, givingSlug: slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || settings.givingSlug })
     setSaved(true)
     setTimeout(() => setSaved(false), 2200)
   }
@@ -207,39 +227,76 @@ function GivingPageSetup() {
             <Wallet size={17} /> {t('giving.page.how')}
           </h2>
         </div>
-        <div className="g-methods" role="radiogroup">
-          <button type="button" role="radio" aria-checked={payout.method === 'ziondesk'} className={`g-method ${payout.method === 'ziondesk' ? 'is-on' : ''}`} onClick={() => setPayout({ ...payout, method: 'ziondesk' })}>
-            <CreditCard size={20} />
-            <b>ZionDesk Payments</b>
-            <small>{t('giving.page.zdText')}</small>
-          </button>
-          <button type="button" role="radio" aria-checked={payout.method === 'bank'} className={`g-method ${payout.method === 'bank' ? 'is-on' : ''}`} onClick={() => setPayout({ ...payout, method: 'bank' })}>
-            <Landmark size={20} />
-            <b>{t('giving.page.bank')}</b>
-            <small>{t('giving.page.bankText')}</small>
-          </button>
+        <div className="g-block">
+          <label className="d-switch">
+            <input type="checkbox" checked={online} onChange={(e) => setOnline(e.target.checked)} />
+            <span>
+              <CreditCard size={16} /> {t('giving.setup.onlineTitle')}
+            </span>
+          </label>
+          <small className="d-notes">{t('giving.setup.onlineText')}</small>
+          {online && <PayoutConnect />}
         </div>
-        {payout.method === 'bank' && (
-          <div className="d-grid">
-            <label className="d-field">
-              <span>{t('links.bank.bankName')}</span>
-              <input value={payout.bankName} onChange={(e) => setPayout({ ...payout, bankName: e.target.value })} placeholder="First Bank" />
-            </label>
-            <label className="d-field">
-              <span>{t('links.bank.accountName')}</span>
-              <input value={payout.accountName} onChange={(e) => setPayout({ ...payout, accountName: e.target.value })} placeholder={settings.churchName} />
-            </label>
-            <label className="d-field">
-              <span>{t('links.bank.accountNumber')}</span>
-              <input value={payout.accountNumber} onChange={(e) => setPayout({ ...payout, accountNumber: e.target.value })} />
-            </label>
-            <label className="d-field">
-              <span>{t('links.bank.routing')}</span>
-              <input value={payout.routing} placeholder={t('links.bank.routingPh')} onChange={(e) => setPayout({ ...payout, routing: e.target.value })} />
-            </label>
+
+        <div className="g-block">
+          <b className="g-block-title">
+            <Landmark size={16} /> {t('giving.setup.manualTitle')}
+          </b>
+          <small className="d-notes">{t('giving.setup.manualText', { currency: settings.currency })}</small>
+          <div className="g-suggest">
+            {suggestedMethods(settings.currency)
+              .concat((Object.keys(GIVE_METHODS) as MethodType[]).filter((x) => !suggestedMethods(settings.currency).includes(x)))
+              .map((type, i) => (
+                <button key={type} type="button" className={`g-add ${i < suggestedMethods(settings.currency).length ? 'is-suggested' : ''}`} onClick={() => addMethod(type)}>
+                  <MethodLogo type={type} size="sm" /> <span>{GIVE_METHODS[type].name}</span> <Plus size={14} />
+                </button>
+              ))}
           </div>
-        )}
-        {payout.method === 'ziondesk' && <PayoutConnect />}
+          {manual.map((m) => (
+            <div key={m.id} className="g-mcard">
+              <div className="g-mcard-head">
+                <MethodLogo type={m.type} />
+                <div>
+                  <b>{GIVE_METHODS[m.type].name}</b>
+                  <small>{GIVE_METHODS[m.type].hint}</small>
+                </div>
+                <button type="button" className="d-icon-btn" aria-label={t('common.remove')} onClick={() => setManual(manual.filter((x) => x.id !== m.id))}>
+                  <Trash2 size={15} />
+                </button>
+              </div>
+              <div className="d-grid">
+                {GIVE_METHODS[m.type].fields.map((f) => {
+                  const err = errors[`${m.id}.${f.key}`]
+                  const val = m.fields[f.key] ?? ''
+                  const set = (v: string) => setManual(manual.map((x) => (x.id === m.id ? { ...x, fields: { ...x.fields, [f.key]: v } } : x)))
+                  return (
+                    <label key={f.key} className={`d-field ${err ? 'has-error' : ''}`}>
+                      <span>
+                        {f.label}
+                        {f.optional ? ` (${t('common.optional')})` : ''}
+                      </span>
+                      {f.options ? (
+                        <select value={val} onChange={(e) => set(e.target.value)}>
+                          <option value="">—</option>
+                          {f.options.map((o) => (
+                            <option key={o}>{o}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input value={val} placeholder={f.placeholder ?? (f.key === 'accountName' || f.key === 'name' ? settings.churchName : '')} onChange={(e) => set(f.key === 'iban' ? formatIban(e.target.value) : e.target.value)} />
+                      )}
+                      {err && <em>{err}</em>}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          <label className="d-field">
+            <span>{t('giving.setup.instructions')}</span>
+            <textarea rows={2} value={payout.instructions} maxLength={400} placeholder={t('giving.setup.instructionsPh')} onChange={(e) => setPayout({ ...payout, instructions: e.target.value })} />
+          </label>
+        </div>
         <label className="d-field">
           <span>{t('giving.page.address')}</span>
           <div className="g-slug">
@@ -315,7 +372,8 @@ function GivingPageSetup() {
 export default function Giving() {
   const { members, role } = useMembers()
   const { anonGifts, expenses, settings, removeExpense } = useWorkspace()
-  const [tab, setTab] = useState<'overview' | 'gifts' | 'expenses' | 'page'>('overview')
+  const [tabParams] = useSearchParams()
+  const [tab, setTab] = useState<'overview' | 'gifts' | 'expenses' | 'page'>(tabParams.get('tab') === 'page' ? 'page' : 'overview')
   const [recording, setRecording] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
   const [q, setQ] = useState('')

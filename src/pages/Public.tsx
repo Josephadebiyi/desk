@@ -16,6 +16,7 @@ import { giftPresets } from '../lib/currency'
 import { apiUrl } from '../lib/api'
 import { PhoneInput } from '../components/PhoneInput'
 import { countryFromText } from '../lib/countries'
+import { manualMethods, METHODS as GIVE_METHODS, MethodLogo, publicLabel } from '../lib/giveMethods'
 
 /**
  * Public, no-login pages opened from shared links and QR codes:
@@ -32,7 +33,7 @@ const JOIN_ICON: Record<JoinType, typeof Users> = { member: Users, newcomer: Use
 
 /* ───────── data source: local preview stores, or the API when connected ───────── */
 
-type PubSettings = Pick<Settings, 'churchName' | 'location' | 'branches' | 'departments' | 'funds' | 'currency' | 'payout' | 'givingSlug' | 'onlineGiving'> & { onlineCurrency?: string }
+type PubSettings = Pick<Settings, 'churchName' | 'location' | 'branches' | 'departments' | 'funds' | 'currency' | 'payout' | 'givingSlug' | 'onlineGiving'> & { onlineCurrency?: string; logoUrl?: string | null }
 interface Pub {
   settings: PubSettings
   register: (m: MemberInput, type: JoinType) => Promise<void>
@@ -70,7 +71,7 @@ function RemotePub({ slug, children }: { slug: string; children: ReactNode }) {
   useEffect(() => {
     fetch(apiUrl(`/public/church/${encodeURIComponent(slug)}`))
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((c) => setSettings({ churchName: c.name, location: c.location, branches: c.branches, departments: c.departments, funds: c.funds, currency: c.currency, onlineCurrency: c.onlineCurrency, payout: c.payout, givingSlug: c.slug, onlineGiving: c.onlineGiving }))
+      .then((c) => setSettings({ churchName: c.name, location: c.location, branches: c.branches, departments: c.departments, funds: c.funds, currency: c.currency, onlineCurrency: c.onlineCurrency, payout: c.payout, givingSlug: c.slug, onlineGiving: c.onlineGiving, logoUrl: c.logoUrl }))
       .catch(() => setSettings('missing'))
   }, [slug])
   if (settings === null) return <div className="pub-loading" role="status" />
@@ -97,13 +98,17 @@ function Frame({ children }: { children: ReactNode }) {
     <div className="pub">
       <header className="pub-top">
         <span className="pub-church">
-          <span className="pub-mono" aria-hidden="true">
-            {settings.churchName
-              .split(/\s+/)
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join('')}
-          </span>
+          {(settings as PubSettings).logoUrl ? (
+            <img className="pub-logo" src={(settings as PubSettings).logoUrl!} alt="" />
+          ) : (
+            <span className="pub-mono" aria-hidden="true">
+              {settings.churchName
+                .split(/\s+/)
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join('')}
+            </span>
+          )}
           <span>
             <b>{settings.churchName}</b>
             <small>{settings.location}</small>
@@ -400,7 +405,8 @@ function GiveForm() {
   const { settings, claim, giveOnline } = usePub()
   const [sending, setSending] = useState(false)
   const p = settings.payout
-  const hasBank = !!p.accountNumber
+  const methods = manualMethods(p)
+  const hasBank = methods.length > 0
   const online = remote ? !!settings.onlineGiving : p.method === 'ziondesk'
   const paidParam = params.get('paid')
   const [method, setMethod] = useState<'online' | 'bank'>(online ? 'online' : 'bank')
@@ -526,11 +532,16 @@ function GiveForm() {
 
       {method === 'bank' && hasBank && (
         <form className="pub-bank-flow" onSubmit={submitClaim} noValidate>
+          {methods.map((m) => (
+            <div key={m.id} className="pub-bank pub-method">
+              <div className="pub-method-head">
+                <MethodLogo type={m.type} />
+                <b>{GIVE_METHODS[m.type]?.name ?? ''}</b>
+              </div>
+              {(GIVE_METHODS[m.type]?.fields ?? []).map((f) => (m.fields[f.key] ? <CopyRow key={f.key} label={publicLabel(f.key, lang)} value={m.fields[f.key]} /> : null))}
+            </div>
+          ))}
           <div className="pub-bank">
-            <CopyRow label={t('pub.give.bankName')} value={p.bankName} />
-            <CopyRow label={t('pub.give.accountName')} value={p.accountName || settings.churchName} />
-            <CopyRow label={t('pub.give.accountNumber')} value={p.accountNumber} />
-            <CopyRow label={t('pub.give.routing')} value={p.routing} />
             <CopyRow label={t('pub.give.reference')} value={reference} />
           </div>
           {p.instructions && <p className="pub-note">{p.instructions}</p>}

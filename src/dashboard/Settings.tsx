@@ -846,6 +846,11 @@ function Integrations() {
           <div>
             <b>{i.name}</b>
             <p>{t(`settings.int.${i.id}`)}</p>
+            {i.id === 'payments' && (
+              <Link to="/dashboard/giving?tab=page" className="d-link">
+                {t('giving.tabs.page')} →
+              </Link>
+            )}
           </div>
           {status?.[i.id] ? (
             <span className="d-pill d-pill-lime">{t('settings.int.connected')}</span>
