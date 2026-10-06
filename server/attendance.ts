@@ -15,7 +15,7 @@ import { db } from './db'
 import { configured, env } from './env'
 import { logOutbound } from './inbox'
 import { compose, sendEmail } from './mail'
-import { twilio } from './messaging'
+import { phoneOf, twilio } from './messaging'
 import { sendWhatsApp } from './whatsapp'
 
 /** Plans that include automatic follow-ups. */
@@ -130,12 +130,12 @@ export async function sendFollowup(churchId: string, a: Absentee, byName: string
   const wa = a.whatsapp || a.phone
   if (wa && configured.whatsapp) {
     const body = withChurchName(text, churchName)
-    providerId = configured.whatsappCloud ? await sendWhatsApp(wa, body, a.language) : await twilio('WhatsApp', wa.replace(/[^\d+]/g, ''), body)
+    providerId = configured.whatsappCloud ? await sendWhatsApp(wa, body, a.language) : await twilio('WhatsApp', phoneOf(wa), body)
     channel = 'WhatsApp'
     await logOutbound({ churchId, memberId: a.memberId, name: a.name, to: wa, channel, body, providerId, byName })
   } else if (a.phone && configured.sms) {
     const body = withChurchName(text, churchName)
-    providerId = await twilio('SMS', a.phone.replace(/[^\d+]/g, ''), body)
+    providerId = await twilio('SMS', phoneOf(a.phone), body)
     channel = 'SMS'
     await logOutbound({ churchId, memberId: a.memberId, name: a.name, to: a.phone, channel, body, providerId, byName })
   } else if (a.email && configured.email) {

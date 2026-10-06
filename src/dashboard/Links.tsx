@@ -3,6 +3,7 @@ import { Check, Copy, Download, ExternalLink, HandHeart, Landmark, Link2, Plus, 
 import QRCode from 'qrcode'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { fmtDate, Kpi, Modal, money, PageHead, Tabs } from './kit'
+import { confirmAction, withConfirm } from './confirm'
 import { useMembers } from './store'
 import { can } from './types'
 import { useWorkspace, type LinkType, type ShareLink } from './workspace'
@@ -180,8 +181,9 @@ function BankDetails() {
   const { settings, updateSettings } = useWorkspace()
   const [p, setP] = useState(settings.payout)
   const [saved, setSaved] = useState(false)
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!(await confirmAction({ title: t('cf.payoutTitle'), body: t('cf.payoutBody'), confirmLabel: t('cf.save') }))) return
     updateSettings({ payout: { ...p, method: p.method === 'none' ? 'bank' : p.method } })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -237,6 +239,8 @@ function Transfers() {
   const { members, addGift, reload } = useMembers()
   const [busy, setBusy] = useState('')
   const confirm = async (id: string) => {
+    const claim = claims.find((x) => x.id === id)
+    if (!claim || !(await confirmAction({ title: t('cf.claimConfirmTitle'), body: t('cf.claimConfirmBody', { amount: money(claim.amount, settings.currency), name: claim.name || t('links.claims.anonymous') }) }))) return
     if (live) {
       // The server records the gift and emails the receipt.
       setBusy(id)
@@ -309,7 +313,7 @@ function Transfers() {
                       <button type="button" className="d-btn d-btn-ink lk-sm" disabled={busy === c.id} onClick={() => confirm(c.id)}>
                         <Check size={14} /> {t('links.claims.confirm')}
                       </button>
-                      <button type="button" className="d-circle d-circle-sm" aria-label={t('links.claims.decline')} title={t('links.claims.decline')} onClick={() => setClaimStatus(c.id, 'Declined')}>
+                      <button type="button" className="d-circle d-circle-sm" aria-label={t('links.claims.decline')} title={t('links.claims.decline')} onClick={withConfirm({ title: t('cf.claimDeclineTitle'), body: t('cf.claimDeclineBody'), danger: true }, () => setClaimStatus(c.id, 'Declined'))}>
                         <X size={13} />
                       </button>
                     </span>
@@ -377,7 +381,7 @@ export default function Links() {
           </p>
           <div className="lk-grid">
             {visible.map((l) => (
-              <LinkCard key={l.id} link={l} slug={settings.givingSlug} onRemove={defaults.has(l.id) ? undefined : () => removeLink(l.id)} />
+              <LinkCard key={l.id} link={l} slug={settings.givingSlug} onRemove={defaults.has(l.id) ? undefined : withConfirm({ title: t('cf.linkRemoveTitle'), body: t('cf.linkRemoveBody'), danger: true, confirmLabel: t('cf.delete') }, () => removeLink(l.id))} />
             ))}
           </div>
           {finance && !settings.payout.accountNumber && (
@@ -398,7 +402,8 @@ export default function Links() {
           <NewLink
             allowGiving={finance}
             onClose={() => setCreating(false)}
-            onCreate={(l) => {
+            onCreate={async (l) => {
+              if (!(await confirmAction({ title: t('cf.linkAddTitle') }))) return
               addLink(l)
               setCreating(false)
             }}

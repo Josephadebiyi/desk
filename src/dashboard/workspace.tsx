@@ -95,7 +95,7 @@ export interface Campaign {
   body: string
   createdAt: string
   scheduledFor: string | null
-  status: 'Queued' | 'Scheduled'
+  status: 'Queued' | 'Scheduled' | 'Sending' | 'Sent' | 'Failed'
   /** Template details (event, isoDate, isoTime, text…) the server fills per language. */
   vars?: Record<string, string>
   /** Recipients per communication language, e.g. { en: 40, fr: 5 }. */
@@ -289,6 +289,16 @@ function usePersisted<K extends Key>(key: K, demo: boolean, live = false): [Val<
   return [v, update]
 }
 
+export interface SendResult {
+  recipients: number
+  sent: number
+  failed: number
+  queued: number
+  error: string | null
+  /** The channel isn't switched on yet on the server. */
+  waiting: boolean
+}
+
 interface WorkspaceApi {
   /** Live (database) mode and its loading state. */
   live: boolean
@@ -304,7 +314,8 @@ interface WorkspaceApi {
   saveEvent: (e: Omit<ChurchEvent, 'id'> & { id?: string }) => ChurchEvent
   removeEvent: (id: string) => void
   campaigns: Campaign[]
-  addCampaign: (c: Omit<Campaign, 'id' | 'createdAt'>) => void
+  /** Saves and (unless scheduled) sends; resolves with the delivery result in live mode. */
+  addCampaign: (c: Omit<Campaign, 'id' | 'createdAt'>) => Promise<SendResult | null>
   expenses: Expense[]
   addExpense: (x: Omit<Expense, 'id'>) => void
   removeExpense: (id: string) => void
@@ -412,10 +423,20 @@ export function WorkspaceProvider({ children, demo = false }: { children: ReactN
         if (live) db.removeEvent(churchId, id)
       },
       campaigns,
-      addCampaign: (c) => {
-        const created = { ...c, id: uid(), createdAt: now() }
+      addCampaign: async (c) => {
+        const created: Campaign = { ...c, id: uid(), createdAt: now(), status: c.scheduledFor ? 'Scheduled' : live ? 'Sending' : c.status }
         setCampaigns((all) => [created, ...all])
-        if (live) db.addCampaign(churchId, created).catch((e) => console.error('[send]', e))
+        if (!live) return null
+        const setStatus = (status: Campaign['status']) => setCampaigns((all) => all.map((x) => (x.id === created.id ? { ...x, status } : x)))
+        try {
+          const r = await db.addCampaign(churchId, created)
+          if (r) setStatus(r.sent ? 'Sent' : r.failed ? 'Failed' : 'Queued')
+          return r
+        } catch (e) {
+          console.error('[send]', e)
+          setStatus('Failed')
+          return { recipients: c.recipients, sent: 0, failed: c.recipients, queued: 0, error: e instanceof Error ? e.message : 'send failed', waiting: false }
+        }
       },
       expenses,
       addExpense: (x) => {

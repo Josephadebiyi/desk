@@ -1028,3 +1028,14 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .g-mcard-head { display: flex; align-items: center; gap: 10px; }
 .g-mcard-head > div { flex: 1; display: grid; }
 .g-mcard-head small { font-size: 12px; color: var(--muted); }
+
+/* Confirmation pop-up (confirm.tsx) */
+.cf-overlay { z-index: 90; }
+.cf-modal { width: min(420px, 100%); text-align: center; padding: 28px 24px 22px; }
+.cf-modal h2 { font-size: 20px; margin: 12px 0 6px; }
+.cf-modal p { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0; white-space: pre-line; }
+.cf-icon { display: inline-grid; place-items: center; width: 50px; height: 50px; border-radius: 50%; background: color-mix(in srgb, var(--purple) 12%, transparent); color: var(--purple); }
+.cf-icon.is-danger { background: rgba(229, 72, 77, 0.12); color: #e5484d; }
+.cf-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+.cf-actions .d-btn { justify-content: center; }
+.cf-danger { background: #e5484d; color: #fff; border-color: transparent; }

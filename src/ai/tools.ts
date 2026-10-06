@@ -537,7 +537,7 @@ export const TOOLS: ToolDef<any>[] = [
     },
     run: (ctx, input) => {
       const everyone = audienceMembers(ctx.members, input.audience)
-      const reachable = everyone.filter((m) => (input.channel === 'Email' ? m.email : input.channel === 'WhatsApp' ? m.whatsapp : m.phone))
+      const reachable = everyone.filter((m) => (input.channel === 'Email' ? m.email : input.channel === 'WhatsApp' ? m.whatsapp || m.phone : m.phone))
       if (!reachable.length) return { agent: 'comms', blocks: [{ type: 'text', text: tr('ai.send.noContact', { audience: audienceLabel(input.audience), channel: input.channel }) }] }
       const sample = reachable[0]
       // Built-in templates go out in each member's own language; custom text is sent as written.

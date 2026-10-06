@@ -6,6 +6,7 @@ import Inbox, { useInboxUnread } from './Inbox'
 import { AskAI, audienceLabel, audienceMembers, AudiencePicker, fmtDate, Kpi, Modal, NoAccess, PageHead, Tabs, tEnum, today } from './kit'
 import { useMembers } from './store'
 import { can } from './types'
+import { confirmAction, withConfirm } from './confirm'
 import { useWorkspace, type Audience, type Channel } from './workspace'
 import { LANGS, localeOf, translate, useT, type Lang } from '../i18n'
 import { Flag } from '../i18n/Flags'
@@ -68,11 +69,11 @@ function TemplateEditor({ onClose }: { onClose: () => void }) {
         <small className="d-muted">{t('msg.fieldsHint')}</small>
         <div className="d-form-actions">
           {templates[key]?.[lang] !== undefined && (
-            <button type="button" className="d-btn" onClick={() => setTemplate(key, lang, null)}>
+            <button type="button" className="d-btn" onClick={withConfirm({ title: t('cf.tplResetTitle'), body: t('cf.tplResetBody') }, () => setTemplate(key, lang, null))}>
               <RotateCcw size={14} /> {t('msg.resetDefault')}
             </button>
           )}
-          <button type="button" className="d-btn d-btn-ink" disabled={!changed || !text.trim()} onClick={() => setTemplate(key, lang, text.trim() === def ? null : text.trim())}>
+          <button type="button" className="d-btn d-btn-ink" disabled={!changed || !text.trim()} onClick={withConfirm({ title: t('cf.tplSaveTitle'), body: t('cf.tplSaveBody'), confirmLabel: t('cf.save') }, () => setTemplate(key, lang, text.trim() === def ? null : text.trim()))}>
             <Check size={15} /> {t('common.save')}
           </button>
         </div>
@@ -134,13 +135,13 @@ function Compose() {
 
   useEffect(() => {
     if (!toast) return
-    const id = setTimeout(() => setToast(''), 3200)
+    const id = setTimeout(() => setToast(''), toast.length > 60 ? 9000 : 3600)
     return () => clearTimeout(id)
   }, [toast])
 
   const recipients = useMemo(() => {
     const list = audienceMembers(members, audience)
-    return channel === 'Email' ? list.filter((m) => m.email) : channel === 'WhatsApp' ? list.filter((m) => m.whatsapp) : list.filter((m) => m.phone)
+    return channel === 'Email' ? list.filter((m) => m.email) : channel === 'WhatsApp' ? list.filter((m) => m.whatsapp || m.phone) : list.filter((m) => m.phone)
   }, [members, audience, channel])
 
   // Recipients grouped by communication language, largest group first.
@@ -175,7 +176,7 @@ function Compose() {
   const shown = channel === 'Email' || !rendered ? rendered : withChurchName(rendered, settings.churchName)
   const segments = Math.max(1, Math.ceil(shown.length / 160))
 
-  const send = () => {
+  const send = async () => {
     if (!tplKey && !custom.trim()) return setError(t('msg.errBody'))
     if (channel === 'Email' && !subject.trim()) return setError(t('msg.errSubject'))
     if (!recipients.length) return setError(t(`msg.errNone.${channel}`))
@@ -185,8 +186,14 @@ function Compose() {
     }
     if (later && !when) return setError(t('msg.errWhen'))
     setError('')
+    const ok = await confirmAction(
+      later
+        ? { title: t('cf.scheduleTitle', { channel }), body: t('cf.scheduleBody', { count: recipients.length, when: new Date(when).toLocaleString(localeOf(uiLang), { dateStyle: 'medium', timeStyle: 'short' }) }), confirmLabel: t('cf.scheduleBtn') }
+        : { title: t('cf.sendTitle', { channel }), body: t('cf.sendBody', { count: recipients.length }), confirmLabel: t('cf.sendBtn') },
+    )
+    if (!ok) return
     const languages = Object.fromEntries(groups.map(([l, ms]) => [l, ms.length]))
-    addCampaign({
+    const sending = addCampaign({
       channel,
       audience,
       recipients: recipients.length,
@@ -206,7 +213,16 @@ function Compose() {
         ),
       )
     }
-    setToast(t(later ? 'msg.toastScheduled' : 'msg.toastQueued', { count: recipients.length }))
+    if (later) return setToast(t('msg.toastScheduled', { count: recipients.length }))
+    setToast(t('msg.toastQueued', { count: recipients.length }))
+    const r = await sending
+    if (!r) return
+    const total = r.recipients
+    if (r.waiting) setToast(t('msg.toastWaiting', { channel }))
+    else if (!total) setToast(t('msg.toastNoNumbers', { channel }))
+    else if (r.sent && r.failed) setToast(t('msg.toastPartial', { sent: r.sent, total, failed: r.failed, error: r.error ?? '' }))
+    else if (r.sent) setToast(t('msg.toastSent', { sent: r.sent, total }))
+    else setToast(t('msg.toastFailed', { error: r.error ?? t('common.somethingWrong') }))
   }
 
   return (

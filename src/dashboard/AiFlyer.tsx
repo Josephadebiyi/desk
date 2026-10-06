@@ -1,4 +1,5 @@
 import { Download, ImagePlus, Loader2, Save, Sparkles, Wand2 } from 'lucide-react'
+import { withConfirm } from './confirm'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -229,10 +230,10 @@ export function AiFlyer() {
               type="button"
               className="d-btn"
               disabled={saved}
-              onClick={() => {
+              onClick={withConfirm({ title: t('cf.designSaveTitle'), confirmLabel: t('cf.save') }, () => {
                 addDesign({ template: 'ai', title: title || t('design.untitled'), when, svg: result.svg })
                 setSaved(true)
-              }}
+              })}
             >
               <Save size={15} /> {saved ? t('common.saved') : t('design.save')}
             </button>

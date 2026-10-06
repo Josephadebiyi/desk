@@ -23,6 +23,7 @@ import help from './help'
 import auth from './auth'
 import legal from './legal'
 import att from './att'
+import cf from './cf'
 
-const dict: Dict = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att }
+const dict: Dict = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att, cf }
 export default dict

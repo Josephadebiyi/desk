@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
 import { AskAI, audienceLabel, audienceMembers, AudiencePicker, fmtDate, fmtTime, Kpi, Modal, PageHead, tEnum, today } from './kit'
+import { confirmAction, withConfirm } from './confirm'
 import { useT } from '../i18n'
 import { reminderVars, tpl } from '../ai/tools'
 import { useMembers } from './store'
@@ -34,11 +35,12 @@ function EventForm({ initial, date, onClose }: { initial?: ChurchEvent; date?: s
   const [error, setError] = useState('')
   const online = f.mode !== 'In person'
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!f.title.trim()) return setError(t('events.errTitle'))
     if (f.end <= f.start) return setError(t('events.errTime'))
     if (online && f.googleMeet && f.meetLink && !/^https:\/\/\S+$/.test(f.meetLink.trim())) return setError(t('events.errLink'))
+    if (!(await confirmAction({ title: t('cf.eventSaveTitle'), body: t('cf.eventSaveBody', { name: f.title.trim(), date: `${fmtDate(f.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${f.start}` }), confirmLabel: t('cf.save') }))) return
     saveEvent({
       ...f,
       id: initial?.id,
@@ -174,8 +176,9 @@ function EventDetail({ ev, onClose, onEdit }: { ev: ChurchEvent; onClose: () => 
         {past && edit && (
           <form
             className="ev-att"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
+              if (!(await confirmAction({ title: t('cf.attendanceTitle', { name: ev.title }), confirmLabel: t('cf.save') }))) return
               saveEvent({ ...ev, attendance: att === '' ? null : Math.max(0, Number(att)) })
               onClose()
             }}
@@ -212,11 +215,10 @@ function EventDetail({ ev, onClose, onEdit }: { ev: ChurchEvent; onClose: () => 
             <button
               type="button"
               className="d-btn d-danger"
-              onClick={() => {
-                if (!window.confirm(t('events.confirmDelete'))) return
+              onClick={withConfirm({ title: t('events.confirmDelete'), body: t('cf.cantUndo'), danger: true, confirmLabel: t('cf.delete') }, () => {
                 removeEvent(ev.id)
                 onClose()
-              }}
+              })}
             >
               <Trash2 size={15} /> {t('common.delete')}
             </button>

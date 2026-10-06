@@ -5,7 +5,7 @@
  */
 import type { Lang } from '../i18n'
 import type { Communication, Gift, Member, MemberInput, Role } from '../dashboard/types'
-import type { AnonGift, Campaign, ChurchEvent, DesignRequest, Expense, SavedDesign, Settings, ShareLink, TeamMember, TemplateOverrides, TransferClaim } from '../dashboard/workspace'
+import type { AnonGift, Campaign, ChurchEvent, DesignRequest, Expense, SavedDesign, Settings, SendResult, ShareLink, TeamMember, TemplateOverrides, TransferClaim } from '../dashboard/workspace'
 import { supabase } from '../lib/supabase'
 
 const sb = () => {
@@ -236,7 +236,7 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
       body: x.body as string,
       createdAt: x.created_at as string,
       scheduledFor: (x.scheduled_for as string | null) ?? null,
-      status: (x.status === 'Scheduled' ? 'Scheduled' : 'Queued') as Campaign['status'],
+      status: (['Scheduled', 'Sending', 'Sent', 'Failed'].includes(x.status as string) ? x.status : 'Queued') as Campaign['status'],
       languages: (x.languages as Record<string, number> | null) ?? undefined,
       template: (x.template as string | null) ?? undefined,
     })),
@@ -336,10 +336,9 @@ export const ws = {
         status: c.scheduledFor ? 'Scheduled' : 'Queued',
       })
     if (error) throw new Error(error.message)
-    if (!c.scheduledFor) {
-      const { api } = await import('../lib/api')
-      await api(`/campaigns/${c.id}/send`, {})
-    }
+    if (c.scheduledFor) return null
+    const { api } = await import('../lib/api')
+    return api<SendResult>(`/campaigns/${c.id}/send`, {})
   },
   addExpense: (churchId: string, x: Expense) => bg(sb().from('expenses').insert({ ...x, church_id: churchId }), 'add expense'),
   removeExpense: (churchId: string, id: string) => bg(sb().from('expenses').delete().eq('id', id).eq('church_id', churchId), 'delete expense'),

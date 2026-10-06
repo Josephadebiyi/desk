@@ -4,7 +4,7 @@ const p = await b.newPage()
 const errs = []
 p.on('pageerror', (e) => errs.push(e.message))
 await p.setViewport({ width: 1080, height: 1920 })
-await p.goto('file:///Users/j/Desktop/CLAUDE/ZIONDESK/ziondesk-web/promo/story.html', { waitUntil: 'networkidle0' })
+await p.goto('file:///Users/j/Desktop/CLAUDE/ZIONDESK/ziondesk-web/promo/' + (process.env.SCENE || 'story.html') + '', { waitUntil: 'networkidle0' })
 await p.evaluate(() => window.ready)
 const dur = await p.evaluate(() => window.DURATION)
 for (let t = 0; t < dur; t += 0.25) {

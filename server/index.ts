@@ -77,6 +77,13 @@ app.use((req, res, next) => {
   if (req.hostname.startsWith('admin.')) res.setHeader('X-Robots-Tag', 'noindex, nofollow')
   next()
 })
+// One line per API request in the Render logs (method, path, status, time). No bodies, tokens or query strings.
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api/') || req.path === '/api/health') return next()
+  const start = Date.now()
+  res.on('finish', () => console.log(`[api] ${req.method} ${req.path.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/gi, ':id')} ${res.statusCode} ${Date.now() - start}ms`))
+  next()
+})
 app.use('/api/auth', authHookRoutes)
 app.use('/api/whatsapp', whatsappRoutes) // raw body for signature checks
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB

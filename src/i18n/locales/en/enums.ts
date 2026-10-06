@@ -9,7 +9,7 @@ export default {
   method: { Transfer: 'Transfer', Card: 'Card', Cash: 'Cash', Cheque: 'Cheque' },
   expense: { Utilities: 'Utilities', Salaries: 'Salaries', Outreach: 'Outreach', Equipment: 'Equipment', Maintenance: 'Maintenance', Missions: 'Missions', Events: 'Events', Other: 'Other' },
   request: { 'Awaiting payment': 'Awaiting payment', Submitted: 'Submitted', 'In design': 'In design', Review: 'Review', Delivered: 'Delivered' },
-  campaign: { Queued: 'Queued', Scheduled: 'Scheduled' },
+  campaign: { Queued: 'Queued', Scheduled: 'Scheduled', Sending: "Sending", Sent: "Sent", Failed: "Failed" },
   role: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader' },
   plan: { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' },
 }

@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useT } from '../i18n'
 import { api } from '../lib/api'
+import { withConfirm } from './confirm'
 import { publicOrigin } from '../lib/site'
 import { remote } from '../lib/supabase'
 import { Bars, fmtDate, Kpi, PageHead, today } from './kit'
@@ -169,10 +170,10 @@ export default function Attendance() {
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => {
+                    onClick={withConfirm({ title: t('cf.checkinTitle', { name: m.fullName }) }, () => {
                       setQuery('')
                       void run(() => api('/attendance/checkin', { memberId: m.id, date }))
-                    }}
+                    })}
                   >
                     <span>{m.fullName}</span>
                     <b>
@@ -191,7 +192,7 @@ export default function Attendance() {
                   <small>
                     {new Date(x.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · {x.method === 'qr' ? t('att.byQr') : t('att.byHand', { name: x.by })}
                   </small>
-                  <button type="button" className="d-icon-btn" aria-label={t('att.undo')} title={t('att.undo')} onClick={() => run(() => api(`/attendance/${x.memberId}/${date}`, undefined, 'DELETE'))}>
+                  <button type="button" className="d-icon-btn" aria-label={t('att.undo')} title={t('att.undo')} onClick={withConfirm({ title: t('cf.undoCheckinTitle', { name: x.name }), danger: true, confirmLabel: t('cf.remove') }, () => run(() => api(`/attendance/${x.memberId}/${date}`, undefined, 'DELETE')))}>
                     <Undo2 size={14} />
                   </button>
                 </li>
@@ -239,7 +240,7 @@ export default function Attendance() {
                 </>
               )}
               <small className="att-note">{t('att.fuRules')}</small>
-              <button type="button" className="d-btn d-btn-ink" disabled={!remote} onClick={() => run(() => api('/attendance/settings', fu, 'PUT'), t('att.fuSaved'))}>
+              <button type="button" className="d-btn d-btn-ink" disabled={!remote} onClick={withConfirm({ title: t('cf.fuSaveTitle'), body: fu.enabled ? t('cf.fuOnBody', { count: fu.missed }) : t('cf.fuOffBody'), confirmLabel: t('cf.save') }, () => run(() => api('/attendance/settings', fu, 'PUT'), t('att.fuSaved')))}>
                 {t('att.fuSave')}
               </button>
             </div>
@@ -260,7 +261,7 @@ export default function Attendance() {
                   {t('att.missed', { count: a.missed })} · {t('att.lastSeen', { date: fmtDate(a.lastSeen, { day: 'numeric', month: 'short' }) })}
                   {a.followedUpAt ? ` · ${t('att.followed', { date: fmtDate(a.followedUpAt, { day: 'numeric', month: 'short' }) })}` : ''}
                 </small>
-                <button type="button" className="d-btn" onClick={() => run(() => api<{ channel: string }>(`/attendance/followup/${a.memberId}`, {}).then((r) => flash(true, t('att.sent', { channel: r.channel }))))}>
+                <button type="button" className="d-btn" onClick={withConfirm({ title: t('cf.fuSendTitle', { name: a.name }), confirmLabel: t('cf.sendBtn') }, () => run(() => api<{ channel: string }>(`/attendance/followup/${a.memberId}`, {}).then((r) => flash(true, t('att.sent', { channel: r.channel })))))}>
                   <Send size={14} /> {t('att.sendNow')}
                 </button>
               </li>

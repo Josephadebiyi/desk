@@ -27,6 +27,7 @@ import { AiProvider } from '../ai/store'
 import { type Role } from './types'
 import { useT } from '../i18n'
 import { LanguagePopup } from '../i18n/LanguagePopup'
+import { ConfirmHost } from './confirm'
 import { LangMenu } from '../i18n/Flags'
 import './dashboard.css'
 import { apiUrl } from '../lib/api'
@@ -231,6 +232,7 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
       {!preview && <><AnnouncementBar /><MeetErrorNotice /></>}
       {!preview && <TrialBanner />}
       {!preview && <LanguagePopup />}
+      {!preview && <ConfirmHost />}
       <header className="d-top">
         <Link to="/" className="d-brand" aria-label={t('dash.website')}>
           <img src={theme === 'dark' ? '/brand/logo-lime.webp' : '/brand/logo-color.webp'} alt="ZionDesk" />

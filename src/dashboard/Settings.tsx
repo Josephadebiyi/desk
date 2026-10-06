@@ -7,6 +7,7 @@ import { useSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
 import { PageHead, Tabs, planName, tEnum } from './kit'
+import { confirmAction, withConfirm } from './confirm'
 import { useMembers } from './store'
 import { type Role } from './types'
 import { useWorkspace, type PlanId, type Settings as S } from './workspace'
@@ -242,8 +243,8 @@ function Account() {
             type="button"
             className="d-btn d-danger"
             disabled={busy !== ''}
-            onClick={() => {
-              if (!window.confirm(t('settings.account.deleteConfirm'))) return
+            onClick={async () => {
+              if (!(await confirmAction({ title: t('settings.account.deleteConfirm'), body: t('cf.cantUndo'), danger: true, confirmLabel: t('cf.delete') }))) return
               run('delete', async () => {
                 await api('/account/delete', {})
                 await session.signOut()
@@ -276,9 +277,10 @@ function Profile() {
   return (
     <form
       className="d-panel d-form"
-      onSubmit={(e: FormEvent) => {
+      onSubmit={async (e: FormEvent) => {
         e.preventDefault()
         if (!f.churchName.trim()) return
+        if (!(await confirmAction({ title: t('cf.profileTitle'), confirmLabel: t('cf.save') }))) return
         updateSettings({ churchName: f.churchName.trim(), location: f.location, phone: f.phone, email: f.email, denomination: f.denomination, currency: f.currency })
         setOk(true)
         setTimeout(() => setOk(false), 2000)
@@ -297,6 +299,7 @@ function Profile() {
           onPick={async (file) => {
             setLogoError('')
             if (!/^image\//.test(file.type) || file.size > 3 * 1024 * 1024) return setLogoError(t('settings.account.imageSize'))
+            if (!(await confirmAction({ title: t('cf.logoTitle'), body: file.name, confirmLabel: t('cf.save') }))) return
             setLogoBusy(true)
             try {
               const url = await uploadLogo(session.church!.id, file)
@@ -307,7 +310,7 @@ function Profile() {
               setLogoBusy(false)
             }
           }}
-          onRemove={() => updateSettings({ logoUrl: null })}
+          onRemove={withConfirm({ title: t('cf.logoRemoveTitle'), danger: true, confirmLabel: t('cf.remove') }, () => updateSettings({ logoUrl: null }))}
         />
       )}
       {logoError && <p className="d-errors">{logoError}</p>}
@@ -348,7 +351,7 @@ function ListEditor({ title, items, onChange, placeholder }: { title: string; it
         {items.map((x) => (
           <span key={x} className="st-chip">
             {x}
-            <button type="button" aria-label={t('settings.removeX', { name: x })} onClick={() => onChange(items.filter((y) => y !== x))}>
+            <button type="button" aria-label={t('settings.removeX', { name: x })} onClick={withConfirm({ title: t('settings.removeX', { name: x }) + '?', danger: true, confirmLabel: t('cf.remove') }, () => onChange(items.filter((y) => y !== x)))}>
               <X size={12} />
             </button>
           </span>
@@ -356,10 +359,12 @@ function ListEditor({ title, items, onChange, placeholder }: { title: string; it
       </div>
       <form
         className="st-add"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
           const val = v.trim()
-          if (val && !items.some((x) => x.toLowerCase() === val.toLowerCase())) onChange([...items, val])
+          if (!val || items.some((x) => x.toLowerCase() === val.toLowerCase())) return setV('')
+          if (!(await confirmAction({ title: t('cf.listChangeTitle', { list: title.toLowerCase() }), body: val, confirmLabel: t('cf.save') }))) return
+          onChange([...items, val])
           setV('')
         }}
       >
@@ -410,14 +415,17 @@ function Team() {
                 <small>{tm.email}</small>
               </div>
               {tm.status === 'Invited' && <span className="d-pill">{t('settings.team.pending')}</span>}
-              <select className="st-role" value={tm.role} onChange={(e) => updateTeam(tm.id, { role: e.target.value as Role })} aria-label={t('settings.team.roleFor', { name: tm.name })}>
+              <select className="st-role" value={tm.role} onChange={async (e) => {
+                const role = e.target.value as Role
+                if (await confirmAction({ title: t('cf.roleTitle', { name: tm.name, role: tEnum('role', role) }) })) updateTeam(tm.id, { role })
+              }} aria-label={t('settings.team.roleFor', { name: tm.name })}>
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
                     {tEnum('role', r)}
                   </option>
                 ))}
               </select>
-              <button type="button" className="d-circle d-circle-sm" aria-label={t('settings.removeX', { name: tm.name })} onClick={() => removeTeam(tm.id)}>
+              <button type="button" className="d-circle d-circle-sm" aria-label={t('settings.removeX', { name: tm.name })} onClick={withConfirm({ title: t('cf.teamRemoveTitle', { name: tm.name }), body: t('cf.teamRemoveBody'), danger: true, confirmLabel: t('cf.remove') }, () => removeTeam(tm.id))}>
                 <Trash2 size={13} />
               </button>
             </li>
@@ -426,11 +434,12 @@ function Team() {
       </section>
       <form
         className="d-panel d-form"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
           if (!f.name.trim()) return setError(t('settings.team.errName'))
           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) return setError(t('common.invalidEmail'))
           setError('')
+          if (!(await confirmAction({ title: t('cf.inviteTitle', { name: f.name.trim() }), body: t('cf.inviteBody', { email: f.email.trim() }), confirmLabel: t('cf.inviteBtn') }))) return
           inviteTeam({ name: f.name.trim(), email: f.email.trim(), role: f.role })
           setF({ name: '', email: '', role: 'leader' })
         }}
@@ -505,7 +514,7 @@ function Plan() {
   const [error, setError] = useState('')
   const fmt = (d: string) => new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
   const cancel = async () => {
-    if (!window.confirm(t('settings.plan.cancelConfirm', { date: settings.planRenewsAt ? fmt(settings.planRenewsAt) : '' }))) return
+    if (!(await confirmAction({ title: t('settings.plan.cancelConfirm', { date: settings.planRenewsAt ? fmt(settings.planRenewsAt) : '' }), danger: true, confirmLabel: t('cf.yes') }))) return
     setError('')
     setBusy('cancel')
     try {
@@ -518,6 +527,7 @@ function Plan() {
     }
   }
   const resume = async () => {
+    if (!(await confirmAction({ title: t('cf.resumeTitle'), body: t('cf.resumeBody') }))) return
     setError('')
     setBusy('cancel')
     try {
@@ -553,6 +563,7 @@ function Plan() {
   }
   // Live: plans are paid monthly through Flutterwave; the plan switches when payment is confirmed.
   const choose = async (plan: PlanId) => {
+    if (!(await confirmAction({ title: t('cf.planTitle', { plan: planName(plan) }), confirmLabel: t('cf.yes') }))) return
     if (!live) return updateSettings({ plan })
     setError('')
     setBusy(plan)
@@ -742,7 +753,7 @@ function ChurchAiSettings() {
       <section className="d-panel d-span-2">
         <div className="d-panel-head">
           <h2>{t('settings.ai.limits')}</h2>
-          <button type="button" className="d-btn" onClick={() => window.confirm(t('settings.ai.resetConfirm')) && ai.resetSettings()}>
+          <button type="button" className="d-btn" onClick={withConfirm({ title: t('settings.ai.resetConfirm'), danger: true }, () => ai.resetSettings())}>
             <RotateCcw size={14} /> {t('settings.ai.reset')}
           </button>
         </div>
@@ -963,8 +974,8 @@ function Data() {
         <button
           type="button"
           className="d-btn d-danger"
-          onClick={() => {
-            if (!window.confirm(t('settings.data.confirm'))) return
+          onClick={async () => {
+            if (!(await confirmAction({ title: t('settings.data.confirm'), body: t('cf.cantUndo'), danger: true, confirmLabel: t('cf.yes') }))) return
             resetDemo()
             resetWorkspace()
             setDone(true)

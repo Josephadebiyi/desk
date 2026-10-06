@@ -6,6 +6,7 @@ import { useT } from '../i18n'
 import { api } from '../lib/api'
 import { remote } from '../lib/supabase'
 import { fmtDate } from './kit'
+import { confirmAction } from './confirm'
 
 interface Conversation {
   id: string
@@ -86,6 +87,8 @@ export default function Inbox() {
   const send = async (e: FormEvent) => {
     e.preventDefault()
     if (!openId || !text.trim()) return
+    const who = list?.find((c) => c.id === openId)
+    if (!(await confirmAction({ title: t('cf.replyTitle'), body: t('cf.replyBody', { name: who?.name || who?.phone || '' }), confirmLabel: t('cf.replyBtn') }))) return
     setBusy(true)
     setError('')
     try {

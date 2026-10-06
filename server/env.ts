@@ -87,6 +87,10 @@ export const configured = {
   sms: Boolean(env.twilioSid && env.twilioToken && (env.twilioMessagingService || env.twilioSmsFrom)),
   whatsappCloud: Boolean(env.waToken && env.waPhoneId),
   whatsapp: Boolean((env.waToken && env.waPhoneId) || (env.twilioSid && env.twilioToken && env.twilioWhatsappFrom)),
+  /** An approved WhatsApp template is set: without it, broadcasts only reach people who messaged in the last 24 hours. */
+  whatsappTemplate: Boolean(env.waToken && env.waPhoneId ? env.waTemplate : env.twilioWhatsappContentSid),
+  /** Twilio's shared sandbox number: only delivers to phones that sent it the "join" code. */
+  whatsappSandbox: env.twilioWhatsappFrom.replace(/\D/g, '') === '14155238886',
   googleMeet: Boolean(env.googleClientId && env.googleClientSecret),
   prayers: Boolean(process.env.ANTHROPIC_API_KEY),
   admin: env.adminEmails.length > 0,

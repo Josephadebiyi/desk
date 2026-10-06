@@ -10,7 +10,7 @@ const enums: Dict['enums'] = {
   method: { Transfer: 'Überweisung', Card: 'Karte', Cash: 'Bar', Cheque: 'Scheck' },
   expense: { Utilities: 'Nebenkosten', Salaries: 'Gehälter', Outreach: 'Evangelisation', Equipment: 'Ausstattung', Maintenance: 'Wartung', Missions: 'Mission', Events: 'Veranstaltungen', Other: 'Sonstiges' },
   request: { 'Awaiting payment': 'Zahlung ausstehend', Submitted: 'Eingereicht', 'In design': 'In Gestaltung', Review: 'Prüfung', Delivered: 'Geliefert' },
-  campaign: { Queued: 'In Warteschlange', Scheduled: 'Geplant' },
+  campaign: { Queued: 'In Warteschlange', Scheduled: 'Geplant', Sending: "Wird gesendet", Sent: "Gesendet", Failed: "Fehlgeschlagen" },
   role: { admin: 'Administrator', finance: 'Finanzen', leader: 'Dienstbereichsleitung' },
   plan: { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' },
 }

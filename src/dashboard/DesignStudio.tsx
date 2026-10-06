@@ -8,6 +8,7 @@ import { Flyer, flyerName, flyerSample, FLYER_TEMPLATES, type FlyerId } from '..
 import { tr, useT } from '../i18n'
 import { AiFlyer } from './AiFlyer'
 import { AskAI, fmtDate, Kpi, PageHead, PlanGate, Tabs } from './kit'
+import { confirmAction, withConfirm } from './confirm'
 import { useWorkspace, type DesignRequest } from './workspace'
 import { api } from '../lib/api'
 import { remote } from '../lib/supabase'
@@ -108,11 +109,11 @@ function Creator() {
           <button
             type="button"
             className="d-btn"
-            onClick={() => {
+            onClick={withConfirm({ title: t('cf.designSaveTitle'), confirmLabel: t('cf.save') }, () => {
               addDesign({ template: tpl, title: title || t('design.untitled'), when })
               setMsg(t('design.saved'))
               setTimeout(() => setMsg(''), 2200)
-            }}
+            })}
           >
             <Save size={15} /> {t('design.save')}
           </button>
@@ -155,7 +156,7 @@ function MyDesigns({ onOpen }: { onOpen: () => void }) {
               <b>{d.title}</b>
               <small>{t('design.savedOn', { date: fmtDate(d.createdAt) })}</small>
             </span>
-            <button type="button" className="d-circle d-circle-sm" aria-label={t('common.delete')} onClick={() => removeDesign(d.id)}>
+            <button type="button" className="d-circle d-circle-sm" aria-label={t('common.delete')} onClick={withConfirm({ title: t('cf.designDeleteTitle'), body: t('cf.cantUndo'), danger: true, confirmLabel: t('cf.delete') }, () => removeDesign(d.id))}>
               <Trash2 size={13} />
             </button>
           </figcaption>
@@ -395,16 +396,18 @@ function BriefChat({ onDone, onCancel }: { onDone: (r: DesignRequest) => void; o
           <button
             type="button"
             className="d-btn d-btn-ink"
-            onClick={() =>
-              onDone(
-                addRequest({
-                  title: brief.title || t('design.requestFallback'),
-                  brief: { when: brief.when, where: brief.where, audience: brief.audience, text: brief.text },
-                  formats,
-                  inspiration: files,
-                }),
-              )
-            }
+            onClick={withConfirm(
+              { title: t('cf.requestTitle'), body: t('cf.requestBody', { title: brief.title || t('design.requestFallback') }), confirmLabel: extra ? t('design.payAndSend') : t('design.sendTeam') },
+              () =>
+                onDone(
+                  addRequest({
+                    title: brief.title || t('design.requestFallback'),
+                    brief: { when: brief.when, where: brief.where, audience: brief.audience, text: brief.text },
+                    formats,
+                    inspiration: files,
+                  }),
+                ),
+            )}
           >
             <Send size={15} /> {extra ? t('design.payAndSend') : t('design.sendTeam')}
           </button>
@@ -524,9 +527,10 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
         </div>
         <form
           className="brief-input brief-text"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
             if (!text.trim()) return
+            if (!(await confirmAction({ title: t('cf.requestMsgTitle'), confirmLabel: t('cf.replyBtn') }))) return
             postRequestMessage(req.id, text.trim())
             setText('')
           }}

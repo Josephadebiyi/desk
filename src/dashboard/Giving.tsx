@@ -32,6 +32,7 @@ import {
   tEnum,
   today,
 } from "./kit";
+import { confirmAction, withConfirm } from "./confirm";
 import { useMembers } from "./store";
 import { can, uid } from "./types";
 import { useWorkspace } from "./workspace";
@@ -106,10 +107,11 @@ function RecordGift({ onClose }: { onClose: () => void }) {
     [members],
   );
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     const n = Number(amount);
     if (!n || n <= 0) return setError(t("giving.errAmount"));
+    if (!(await confirmAction({ title: t("cf.giftTitle"), body: `${money(n, settings.currency)} · ${fund} · ${method}`, confirmLabel: t("cf.save") }))) return;
     if (giver === "anon")
       addAnonGift({
         amount: n,
@@ -211,10 +213,11 @@ function AddExpense({ onClose }: { onClose: () => void }) {
       <form
         className="d-form"
         noValidate
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           const n = Number(f.amount);
           if (!n || n <= 0) return setError(t("giving.errAmount"));
+          if (!(await confirmAction({ title: t("cf.expenseTitle"), body: `${money(n, settings.currency)} · ${f.category}`, confirmLabel: t("cf.save") }))) return;
           addExpense({
             category: f.category,
             amount: n,
@@ -310,11 +313,12 @@ function GivingPageSetup() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const addMethod = (type: MethodType) =>
     setManual([...manual, { id: uid(), type, fields: {} }]);
-  const save = (e: FormEvent) => {
+  const save = async (e: FormEvent) => {
     e.preventDefault();
     const errs = validateMethods(manual);
     setErrors(errs);
     if (Object.keys(errs).length) return;
+    if (!(await confirmAction({ title: t("cf.payoutTitle"), body: t("cf.payoutBody"), confirmLabel: t("cf.save") }))) return;
     // The first bank-type method also fills the older flat fields (receipts, older pages).
     const firstBank = manual.find(
       (m) => m.fields.accountNumber || m.fields.iban,
@@ -898,7 +902,7 @@ export default function Giving() {
                           type="button"
                           className="d-circle d-circle-sm"
                           aria-label={t("common.delete")}
-                          onClick={() => removeExpense(x.id)}
+                          onClick={withConfirm({ title: t("cf.expenseDeleteTitle"), body: t("cf.cantUndo"), danger: true, confirmLabel: t("cf.delete") }, () => removeExpense(x.id))}
                         >
                           <Trash2 size={13} />
                         </button>

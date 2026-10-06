@@ -32,6 +32,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import { useSearchParams } from 'react-router-dom'
 import { downloadTemplate, exportMembers, parseMemberFile, type ParsedImport } from './io'
 import { AskAI, fmtDate, money, tEnum } from './kit'
+import { confirmAction, withConfirm } from './confirm'
 import { LANGS, tr, useT, type Lang } from '../i18n'
 import { Flag } from '../i18n/Flags'
 import { BRANCHES } from './seed'
@@ -476,7 +477,7 @@ function MemberDetail({ member, onClose, onEdit }: { member: Member; onClose: ()
               key={s}
               type="button"
               className={member.stage === s ? 'is-on' : ''}
-              onClick={() => updateMember(member.id, { stage: s })}
+              onClick={withConfirm({ title: t('cf.stageTitle', { count: 1, stage: tEnum('stage', s) }) }, () => updateMember(member.id, { stage: s }))}
             >
               {tEnum('stage', s)}
             </button>
@@ -510,9 +511,10 @@ function MemberDetail({ member, onClose, onEdit }: { member: Member; onClose: ()
         {can.editMembers(role) && (
           <form
             className="d-log"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
               if (!summary.trim()) return
+              if (!(await confirmAction({ title: t('cf.noteTitle', { name: member.fullName }), confirmLabel: t('cf.save') }))) return
               logCommunication(member.id, {
                 channel,
                 summary: summary.trim(),
@@ -869,8 +871,9 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
                 <select
                   value=""
                   aria-label={t('members.setStageFor')}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const s = e.target.value as Stage
+                    if (!s || !(await confirmAction({ title: t('cf.stageTitle', { count: selected.size, stage: tEnum('stage', s) }) }))) return
                     selected.forEach((id) => updateMember(id, { stage: s }))
                     setToast(t('members.toastMoved', { count: selected.size, stage: tEnum('stage', s) }))
                   }}
@@ -897,12 +900,11 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
                 <button
                   type="button"
                   className="d-link d-danger"
-                  onClick={() => {
-                    if (!window.confirm(t('members.confirmDelete', { count: selected.size }))) return
+                  onClick={withConfirm({ title: t('members.confirmDelete', { count: selected.size }), body: t('cf.cantUndo'), danger: true, confirmLabel: t('cf.delete') }, () => {
                     removeMembers([...selected])
                     setToast(t('members.toastDeleted', { count: selected.size }))
                     setSelected(new Set())
-                  }}
+                  })}
                 >
                   <Trash2 size={14} /> {t('common.delete')}
                 </button>
@@ -1034,7 +1036,8 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
             branches={branches}
             departments={departments}
             onClose={() => setEditing(null)}
-            onSave={(m) => {
+            onSave={async (m) => {
+              if (!(await confirmAction({ title: editing === 'new' ? t('cf.memberAddTitle', { name: m.fullName }) : t('cf.memberSaveTitle', { name: m.fullName }), confirmLabel: t('cf.save') }))) return
               if (editing === 'new') {
                 const created = addMember(m)
                 setOpenId(created.id)
@@ -1053,7 +1056,8 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
         {importing && (
           <ImportDialog
             onClose={() => setImporting(false)}
-            onImport={(rows) => {
+            onImport={async (rows) => {
+              if (!(await confirmAction({ title: t('cf.importTitle', { count: rows.length }), body: t('cf.importBody'), confirmLabel: t('common.import') }))) return
               const n = importMembers(rows)
               setImporting(false)
               setToast(t('members.toastImported', { count: n }))

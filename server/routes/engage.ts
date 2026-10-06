@@ -8,12 +8,14 @@
  *   POST /api/attendance/followup/:memberId  send a check-up message now
  *   GET  /api/inbox  ·  GET /api/inbox/unread  ·  GET /api/inbox/:id  ·  POST /api/inbox/:id/reply
  *   POST /api/twilio/inbound              Twilio webhook for incoming SMS & WhatsApp
+ *   POST /api/twilio/status               Twilio delivery reports (delivered / failed + reason)
  */
 import express, { Router, type Request } from 'express'
 import { absentees, checkIn, checkinToken, defaultFollowupText, FOLLOWUP_PLANS, memberFromToken, sendFollowup, serviceDate, trackedSundays } from '../attendance'
 import { db, HttpError, requireCaller, route } from '../db'
 import { env } from '../env'
 import { recordInbound, sendReply, validTwilioSignature } from '../inbox'
+import { recordDeliveryStatus } from '../messaging'
 
 export const engageRoutes = Router()
 
@@ -190,6 +192,20 @@ engageRoutes.post(
 )
 
 /* ───────── Twilio: incoming SMS & WhatsApp ───────── */
+/* Twilio delivery reports (StatusCallback on every message we send). */
+engageRoutes.post(
+  '/twilio/status',
+  express.urlencoded({ extended: false, limit: '50kb' }),
+  async (req, res) => {
+    const params = Object.fromEntries(Object.entries(req.body ?? {}).map(([k, v]) => [k, String(v)]))
+    const sig = req.header('x-twilio-signature')
+    const urls = [`${env.apiUrl}/api/twilio/status`, `https://${req.get('host')}${req.originalUrl}`]
+    if (!urls.some((u) => validTwilioSignature(u, params, sig))) return res.sendStatus(403)
+    res.sendStatus(204)
+    await recordDeliveryStatus(params.MessageSid ?? '', params.MessageStatus ?? '', params.ErrorCode).catch((e) => console.error('[twilio status]', e))
+  },
+)
+
 engageRoutes.post(
   '/twilio/inbound',
   express.urlencoded({ extended: false, limit: '200kb' }),
