@@ -20,7 +20,7 @@ def T(word, n=1):
 
 
 DUR = 117.1
-MUSIC = D / "audio-story" / (sys.argv[1] if len(sys.argv) > 1 else "music.mp3")
+MUSIC = D / "audio-story" / next((a for a in sys.argv[1:] if not a.startswith("--")), "music.mp3")
 CUES = [
     ("pop", T("taiwo"), 0.5), ("pop", T("worker"), 0.35), ("whoosh", T("media") - 0.1, 0.35),
     ("typing", T("why") - 0.45, 0.35), ("pop", T("why"), 0.55), ("impact", T("five"), 0.5), ("stamp", T("done"), 0.55),
@@ -54,12 +54,18 @@ CUES = [
     ("riser", T("ziondesk", 6) - 1.55, 0.5), ("impact", T("ziondesk", 6) - 0.03, 0.8), ("sparkle", T("church", 12), 0.6),
 ]
 
+NO_VOICE = "--no-voice" in sys.argv
 inputs = ["-i", str(D / "audio-story" / "vo.wav"), "-i", str(MUSIC)]
 parts = []
 for i, (snd, at, vol) in enumerate(CUES):
     inputs += ["-i", str(A / f"{snd}.mp3")]
     parts.append(f"[{i + 2}]aresample=48000,aformat=channel_layouts=stereo,volume={vol * 0.8},adelay={max(0, int(at * 1000))}:all=1[s{i}]")
 graph = ";".join(parts + [
+    # Without the voice-over: steady music bed a little lower, so a voice recorded later sits on top.
+    "".join(f"[s{i}]" for i in range(len(CUES))) + f"amix=inputs={len(CUES)}:normalize=0,apad=whole_dur={DUR}[fx]",
+    f"[1]aresample=48000,aformat=channel_layouts=stereo,volume=0.42,afade=t=out:st={DUR - 2.2}:d=2.2,apad=whole_dur={DUR}[m]",
+    f"[m][fx]amix=inputs=2:normalize=0,atrim=0:{DUR},loudnorm=I=-18:TP=-2:LRA=9[out]",
+]) if NO_VOICE else ";".join(parts + [
     "".join(f"[s{i}]" for i in range(len(CUES))) + f"amix=inputs={len(CUES)}:normalize=0,apad=whole_dur={DUR}[fx]",
     f"[0]aresample=48000,aformat=channel_layouts=stereo,highpass=f=70,acompressor=threshold=-18dB:ratio=3:attack=4:release=90,volume=1.6,apad=whole_dur={DUR}[vo]",
     "[vo]asplit[v][sc]",
@@ -67,6 +73,6 @@ graph = ";".join(parts + [
     "[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=20:release=350[duck]",
     f"[v][duck][fx]amix=inputs=3:normalize=0,atrim=0:{DUR},loudnorm=I=-14:TP=-1:LRA=9[out]",
 ])
-out = D / "out" / "story-audio.wav"
+out = D / "out" / ("story-audio-novoice.wav" if NO_VOICE else "story-audio.wav")
 subprocess.run(["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", graph, "-map", "[out]", "-ar", "48000", str(out)], check=True)
 print(out)

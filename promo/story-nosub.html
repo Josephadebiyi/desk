@@ -1,0 +1,480 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&family=Caveat:wght@600;700&family=Anton&family=Archivo+Black&family=Playfair+Display:ital,wght@1,800&display=swap" rel="stylesheet" />
+<script src="words-story.js"></script>
+<style>
+  :root { --p: #6c34ff; --l: #c4ec62; --ink: #111015; --mat: #0e5a40; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; font-family: Poppins, sans-serif; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  .sc { position: absolute; inset: 0; display: none; overflow: hidden; }
+  .abs { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  .center { position: absolute; left: 50%; top: 50%; }
+  .white { background: radial-gradient(70% 55% at 50% 48%, #ffffff 0%, #f3f1f7 55%, #d9d6e2 100%); }
+  .dark { background: radial-gradient(70% 55% at 50% 48%, #1d1a26 0%, #0b0a10 75%); }
+  .pink { background-color: #fbf3ff; background-image: linear-gradient(rgba(108,52,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(108,52,255,.07) 1px, transparent 1px); background-size: 54px 54px; }
+  .mat { background-color: var(--mat); background-image:
+      linear-gradient(rgba(255,255,255,.16) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,.16) 2px, transparent 2px),
+      linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px; }
+  .vig::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(80% 60% at 50% 45%, transparent 40%, rgba(0,0,0,.55)); }
+  .line { font-weight: 800; font-size: 86px; letter-spacing: -0.025em; color: var(--ink); line-height: 1.1; text-align: center; white-space: nowrap; }
+  .line .w { display: inline-block; margin: 0 .12em; }
+  .big { font-weight: 900; letter-spacing: -0.04em; line-height: 1; white-space: nowrap; text-align: center; }
+  .bubble { padding: 34px 54px; border-radius: 60px; background: #e9e7ee; font-weight: 700; font-size: 84px; color: #4b4856; box-shadow: 0 20px 50px -20px rgba(0,0,0,.25); white-space: nowrap; }
+  .dots { display: flex; gap: 18px; padding: 40px 54px; border-radius: 60px; background: #e9e7ee; }
+  .dots i { width: 30px; height: 30px; border-radius: 50%; background: #a19eab; display: block; }
+  .tile { width: 290px; height: 290px; border-radius: 52px; display: grid; place-items: center; box-shadow: 0 34px 60px -24px rgba(0,0,0,.55); }
+  .tile svg { width: 140px; height: 140px; }
+  .tlabel { position: absolute; bottom: -76px; left: 50%; transform: translateX(-50%); font-weight: 700; font-size: 42px; color: #fff; white-space: nowrap; text-shadow: 0 4px 20px rgba(0,0,0,.45); }
+  .chip { padding: 18px 30px; border-radius: 22px; background: #fff; font-weight: 700; font-size: 44px; color: var(--ink); box-shadow: 0 18px 40px -18px rgba(0,0,0,.4); white-space: nowrap; display: flex; align-items: center; gap: 16px; }
+  .cut { display: inline-block; padding: 8px 18px; margin: 0 4px; line-height: 1; box-shadow: 0 14px 28px -12px rgba(0,0,0,.55); }
+  .phone { width: 520px; height: 1060px; border-radius: 80px; background: #0b0a10; padding: 22px; box-shadow: 0 60px 120px -40px rgba(0,0,0,.7), inset 0 0 0 3px #2a2733; }
+  .phone .scr { width: 100%; height: 100%; border-radius: 60px; overflow: hidden; background: #fff; position: relative; }
+  .hl { background: var(--p); color: #fff; padding: 0 .18em; border-radius: 12px; box-shadow: 0 0 60px rgba(108,52,255,.6); }
+  .hand { font-family: Caveat, cursive; font-weight: 700; }
+  .card { width: 980px; height: 612px; border-radius: 34px; overflow: hidden; background: #fff; box-shadow: 0 60px 120px -40px rgba(40,20,110,.55), 0 0 0 2px rgba(17,16,21,.06); }
+  .card img { width: 100%; height: 100%; display: block; }
+  .flabel { display: flex; align-items: center; gap: 18px; padding: 18px 34px 18px 18px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 800; font-size: 52px; white-space: nowrap; box-shadow: 0 24px 50px -20px rgba(0,0,0,.5); }
+  .flabel i { font-style: normal; display: grid; place-items: center; width: 70px; height: 70px; border-radius: 50%; background: var(--l); color: #18210a; font-size: 32px; }
+  .input { width: 860px; height: 170px; border-radius: 40px; background: #fff; border: 5px solid var(--ink); display: flex; align-items: center; padding: 0 44px; font-weight: 800; font-size: 92px; letter-spacing: .04em; color: var(--ink); box-shadow: 0 22px 0 -6px var(--ink); }
+  .caret { display: inline-block; width: 8px; height: 100px; background: var(--p); margin-left: 6px; }
+  .role { display: flex; align-items: center; gap: 18px; padding: 22px 34px; border-radius: 28px; background: #fff; font-weight: 800; font-size: 50px; color: var(--ink); box-shadow: 0 18px 0 -6px var(--ink); border: 4px solid var(--ink); white-space: nowrap; }
+  .sub { position: absolute; left: 60px; right: 60px; bottom: 190px; text-align: center; font-weight: 700; font-size: 48px; line-height: 1.25; color: #fff; text-shadow: 0 3px 18px rgba(0,0,0,.8); }
+  .sub b { color: var(--l); }
+  .sub.darktext { color: var(--ink); text-shadow: 0 0 18px rgba(255,255,255,.9); }
+  .sub.darktext b { color: var(--p); }
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: .05; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <section class="sc white" id="a"><div class="center" id="a1"></div><div class="abs" id="a2"></div></section>
+  <section class="sc white" id="b"><div class="abs" id="bbg" style="inset:0"></div><div class="center" id="b1"></div><div class="abs" id="bdots"><div class="dots"><i></i><i></i><i></i></div></div><div class="abs" id="bwhy"><div class="bubble">Why?</div></div><div class="abs" id="bghost"></div><div class="center" id="bfive"></div></section>
+  <section class="sc mat vig" id="c"><div class="abs" id="ctiles"></div><div class="center" id="ctitle"></div></section>
+  <section class="sc dark" id="d"><div class="abs" id="dcard"></div><div class="center" id="dtext"></div><div class="abs" id="dcal"></div></section>
+  <section class="sc white" id="e"><div class="abs" id="eheart"></div><div class="abs" id="erain"></div><div class="center" id="etext"></div><div class="abs" id="ecut"></div></section>
+  <section class="sc dark" id="f"><div class="center" id="fyear"></div><div class="abs" id="fbulb"></div><div class="abs" id="fburst"></div><div class="center" id="flogo"><img src="../public/brand/logo-lime.webp" style="width:820px" /></div></section>
+  <section class="sc white" id="g"><div class="abs" id="gfly"></div><div class="abs" id="gphone"><div class="phone"><div class="scr"><img src="shots/overview.png" style="position:absolute;height:100%;left:0;top:0" /></div></div></div><div class="center" id="gtext"></div></section>
+  <section class="sc pink" id="h"><div class="center" id="htop"></div><div class="abs" id="hcard"><div class="card"><img id="himg" /></div></div><div class="abs" id="hphone"><div class="phone" style="width:470px;height:960px"><div class="scr"><img src="shots/phone-join.png" style="width:100%" /></div></div></div><div class="abs" id="hroles"></div><div class="abs" id="hcount"></div></section>
+  <section class="sc white" id="i"><div class="center" id="i1"></div><div class="abs" id="i2"></div></section>
+  <section class="sc dark" id="j"><div class="center" id="j1"></div><div class="abs" id="jtiles"></div></section>
+  <section class="sc dark" id="k"><div class="center" id="kcount"></div><div class="abs" id="kseats"></div><div class="center" id="kprice"></div><div class="center" id="kcode"></div></section>
+  <section class="sc pink" id="l"><div class="center" id="l1"></div><div class="abs" id="lroles"></div></section>
+  <section class="sc white" id="m"><div class="center" id="mlogo"><img src="../public/brand/logo-color.webp" style="width:640px" /></div><div class="center" id="m1"></div><div class="center" id="mcta"></div></section>
+  <div class="sub" id="sub" style="display:none"></div>
+  <div class="grain"></div>
+</div>
+
+<script>
+const W = window.WORDS
+const clean = (w) => w.toLowerCase().replace(/[^a-z0-9'-]/g, '')
+function T(word, n = 1, end = false) {
+  let c = 0
+  for (const x of W) if (clean(x.w) === clean(word) && ++c === n) return end ? x.e : x.s
+  throw new Error('word ' + word + ' #' + n)
+}
+const E = (w, n = 1) => T(w, n, true)
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const P = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, k) => a + (b - a) * k
+const easeOut = (k) => 1 - Math.pow(1 - k, 3)
+const easeIO = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+const back = (k, s = 1.7) => 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2)
+const pop = (t, t0, d = 0.32) => back(P(t, t0, t0 + d), 2.2)
+const $ = (id) => document.getElementById(id)
+function put(el, o) {
+  el.style.transform = `${o.persp ? `perspective(1600px) rotateX(${o.rx || 0}deg) rotateY(${o.ry || 0}deg) ` : ''}translate(${o.x ?? 0}px, ${o.y ?? 0}px) translate(${o.cx ? '-50%' : '0'}, ${o.cy ? '-50%' : '0'}) rotate(${o.r ?? 0}deg) scale(${o.s ?? 1})`
+  el.style.opacity = o.o ?? 1
+  el.style.filter = o.blur ? `blur(${o.blur}px)` : o.f || ''
+}
+function h(tag, cls, html, parent, style) {
+  const e = document.createElement(tag)
+  if (cls) e.className = cls
+  if (html != null) e.innerHTML = html
+  if (style) e.setAttribute('style', style)
+  if (parent) parent.appendChild(e)
+  return e
+}
+/** Words appear as they are spoken and stay. list: [[html, time, style?]] */
+function say(t, el, list, o = {}) {
+  el.innerHTML = ''
+  const line = h('div', 'line', '', el, o.style || '')
+  for (const [text, ts, st] of list) {
+    if (text === '<br/>') { if (t >= ts - 0.04) h('br', null, null, line); continue }
+    if (t < ts - 0.04) continue
+    const k = back(P(t, ts - 0.04, ts + 0.22), 2)
+    const w = h('span', 'w', text, line, st || '')
+    w.style.transform = `translateY(${lerp(40, 0, k)}px) scale(${lerp(0.7, 1, k)})`
+    w.style.opacity = P(t, ts - 0.04, ts + 0.08)
+  }
+  el.style.transform = `translate(-50%, -50%) translate(0, ${o.y || 0}px) scale(${o.s || 1})`
+  el.style.opacity = o.o ?? 1
+}
+
+const I = {
+  form: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="#111015" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
+  sheet: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>',
+  give: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  cam: '<svg viewBox="0 0 24 24" fill="none" stroke="#6c34ff" stroke-width="2" stroke-linecap="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="#6c34ff" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/></svg>',
+  slides: '<svg viewBox="0 0 24 24" fill="none" stroke="#6c34ff" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+}
+const TOOLC = { qr: '#ffffff', form: '#7248b9', chat: '#1a73e8', give: '#e8453c', sheet: '#1e8e3e' }
+
+/* ───────── subtitles: phrase = words up to a sentence break ───────── */
+const PH = []
+{
+  let a = 0
+  W.forEach((w, i) => {
+    const endsSentence = /[.?!:…]$/.test(w.w)
+    const long = i - a >= 9 && /,$/.test(w.w)
+    if (endsSentence || long || i === W.length - 1) { PH.push([a, i]); a = i + 1 }
+  })
+}
+function subtitles(t, dark) {
+  const el = $('sub')
+  const ph = PH.find(([a, b]) => t >= W[a].s - 0.12 && t <= W[b].e + 0.3)
+  if (!ph) return (el.innerHTML = '')
+  el.className = 'sub' + (dark ? ' darktext' : '')
+  el.innerHTML = W.slice(ph[0], ph[1] + 1).map((w) => (t >= w.s ? (t < w.e + 0.1 ? `<b>${w.w}</b>` : w.w) : `<span style="opacity:.3">${w.w}</span>`)).join(' ')
+}
+
+/* ───────── scenes ───────── */
+const S = [
+  ['a', 0, T('one', 1) - 0.1, 1],                    // name · worker · media department · struggled
+  ['b', T('why') - 0.4, T('one', 3) - 0.1, 1],         // why five platforms?
+  ['c', T('one', 3) - 0.1, T('and', 3) - 0.1, 0],      // the tools
+  ['d', T('and', 3) - 0.1, T('not') - 0.1, 0],         // follow-up challenge
+  ['e', T('not') - 0.1, T('so,') - 0.1, 1],            // not because they didn't care
+  ['f', T('so,') - 0.1, T('one', 4) - 0.1, 0],         // two years ago · I built ZionDesk
+  ['g', T('one', 4) - 0.1, T('with', 2) - 0.1, 1],     // one platform
+  ['h', T('with', 2) - 0.1, T('ziondesk', 4) - 0.1, 1], // features
+  ['i', T('ziondesk', 4) - 0.1, T('whether') - 0.1, 1],// came from a problem · goal
+  ['j', T('whether') - 0.1, T('and', 15) - 0.1, 0],    // 50 · 500 · thousands
+  ['k', T('and', 15) - 0.1, T('if') - 0.1, 0],          // offer
+  ['l', T('if') - 0.1, T('sign') - 0.1, 1],            // this is for you
+  ['m', T('sign') - 0.1, 999, 1],                      // sign up · end card
+]
+// fix: scene "b" starts where "a" ends
+S[0][2] = T('why') - 0.4
+
+/* static pieces */
+const chips = [['cam', 'Camera'], ['mic', 'Sound'], ['slides', 'Slides']].map(([k, label]) => h('div', 'chip abs', `<span style="width:56px;height:56px;display:grid">${I[k]}</span>${label}`, $('a2')))
+const ghosts = [[-300, -560, 0.6], [300, -470, 0.55], [-320, -330, 0.45], [310, -700, 0.5], [0, -780, 0.45]].map(([x, y, s]) => ({ el: h('div', 'bubble abs', 'Why?', $('bghost')), x, y, s }))
+const TOOLS = [['qr', 'QR code site', 'qr'], ['form', 'Google Forms', 'google'], ['chat', 'Messaging app', 'another'], ['give', 'Giving app', 'another'], ['sheet', 'Spreadsheets', 'spreadsheets']]
+const tiles = TOOLS.map(([icon, label]) => {
+  const d = h('div', 'abs', '', $('ctiles'))
+  h('div', 'tile', I[icon], d, `background:${TOOLC[icon]}`)
+  h('div', 'tlabel', label, d)
+  return d
+})
+const rain = Array.from({ length: 26 }, (_, i) => {
+  const keys = Object.keys(TOOLC)
+  const d = h('div', 'tile abs', I[keys[i % 5]], $('erain'), `background:${TOOLC[keys[i % 5]]};width:150px;height:150px;border-radius:30px`)
+  d.querySelector('svg').style.cssText = 'width:74px;height:74px'
+  return { d, x: (i * 397) % 1000 - 40, r: ((i * 53) % 60) - 30, delay: (i % 13) * 0.07 }
+})
+const fly = Object.keys(TOOLC).map((k) => {
+  const d = h('div', 'tile abs', I[k], $('gfly'), `background:${TOOLC[k]};width:180px;height:180px;border-radius:38px`)
+  d.querySelector('svg').style.cssText = 'width:90px;height:90px'
+  return d
+})
+$('fbulb').innerHTML = `<svg width="420" height="520" viewBox="0 0 24 30"><path d="M9 21h6M10 24h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z" fill="#c4ec62" stroke="#c4ec62" stroke-width="1.2" stroke-linejoin="round"/></svg>`
+$('fburst').innerHTML = `<svg width="1080" height="1920" viewBox="0 0 1080 1920">${Array.from({ length: 24 }, (_, i) => `<line x1="540" y1="960" x2="${540 + Math.cos((i / 24) * Math.PI * 2) * 900}" y2="${960 + Math.sin((i / 24) * Math.PI * 2) * 900}" stroke="${i % 2 ? '#c4ec62' : '#6c34ff'}" stroke-width="${i % 2 ? 6 : 10}" stroke-linecap="round"/>`).join('')}</svg>`
+$('eheart').innerHTML = `<svg width="300" height="300" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z" fill="#6c34ff"/></svg>`
+const CUT = [['NOT', 'Anton', '#c4ec62', '#18210a'], ['BUILT', 'Archivo Black', '#ffffff', '#6c34ff'], ['FOR', 'Playfair Display', '#6c34ff', '#ffffff'], ['CHURCH', 'Anton', '#111015', '#c4ec62']]
+const cuts = CUT.map(([wd, f, bg, fg]) => h('span', 'cut abs', wd, $('ecut'), `font-family:'${f}';${f === 'Playfair Display' ? 'font-style:italic;font-weight:800;' : ''}font-size:150px;background:${bg};color:${fg}`))
+const seats = Array.from({ length: 100 }, () => h('i', 'abs', '', $('kseats'), 'width:56px;height:56px;border-radius:14px;background:#2a2635'))
+const ten = Array.from({ length: 10 }, (_, i) => {
+  const k = Object.keys(TOOLC)[i % 5]
+  const d = h('div', 'tile abs', I[k], $('jtiles'), `background:${TOOLC[k]};width:150px;height:150px;border-radius:30px`)
+  d.querySelector('svg').style.cssText = 'width:74px;height:74px'
+  return d
+})
+const ROLES = [['🎤', 'Pastor', 'pastor'], ['🗂️', 'Church admin', 'administrator'], ['🎥', 'Media worker', 'media', 3], ['🤝', 'Follow-up leader', 'follow-up', 2], ['💰', 'Finance team', 'finance', 2]]
+const roles = ROLES.map(([e, r]) => h('div', 'role abs', `<span>${e}</span>${r}`, $('lroles')))
+const ACCESS = [['🎥', 'Media', '#6c34ff'], ['💰', 'Finance', '#c4ec62'], ['🤝', 'Follow-up', '#111015']]
+const access = ACCESS.map(([e, r, c]) => h('div', 'role abs', `<span>${e}</span>${r}<span style="margin-left:10px;color:${c === '#c4ec62' ? '#5c7a14' : c}">${I.lock}</span>`, $('hroles')))
+
+/* features: [label, image, focus x, focus y, zoom, start word] */
+const FEATS = [
+  ['QR codes for services & events', 'links', 0.42, 0.47, 1.55, ['create', 2]],
+  ['Collect newcomer & convert details', 'phone', 0, 0, 1, ['collect', 2]],
+  ['Automatic follow-up', 'overview', 0.33, 0.4, 1.7, ['automatically', 1]],
+  ['Members & departments', 'members', 0.42, 0.45, 1.45, ['manage', 3]],
+  ['Bulk email & SMS', 'messaging', 0.42, 0.55, 1.5, ['send', 1]],
+  ['Automatic birthday messages', 'overview', 0.33, 0.83, 1.8, ['send', 2]],
+  ['Offerings, giving & finances', 'giving', 0.5, 0.38, 1.5, ['manage', 4]],
+  ['Events & activities', 'events', 0.45, 0.42, 1.5, ['run', 1]],
+  ['Access for each department', 'roles', 0, 0, 1, ['give', 1]],
+].map(([label, img, fx, fy, z, [w, n]]) => ({ label, img, fx, fy, z, t: T(w, n) }))
+
+function seek(t) {
+  for (const [id, a, b] of S) $(id).style.display = t >= a && t < b ? 'block' : 'none'
+  const cur = S.find(([, a, b]) => t >= a && t < b)
+  const id = cur && cur[0]
+  subtitles(t, cur && cur[3])
+
+  /* A · name, worker, media department, "one thing I struggled with" */
+  if (id === 'a') {
+    if (t < T('before') - 0.05) say(t, $('a1'), [['My', T('my')], ['name', T('name')], ['is', T('is')], ['<br/>', 0], ['Taiwo.', T('taiwo'), 'color:#6c34ff;font-size:150px']], { y: -40 })
+    else if (t < T('i', 3) - 0.05) say(t, $('a1'), [['Before I started', T('before')], ['<br/>', 0], ['building', T('building')], ['ZionDesk,', T('ziondesk'), 'color:#6c34ff'], ['<br/>', 0], ['I was simply', T('was')], ['<br/>', 0], ['a', T('a')], ['<span class="hl">worker</span>', T('worker')], ['in', T('in')], ['church.', T('church')]], { y: -60, style: 'font-size:82px' })
+    else if (t < T('and', 1) - 0.05) say(t, $('a1'), [['I served in the', T('i', 3)], ['<br/>', 0], ['media', T('media'), 'color:#6c34ff'], ['department', T('department')]], { y: -200, style: 'font-size:88px' })
+    else say(t, $('a1'), [['one thing I', T('one', 1)], ['<br/>', 0], ['constantly', T('constantly')], ['<span style="color:#e23a3a">struggled</span>', T('struggled')], ['<br/>', 0], ['with…', T('with')]], { y: -60, style: 'font-size:84px' })
+    chips.forEach((c, i) => {
+      const t0 = T('department') + i * 0.16
+      const k = pop(t, t0)
+      put(c, { x: [110, 410, 690][i], y: 1080 + (i % 2) * 90 - (t - t0) * 12, s: lerp(0.4, 1, k), o: P(t, t0, t0 + 0.1) * (1 - P(t, T('and', 1) - 0.2, T('and', 1))), r: [-6, 4, -3][i] })
+    })
+  }
+
+  /* B · why? */
+  if (id === 'b') {
+    const tw = T('why'), tf = T('five'), tdone = T('done')
+    const angry = P(t, T('simple') - 0.1, tdone + 0.1)
+    $('bbg').style.background = `radial-gradient(70% 55% at 50% 48%, rgba(226,58,58,${angry * 0.55}) 0%, rgba(40,10,14,${angry * 0.85}) 100%)`
+    const dk = P(t, tw - 0.4, tw - 0.25) * (1 - P(t, tw - 0.06, tw))
+    $('bdots').querySelectorAll('i').forEach((d, i) => (d.style.transform = `translateY(${Math.sin(t * 10 - i) * 8}px)`))
+    put($('bdots'), { x: 540, y: 960, cx: 1, cy: 1, s: lerp(0.6, 1, dk), o: dk })
+    const shake = Math.sin(t * 60) * 10 * angry
+    put($('bwhy'), { x: 540 + shake, y: tf > t ? 960 : lerp(960, 560, easeIO(P(t, tf - 0.1, tf + 0.25))), cx: 1, cy: 1, s: lerp(0.4, 1, pop(t, tw)) * (1 + angry * 0.3), o: P(t, tw - 0.02, tw + 0.08) })
+    $('bwhy').firstChild.style.background = angry > 0.5 ? '#ffe3e3' : '#e9e7ee'
+    $('bwhy').firstChild.style.color = angry > 0.5 ? '#c62828' : '#4b4856'
+    const fk = pop(t, tf)
+    $('bfive').innerHTML = t >= tf - 0.05 ? `<div style="text-align:center"><div class="big" style="font-size:330px;color:${angry > 0.5 ? '#fff' : '#6c34ff'}">5</div><div class="line" style="font-size:72px;${angry > 0.5 ? 'color:#fff' : ''}">different platforms</div><div class="line" style="font-size:58px;margin-top:18px;opacity:${P(t, T('simple') - 0.1, T('simple'))};${angry > 0.5 ? 'color:#ffd0d0' : 'color:#8d8a96'}">for one simple church task</div></div>` : ''
+    put($('bfive'), { cx: 1, cy: 1, y: 260, s: lerp(0.4, 1, fk), o: P(t, tf - 0.05, tf + 0.05) })
+    ghosts.forEach((g, i) => {
+      const t0 = T('platforms') + i * 0.15
+      put(g.el, { x: 540 + g.x, y: 960 + g.y, cx: 1, cy: 1, s: g.s * lerp(0.3, 1, pop(t, t0)), o: P(t, t0, t0 + 0.1) * 0.45, blur: 2 })
+    })
+  }
+
+  /* C · the tools on the cutting mat */
+  if (id === 'c') {
+    const starts = [T('qr', 1), T('google'), T('another', 1), T('another', 2), T('spreadsheets')]
+    const pos = [[130, 250, -8], [640, 330, 7], [120, 760, 5], [650, 860, -6], [380, 1240, 4]]
+    tiles.forEach((d, i) => {
+      const k = back(P(t, starts[i] - 0.1, starts[i] + 0.3), 1.6)
+      put(d, { x: pos[i][0], y: lerp(-500, pos[i][1], k), r: pos[i][2] + (1 - P(t, starts[i] - 0.1, starts[i] + 0.3)) * 25, o: P(t, starts[i] - 0.1, starts[i]) })
+    })
+    const tn = T('newcomers')
+    $('ctitle').innerHTML = t >= tn - 0.05 ? `<div style="display:flex;flex-wrap:wrap;justify-content:center;width:1000px;gap:12px">${['newcomers', 'new converts'].map((wd, i) => `<span class="cut" style="font-family:${['Anton', 'Archivo Black'][i]};font-size:100px;background:${['#c4ec62', '#ffffff'][i]};color:${['#18210a', '#6c34ff'][i]};transform:rotate(${[-4, 3][i]}deg)">${wd}</span>`).join('')}</div>` : ''
+    put($('ctitle'), { cx: 1, cy: 1, y: 640, s: back(P(t, tn - 0.05, tn + 0.3), 2), o: P(t, tn - 0.05, tn + 0.05) })
+  }
+
+  /* D · follow-up became a challenge */
+  if (id === 'd') {
+    const tv = T('visited'), tl = T('life'), tfo = T('following'), tch = T('challenge')
+    const ck = back(P(t, tv - 0.2, tv + 0.25), 1.6)
+    const fade = P(t, tfo, tch + 0.4)
+    $('dcard').innerHTML = `<div style="width:840px;padding:44px;border-radius:40px;background:#fff;box-shadow:0 40px 90px -30px rgba(0,0,0,.6)">
+      <div style="display:flex;gap:28px;align-items:center"><div style="width:120px;height:120px;border-radius:50%;background:#6c34ff;color:#fff;display:grid;place-items:center;font-weight:800;font-size:52px">GA</div>
+      <div><div style="font-weight:800;font-size:56px">Grace A.</div><div style="font-size:38px;color:#6c34ff;font-weight:700">${t >= tl - 0.05 ? '✝️ Gave her life to Christ' : 'First-time visitor'}</div></div></div>
+      <div style="margin-top:30px;display:flex;gap:16px;flex-wrap:wrap">${['Call', 'Visit', 'Pray'].map((x, i) => `<span style="padding:12px 26px;border-radius:999px;background:#f1eef8;font-weight:700;font-size:36px;color:#8d8a96;text-decoration:${fade > 0.35 + i * 0.15 ? 'line-through' : 'none'}">${x}</span>`).join('')}</div></div>`
+    put($('dcard'), { x: 120, y: lerp(1300, 520, ck), r: lerp(8, -2, ck) + fade * 6, s: 1 - fade * 0.12, o: P(t, tv - 0.2, tv) * (1 - fade * 0.55), f: `grayscale(${fade})` })
+    // days slipping by
+    const days = ['Day 1', 'Day 7', 'Day 14', 'Day 30']
+    $('dcal').innerHTML = days.map((d, i) => {
+      const t0 = tfo + i * 0.35
+      return `<div class="chip abs" style="transform:translate(${[110, 600, 160, 630][i]}px, ${[1260, 1320, 1470, 1520][i] - (t - t0) * 20}px) rotate(${[-6, 5, -3, 7][i]}deg);opacity:${P(t, t0, t0 + 0.1) * (1 - P(t, tch + 0.6, tch + 1))};${i === 3 ? 'background:#ffe3e3;color:#c62828' : ''}">${i === 3 ? '❓' : '📅'} ${d}</div>`
+    }).join('')
+    const txt = t >= tch - 0.1 ? `<div class="line" style="color:#fff;font-size:78px">follow-up became<br/><span style="color:#e23a3a">another challenge</span></div>` : ''
+    $('dtext').innerHTML = txt
+    put($('dtext'), { cx: 1, cy: 1, y: -620, s: back(P(t, tch - 0.1, tch + 0.2), 2), o: P(t, tch - 0.1, tch) })
+  }
+
+  /* E · not because the church didn't care */
+  if (id === 'e') {
+    const tc = T('care'), tt = T('too', 1), tw = T('weren\'t'), ta = T('actually')
+    put($('eheart'), { x: 390, y: 260, s: lerp(0.4, 1, pop(t, tc)) * (1 + Math.sin(t * 8) * 0.04), o: P(t, tc - 0.05, tc + 0.05) * (1 - P(t, tt - 0.1, tt + 0.2)) })
+    let txt
+    if (t < tt - 0.1) txt = `<div class="line" style="font-size:80px">Not because the church<br/><span style="color:#6c34ff">didn't care.</span></div>`
+    else if (t < tw - 0.1) txt = `<div class="line" style="font-size:80px">simply <span class="hl">too many things</span><br/>to manage</div>`
+    else txt = ''
+    $('etext').innerHTML = txt
+    put($('etext'), { cx: 1, cy: 1, y: t < tt - 0.1 ? 120 : -560, o: 1 })
+    rain.forEach((r) => {
+      const t0 = tt + r.delay
+      const k = P(t, t0, t0 + 0.9)
+      put(r.d, { x: r.x, y: lerp(-220, 1700 + (r.x % 200), easeIO(k)), r: r.r + k * 50, o: P(t, t0, t0 + 0.05) * (1 - P(t, tw - 0.2, tw)) })
+    })
+    cuts.forEach((c, i) => {
+      const t0 = [tw, T('built', 1), T('around'), ta][i]
+      const k = back(P(t, t0 - 0.05, t0 + 0.22), 2.4)
+      put(c, { x: [140, 470, 150, 420][i], y: [620, 640, 860, 880][i], r: [-6, 5, -4, 6][i], s: lerp(2.2, 1, k), o: P(t, t0 - 0.05, t0) })
+    })
+  }
+
+  /* F · two years ago → idea → ZionDesk */
+  if (id === 'f') {
+    const t2 = T('two'), td = T('decided'), tz = T('ziondesk', 2)
+    $('fyear').innerHTML = `<div style="text-align:center"><div class="big" style="font-size:320px;color:#c4ec62">2</div><div class="line" style="color:#fff;font-size:96px">years ago</div></div>`
+    put($('fyear'), { cx: 1, cy: 1, y: -380, s: lerp(0.5, 1, pop(t, t2)), o: P(t, t2 - 0.03, t2 + 0.06) * (1 - P(t, tz - 0.3, tz - 0.1)) })
+    const bk = P(t, td - 0.1, td + 0.3)
+    put($('fbulb'), { x: 330, y: 820, s: lerp(0.5, 1, back(bk, 2)), o: bk * (1 - P(t, tz - 0.3, tz - 0.1)), f: `drop-shadow(0 0 ${60 + Math.sin(t * 9) * 25}px rgba(196,236,98,.85))` })
+    const k = back(P(t, tz - 0.05, tz + 0.45), 1.8)
+    put($('flogo'), { cx: 1, cy: 1, s: lerp(0.3, 1, k), o: P(t, tz - 0.05, tz + 0.05), f: `drop-shadow(0 0 ${lerp(120, 40, P(t, tz, tz + 0.8))}px rgba(196,236,98,.75))` })
+    const bu = P(t, tz - 0.05, tz + 0.6)
+    $('fburst').style.transformOrigin = '540px 960px'
+    put($('fburst'), { s: lerp(0.2, 1.4, easeOut(bu)), r: t * 12, o: bu > 0 ? 1 - bu : 0 })
+  }
+
+  /* G · one platform */
+  if (id === 'g') {
+    const t0 = S[6][1], tw = T('without'), tj = T('jumping')
+    const pk = back(P(t, t0, t0 + 0.5), 1.4)
+    put($('gphone'), { x: 280, y: lerp(1950, 470, pk), r: lerp(10, 0, pk), s: 0.92 })
+    fly.forEach((d, i) => {
+      const s = tj + i * 0.12
+      const k = easeIO(P(t, s, s + 0.55))
+      const from = [[-60, 220], [930, 300], [-80, 1500], [940, 1460], [430, -260]][i]
+      put(d, { x: lerp(from[0], 450, k), y: lerp(from[1], 1000, k), s: lerp(1, 0.2, k), r: lerp([-20, 18, 12, -15, 8][i], 0, k), o: P(t, s - 0.15, s) * (1 - P(t, s + 0.45, s + 0.55)) })
+    })
+    $('gtext').innerHTML = t < tw - 0.1 ? `<div class="line" style="font-size:96px"><span class="hl">One</span> platform</div>` : `<div class="line" style="font-size:70px">no more jumping between<br/>websites &amp; apps</div>`
+    put($('gtext'), { cx: 1, cy: 1, y: -700, s: back(P(t, t < tw - 0.1 ? t0 : tw - 0.1, (t < tw - 0.1 ? t0 : tw - 0.1) + 0.25), 2) })
+  }
+
+  /* H · features walkthrough */
+  if (id === 'h') {
+    let fi = 0
+    for (let i = 0; i < FEATS.length; i++) if (t >= FEATS[i].t - 0.15) fi = i
+    const f = FEATS[fi]
+    const k = P(t, f.t - 0.15, f.t + 0.35)
+    const nextT = FEATS[fi + 1] ? FEATS[fi + 1].t - 0.15 : S[7][2]
+    const z = P(t, f.t, nextT)
+    $('htop').innerHTML = `<div class="flabel"><i>${String(fi + 1).padStart(2, '0')}</i>${f.label}</div>`
+    put($('htop'), { cx: 1, cy: 1, y: -640, s: back(k, 1.8) })
+    const isCard = f.img !== 'phone' && f.img !== 'roles'
+    $('hcard').style.display = isCard ? 'block' : 'none'
+    $('hphone').style.display = f.img === 'phone' ? 'block' : 'none'
+    $('hroles').style.display = f.img === 'roles' ? 'block' : 'none'
+    if (isCard) {
+      const src = `shots/${f.img}.png`
+      if (!$('himg').src.endsWith(src)) $('himg').src = src
+      const img = $('himg')
+      img.style.transformOrigin = `${f.fx * 100}% ${f.fy * 100}%`
+      img.style.transform = `scale(${lerp(1, f.z, easeIO(z))})`
+      const dir = fi % 2 ? 1 : -1
+      put($('hcard'), { persp: 1, rx: lerp(18, 4, easeOut(k)), ry: dir * lerp(16, 3, easeOut(k)), x: 50 + dir * lerp(120, 0, easeOut(k)), y: 600, s: lerp(0.85, 1, easeOut(k)), o: P(t, f.t - 0.15, f.t) })
+    }
+    if (f.img === 'phone') put($('hphone'), { x: 305, y: lerp(1900, 520, back(k, 1.3)), r: lerp(-8, 3, k) })
+    if (f.img === 'roles') {
+      access.forEach((a, i) => {
+        const t0 = [T('media', 2), T('finance', 1), T('follow-up', 1)][i]
+        put(a, { x: [120, 420, 200][i], y: [640, 880, 1120][i], s: lerp(0.4, 1, pop(t, t0)), o: P(t, t0, t0 + 0.08), r: [-3, 3, -2][i] })
+      })
+    }
+    // progress dots
+    $('hcount').innerHTML = `<div style="display:flex;gap:12px">${FEATS.map((_, i) => `<i style="display:block;width:${i === fi ? 46 : 16}px;height:16px;border-radius:9px;background:${i <= fi ? '#6c34ff' : 'rgba(108,52,255,.2)'}"></i>`).join('')}</div>`
+    put($('hcount'), { x: 540, y: 1470, cx: 1 })
+  }
+
+  /* I · came from a problem · my goal */
+  if (id === 'i') {
+    const tg = T('goal'), tl = T('less'), tf = T('fighting'), tmo = T('more'), tm = T('ministry')
+    if (t < tg - 0.2) say(t, $('i1'), [['ZionDesk came from', T('ziondesk', 4)], ['<br/>', 0], ['a problem', T('problem')], ['I', T('i', 7)], ['<br/>', 0], ['<span class="hl">personally</span>', T('personally')], ['experienced', T('experienced')]], { y: -160, style: 'font-size:84px' })
+    else if (t < tl - 0.1) say(t, $('i1'), [['My goal is', T('goal')], ['<br/>', 0], ['<span style="color:#6c34ff;font-size:150px">simple.</span>', T('simple', 2)]], { y: -120 })
+    else {
+      const k2 = P(t, tmo - 0.05, tmo + 0.2)
+      $('i1').innerHTML = `<div style="display:grid;gap:60px;justify-items:center">
+        <div class="line" style="font-size:76px;opacity:${P(t, tl - 0.05, tl + 0.05)};transform:scale(${1 - k2 * 0.15})">less time <span style="color:#e23a3a;text-decoration:line-through;text-decoration-thickness:10px">fighting software</span></div>
+        <div class="line" style="font-size:96px;opacity:${k2};transform:scale(${lerp(0.6, 1, pop(t, tmo))})">more time doing<br/><span class="hl" style="background:${t >= tm ? '#c4ec62' : '#6c34ff'};color:${t >= tm ? '#18210a' : '#fff'}">ministry</span></div></div>`
+      $('i1').style.transform = 'translate(-50%, -50%) translate(0, -120px)'
+      $('i1').style.opacity = 1
+    }
+    $('i2').innerHTML = t >= T('serving', 1) - 0.1 && t < tg - 0.2 ? `<div class="hand" style="font-size:90px;color:#6c34ff;transform:rotate(-6deg)">while serving in church</div>` : ''
+    put($('i2'), { x: 150, y: 1180, o: P(t, T('serving', 1) - 0.1, T('serving', 1) + 0.1) })
+  }
+
+  /* J · 50 · 500 · thousands · ten platforms · one place */
+  if (id === 'j') {
+    const t50 = T('fifty'), t500 = T('five', 2), tk = T('thousands'), t10 = T('ten'), tone = T('one', 5)
+    let n = 0
+    if (t >= tk - 0.05) n = Math.round(lerp(500, 5000, easeOut(P(t, tk - 0.05, tk + 0.5))))
+    else if (t >= t500 - 0.05) n = Math.round(lerp(50, 500, easeOut(P(t, t500 - 0.05, t500 + 0.35))))
+    else n = Math.round(lerp(0, 50, easeOut(P(t, t50 - 0.1, t50 + 0.3))))
+    const showN = t < t10 - 0.15
+    $('j1').innerHTML = showN ? `<div style="text-align:center"><div class="big" style="font-size:280px;color:#c4ec62">${n.toLocaleString('en')}${t >= tk + 0.3 ? '+' : ''}</div><div class="line" style="color:#fff;font-size:72px">members</div></div>`
+      : t < tone - 0.1 ? `<div class="line" style="color:#fff;font-size:84px">you shouldn't need<br/><span style="color:#e23a3a">10 platforms</span></div>` : `<div class="line" style="color:#fff;font-size:100px">just <span class="hl">one place</span></div>`
+    put($('j1'), { cx: 1, cy: 1, y: showN ? -120 : -560, s: back(P(t, showN ? t50 - 0.1 : t < tone - 0.1 ? t10 - 0.15 : tone - 0.1, (showN ? t50 - 0.1 : t < tone - 0.1 ? t10 - 0.15 : tone - 0.1) + 0.25), 2) })
+    ten.forEach((d, i) => {
+      const t0 = t10 + i * 0.06
+      const merge = easeIO(P(t, tone - 0.1, tone + 0.4))
+      put(d, { x: lerp(110 + (i % 5) * 180, 465, merge), y: lerp(820 + Math.floor(i / 5) * 200, 960, merge), s: lerp(0.4, 1, pop(t, t0)) * (1 - merge * 0.7), r: (i % 3 - 1) * 8 * (1 - merge), o: P(t, t0, t0 + 0.08) * (1 - P(t, tone + 0.3, tone + 0.45)) })
+    })
+  }
+
+  /* K · first 100 · 40% off · CHRISTALONE */
+  if (id === 'k') {
+    const tf = T('first'), th = T('hundred', 2), t40 = T('forty'), tc = T('code', 2), tch = T('christ', 2), tal = E('alone')
+    const n = Math.round(100 * easeOut(P(t, T('one', 6) - 0.1, th + 0.4)))
+    const phase = t < t40 - 0.1 ? 0 : t < tc - 0.1 ? 1 : 2
+    $('kcount').innerHTML = phase === 0 ? `<div style="text-align:center"><div class="line" style="color:#fff;font-size:80px">the first</div><div class="big" style="font-size:320px;color:#c4ec62">${n}</div><div class="line" style="color:#fff;font-size:76px">churches</div></div>` : ''
+    put($('kcount'), { cx: 1, cy: 1, y: -340, s: back(P(t, tf - 0.05, tf + 0.25), 2), o: P(t, tf - 0.15, tf) })
+    seats.forEach((s, i) => {
+      s.style.background = i < n ? (i % 3 ? '#6c34ff' : '#c4ec62') : '#2a2635'
+      put(s, { x: 90 + (i % 10) * 92, y: 840 + Math.floor(i / 10) * 66, o: phase === 0 ? P(t, tf, tf + 0.2) : 0 })
+    })
+    if (phase >= 1) {
+      const k = pop(t, t40)
+      const strike = easeOut(P(t, t40 + 0.15, t40 + 0.45))
+      $('kprice').innerHTML = `<div style="display:grid;justify-items:center;gap:22px">
+        <div style="font-weight:900;font-size:240px;line-height:1;color:#fff;background:#6c34ff;padding:10px 50px;border-radius:30px;box-shadow:0 0 120px rgba(108,52,255,.8)">-40%</div>
+        <div style="display:flex;gap:40px;align-items:center;font-weight:800;font-size:86px"><span style="color:#8d8a96;position:relative">€19.99<span style="position:absolute;left:-6px;right:-6px;top:50%;height:8px;background:#e23a3a;transform:scaleX(${strike});transform-origin:left"></span></span><span style="color:#c4ec62;opacity:${strike}">€11.99</span></div></div>`
+      put($('kprice'), { cx: 1, cy: 1, y: phase === 1 ? -120 : -520, s: lerp(0.4, 1, k) * (phase === 2 ? 0.75 : 1), o: P(t, t40 - 0.1, t40) })
+    } else $('kprice').innerHTML = ''
+    if (phase === 2) {
+      const full = 'CHRISTALONE'
+      const kk = P(t, tch - 0.05, tal - 0.1)
+      $('kcode').innerHTML = `<div style="display:grid;gap:30px;justify-items:center"><div class="line" style="color:#fff;font-size:66px">with the code</div><div class="input" style="${kk >= 1 ? 'border-color:#c4ec62;box-shadow:0 0 80px rgba(196,236,98,.55), 0 22px 0 -6px #c4ec62' : ''}">${full.slice(0, Math.round(full.length * kk))}<span class="caret" style="opacity:${kk < 1 ? (Math.floor(t * 4) % 2 ? 1 : 0.2) : 0}"></span></div></div>`
+      put($('kcode'), { cx: 1, cy: 1, y: 230, s: back(P(t, tc - 0.1, tc + 0.2), 2) })
+    } else $('kcode').innerHTML = ''
+  }
+
+  /* L · this is for you */
+  if (id === 'l') {
+    const tf = T('this', 2)
+    roles.forEach((r, i) => {
+      const [, , w, n] = ROLES[i]
+      const t0 = T(w, n || 1)
+      put(r, { x: [110, 430, 130, 420, 200][i], y: [440, 620, 820, 1000, 1180][i], r: [-4, 3, -2, 4, -3][i], s: lerp(0.4, 1, pop(t, t0)) * (1 - P(t, tf - 0.1, tf + 0.2) * 0.1), o: P(t, t0, t0 + 0.08) })
+    })
+    $('l1').innerHTML = t >= tf - 0.05 ? `<div class="line" style="font-size:110px">this is <span class="hl">for you</span></div>` : ''
+    put($('l1'), { cx: 1, cy: 1, y: -700, s: back(P(t, tf - 0.05, tf + 0.25), 2) })
+  }
+
+  /* M · sign up · one platform · your church · everything connected · end card */
+  if (id === 'm') {
+    const ts = T('sign'), to = T('one', 7), ty = T('your', 5), te = T('everything', 2), tz = T('ziondesk', 6), tb = T('built', 3), tch = T('church', 12)
+    const endK = P(t, tz - 0.1, tz + 0.3)
+    if (t < tz - 0.1) {
+      let html
+      if (t < to - 0.05) html = `<div class="line" style="font-size:96px">Sign up for<br/><span style="color:#6c34ff">ZionDesk</span> today</div>`
+      else html = `<div style="display:grid;gap:26px;justify-items:center">${[['One platform.', to], ['Your church.', ty], ['Everything connected.', te]].map(([x, tt], i) => `<div class="line" style="font-size:${i === 2 ? 90 : 100}px;opacity:${P(t, tt - 0.04, tt + 0.08)};transform:translateY(${lerp(40, 0, back(P(t, tt - 0.04, tt + 0.22), 2))}px)">${i === 2 ? `<span class="hl">${x}</span>` : x}</div>`).join('')}</div>`
+      $('m1').innerHTML = html
+      put($('m1'), { cx: 1, cy: 1, y: -60, s: back(P(t, ts - 0.1, ts + 0.2), 2) })
+      $('mlogo').style.opacity = 0
+      $('mcta').innerHTML = ''
+    } else {
+      put($('mlogo'), { cx: 1, cy: 1, y: lerp(-80, -420, easeIO(P(t, tb - 0.3, tb + 0.2))), s: lerp(0.5, 1, back(endK, 1.6)), o: endK })
+      say(t, $('m1'), [['Built', tb], ['by', T('by', 1)], ['a', T('a', 8)], ['church', T('church', 11)], ['worker,', T('worker', 3), 'color:#6c34ff'], ['<br/>', 0], ['for', T('for', 6)], ['the', T('the', 9)], ['<span class="hl">Church.</span>', tch]], { y: -80, style: 'font-size:74px' })
+      const ck = back(P(t, tch + 0.6, tch + 1), 1.8)
+      $('mcta').innerHTML = `<div style="display:grid;gap:26px;justify-items:center"><div style="font-weight:800;font-size:66px;color:#fff;background:#111015;padding:22px 46px;border-radius:999px">ziondesk.com</div><div style="font-weight:800;font-size:40px;color:#18210a;background:#c4ec62;padding:16px 34px;border-radius:999px;white-space:nowrap">Code CHRISTALONE · 40% off · first 100 churches</div></div>`
+      put($('mcta'), { cx: 1, cy: 1, y: 430, s: lerp(0.5, 1, ck), o: P(t, tch + 0.6, tch + 0.7) })
+    }
+  }
+}
+
+window.DURATION = W[W.length - 1].e + 3.4
+window.seek = seek
+window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map((i) => (i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))))).then(() => true)
+seek(0)
+</script>
+</body>
+</html>
