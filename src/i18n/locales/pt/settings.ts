@@ -30,6 +30,7 @@ const settings: Dict['settings'] = {
       admin: 'Tudo — membros, ofertas, mensagens, definições, importação e exportação.',
       finance: 'Ofertas, despesas e relatórios financeiros. Pode ver membros mas não editá-los.',
       leader: 'Membros, eventos, mensagens e design. Sem acesso às ofertas.',
+      branch: "Envia o relatório mensal da sua filial. Não vê membros, ofertas nem mensagens.",
     },
   },
   account: {

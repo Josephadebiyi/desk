@@ -7,6 +7,7 @@
  */
 import type { EmailLang } from './strings'
 import { LIFECYCLE, type LifecycleKind } from './lifecycle'
+import { BRANCH_EMAILS, type BranchKind } from './branches'
 
 type BaseKind =
   | 'confirmSignup'
@@ -27,7 +28,7 @@ type BaseKind =
   | 'planExpired'
   | 'birthdayPrayer'
   | 'promoEnded'
-export type EmailKind = BaseKind | LifecycleKind
+export type EmailKind = BaseKind | LifecycleKind | BranchKind
 
 export interface EmailCopy {
   subject: string
@@ -226,9 +227,9 @@ const pt: Catalog = {
 }
 
 export const CATALOG: Record<EmailLang, Record<EmailKind, EmailCopy>> = {
-  en: { ...en, ...LIFECYCLE.en },
-  es: { ...es, ...LIFECYCLE.es },
-  fr: { ...fr, ...LIFECYCLE.fr },
-  de: { ...de, ...LIFECYCLE.de },
-  pt: { ...pt, ...LIFECYCLE.pt },
+  en: { ...en, ...LIFECYCLE.en, ...BRANCH_EMAILS.en },
+  es: { ...es, ...LIFECYCLE.es, ...BRANCH_EMAILS.es },
+  fr: { ...fr, ...LIFECYCLE.fr, ...BRANCH_EMAILS.fr },
+  de: { ...de, ...LIFECYCLE.de, ...BRANCH_EMAILS.de },
+  pt: { ...pt, ...LIFECYCLE.pt, ...BRANCH_EMAILS.pt },
 }

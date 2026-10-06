@@ -11,7 +11,7 @@ const enums: Dict['enums'] = {
   expense: { Utilities: 'Suministros', Salaries: 'Salarios', Outreach: 'Evangelismo', Equipment: 'Equipamiento', Maintenance: 'Mantenimiento', Missions: 'Misiones', Events: 'Eventos', Other: 'Otros' },
   request: { 'Awaiting payment': 'Pendiente de pago', Submitted: 'Enviada', 'In design': 'En diseño', Review: 'Revisión', Delivered: 'Entregada' },
   campaign: { Queued: 'En cola', Scheduled: 'Programado', Sending: "Enviando", Sent: "Enviado", Failed: "Fallido" },
-  role: { admin: 'Administrador', finance: 'Finanzas', leader: 'Líder de ministerio' },
+  role: { admin: 'Administrador', finance: 'Finanzas', leader: 'Líder de ministerio', branch: "Líder de sede" },
   plan: { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' },
 }
 export default enums

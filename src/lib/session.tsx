@@ -15,6 +15,8 @@ export interface ChurchLink {
   name: string
   slug: string
   role: Role
+  /** Branch leaders: the branch they report for. */
+  branch?: string | null
 }
 
 interface SessionApi {
@@ -118,7 +120,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const uid = s.user.id
       const [{ data: prof }, { data: links }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),
-        supabase.from('church_users').select('role, churches(id, name, slug)').eq('user_id', uid),
+        supabase.from('church_users').select('role, branch, churches(id, name, slug)').eq('user_id', uid),
       ])
       if (prof) {
         setProfile({ full_name: prof.full_name, email: prof.email, avatar_url: prof.avatar_url ?? null })
@@ -126,7 +128,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       let list: ChurchLink[] = (links ?? []).flatMap((l) => {
         const c = l.churches as unknown as { id: string; name: string; slug: string } | null
-        return c ? [{ id: c.id, name: c.name, slug: c.slug, role: l.role as Role }] : []
+        return c ? [{ id: c.id, name: c.name, slug: c.slug, role: l.role as Role, branch: (l.branch as string | null) ?? null }] : []
       })
       // First sign-in after confirming email: create the church saved during sign-up.
       const pending = s.user.user_metadata?.pending_church as PendingChurch | undefined

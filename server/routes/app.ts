@@ -17,11 +17,11 @@ export const appRoutes = Router()
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ROLE_NAME: Record<string, Record<string, string>> = {
-  en: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader' },
-  es: { admin: 'Administrador', finance: 'Finanzas', leader: 'Líder de ministerio' },
-  fr: { admin: 'Administrateur', finance: 'Finances', leader: 'Responsable de ministère' },
-  de: { admin: 'Administrator', finance: 'Finanzen', leader: 'Bereichsleiter' },
-  pt: { admin: 'Administrador', finance: 'Finanças', leader: 'Líder de ministério' },
+  en: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader', branch: 'Branch leader' },
+  es: { admin: 'Administrador', finance: 'Finanzas', leader: 'Líder de ministerio', branch: 'Líder de sede' },
+  fr: { admin: 'Administrateur', finance: 'Finances', leader: 'Responsable de ministère', branch: 'Responsable d’antenne' },
+  de: { admin: 'Administrator', finance: 'Finanzen', leader: 'Bereichsleiter', branch: 'Standortleiter' },
+  pt: { admin: 'Administrador', finance: 'Finanças', leader: 'Líder de ministério', branch: 'Líder de filial' },
 }
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 
@@ -44,19 +44,22 @@ appRoutes.post(
   route(async (req, res) => {
     const name = String(req.body?.name ?? '').trim().slice(0, 120)
     const email = String(req.body?.email ?? '').trim().toLowerCase()
-    const role = ['admin', 'finance', 'leader'].includes(req.body?.role) ? req.body.role : 'leader'
+    const role = ['admin', 'finance', 'leader', 'branch'].includes(req.body?.role) ? req.body.role : 'leader'
     const lang = asEmailLang(req.body?.language)
     if (!name || !EMAIL_RE.test(email)) throw new HttpError(400, 'Name and a valid email are required')
     const churchId = req.caller!.churchId
-    const { data: church } = await db().from('churches').select('name').eq('id', churchId).single()
+    const { data: church } = await db().from('churches').select('name, branches').eq('id', churchId).single()
+    // A branch leader is tied to one of the church's branches.
+    const branch = role === 'branch' ? String(req.body?.branch ?? '').trim() : null
+    if (role === 'branch' && !((church?.branches as string[] | null) ?? []).includes(branch!)) throw new HttpError(400, 'Choose one of your branches for this branch leader.')
 
-    await db().from('team_invites').upsert({ church_id: churchId, name, email, role, language: lang, status: 'Invited' }, { onConflict: 'church_id,email' })
+    await db().from('team_invites').upsert({ church_id: churchId, name, email, role, branch, language: lang, status: 'Invited' }, { onConflict: 'church_id,email' })
 
     // Existing ZionDesk user → add straight away and send a sign-in link; new user → invite link.
     const { data: existing } = await db().from('profiles').select('id').eq('email', email).maybeSingle()
     let url = `${env.siteUrl}/login`
     if (existing) {
-      await db().from('church_users').upsert({ church_id: churchId, user_id: existing.id, role }, { onConflict: 'church_id,user_id' })
+      await db().from('church_users').upsert({ church_id: churchId, user_id: existing.id, role, branch }, { onConflict: 'church_id,user_id' })
       await db().from('team_invites').update({ status: 'Accepted' }).eq('church_id', churchId).eq('email', email)
     } else {
       const { data, error } = await db().auth.admin.generateLink({

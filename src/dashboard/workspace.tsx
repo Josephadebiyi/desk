@@ -173,6 +173,8 @@ export interface TeamMember {
   name: string
   email: string
   role: Role
+  /** Branch leaders: their branch. */
+  branch?: string | null
   status: 'Active' | 'Invited'
 }
 
@@ -509,13 +511,13 @@ export function WorkspaceProvider({ children, demo = false }: { children: ReactN
       inviteTeam: (t) => {
         setTeam((all) => [...all, { ...t, id: `invite:${uid()}`, status: 'Invited' }])
         if (live)
-          callApi('/team/invite', { name: t.name, email: t.email, role: t.role, language: (t as { language?: string }).language })
+          callApi('/team/invite', { name: t.name, email: t.email, role: t.role, branch: t.branch ?? null, language: (t as { language?: string }).language })
             .then(reload)
             .catch((e) => console.error('[invite]', e))
       },
       updateTeam: (id, patch) => {
         setTeam((all) => all.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-        if (live && patch.role) db.updateTeamRole(churchId, id, patch.role)
+        if (live && patch.role) db.updateTeamRole(churchId, id, patch.role, patch.role === 'branch' ? patch.branch ?? null : null)
       },
       removeTeam: (id) => {
         setTeam((all) => all.filter((x) => x.id !== id))

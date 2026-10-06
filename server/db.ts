@@ -21,13 +21,16 @@ export class HttpError extends Error {
   }
 }
 
-export type Role = 'admin' | 'finance' | 'leader'
+/** branch = a branch leader: only sees and submits their own branch's reports. */
+export type Role = 'admin' | 'finance' | 'leader' | 'branch'
 export interface Caller {
   userId: string
   email: string
   name: string
   churchId: string
   role: Role
+  /** Set for branch leaders: the branch they report for. */
+  branch: string | null
 }
 
 declare module 'express-serve-static-core' {
@@ -47,15 +50,20 @@ export function requireCaller(roles?: Role[]) {
       const data = { user }
       const churchId = String(req.headers['x-church-id'] ?? '')
       if (!/^[0-9a-f-]{36}$/i.test(churchId)) throw new HttpError(400, 'No church selected.')
-      const { data: link } = await db().from('church_users').select('role').eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle()
+      let { data: link, error: linkError } = await db().from('church_users').select('role, branch').eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle()
+      // Before migration 0010 there is no branch column: fall back so nothing else breaks.
+      if (linkError?.code === '42703') ({ data: link } = await db().from('church_users').select('role').eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle())
       if (!link) throw new HttpError(403, 'You are not part of this church.')
       if (roles && !roles.includes(link.role as Role)) throw new HttpError(403, 'Your role does not allow this.')
+      // Branch leaders only reach routes that name them explicitly.
+      if (!roles && link.role === 'branch') throw new HttpError(403, 'Your role does not allow this.')
       req.caller = {
         userId: data.user.id,
         email: data.user.email ?? '',
         name: String(data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? ''),
         churchId,
         role: link.role as Role,
+        branch: ((link as { branch?: string | null }).branch as string | null) ?? null,
       }
       next()
     } catch (e) {
@@ -89,7 +97,7 @@ export function requireUser() {
     try {
       const user = await verifiedUser(req)
       const data = { user }
-      req.caller = { userId: data.user.id, email: data.user.email ?? '', name: String(data.user.user_metadata?.full_name ?? ''), churchId: '', role: 'leader' }
+      req.caller = { userId: data.user.id, email: data.user.email ?? '', name: String(data.user.user_metadata?.full_name ?? ''), churchId: '', role: 'leader', branch: null }
       next()
     } catch (e) {
       next(e)

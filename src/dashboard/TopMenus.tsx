@@ -8,6 +8,7 @@ import type { ToolContext } from '../ai/tools'
 import { useT } from '../i18n'
 import { useSession } from '../lib/session'
 import { tEnum } from './kit'
+import { useBranchNotices } from './Branches'
 import { useMembers } from './store'
 import { initials } from './types'
 import { useWorkspace } from './workspace'
@@ -48,8 +49,9 @@ export function NotificationsMenu() {
   const navigate = useNavigate()
   const { open, setOpen, ref } = usePopover()
   const [seen, setSeen] = useState<string[]>(readSeen)
+  const branchNotices = useBranchNotices()
 
-  const items = useMemo(() => {
+  const built = useMemo(() => {
     const ctx = {
       user: { name: '', role: m.role },
       churchId: null,
@@ -72,6 +74,14 @@ export function NotificationsMenu() {
     // locale: rebuild translated text when the language changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m.members, m.role, ws.settings, ws.events, ws.campaigns, ws.requests, ws.claims, ai.inbox, locale])
+  const items = useMemo(() => {
+    const now = new Date().toISOString()
+    const extra = branchNotices.filter((it) => {
+      const s = ai.inbox[it.id]
+      return !s || (s.status === 'snoozed' && !!s.until && s.until < now)
+    })
+    return [...extra, ...built]
+  }, [branchNotices, built, ai.inbox])
 
   const unread = items.filter((i) => !seen.includes(i.id)).length
   const markSeen = () => {

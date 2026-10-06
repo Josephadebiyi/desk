@@ -47,7 +47,10 @@ const NAV = [
   { to: '/dashboard/design', key: 'design' },
   { to: '/dashboard/links', key: 'links' },
   { to: '/dashboard/reports', key: 'reports' },
+  { to: '/dashboard/branches', key: 'branches' },
 ]
+/** Menu items per role: branch leaders only see their branch reports; ministry leaders don't see branch finance. */
+const navFor = (role: Role | null) => (role === 'branch' ? NAV.filter((n) => n.key === 'branches') : role === 'leader' ? NAV.filter((n) => n.key !== 'branches') : NAV)
 
 function useTrial() {
   const [params] = useSearchParams()
@@ -238,7 +241,7 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
           <img src={theme === 'dark' ? '/brand/logo-lime.webp' : '/brand/logo-color.webp'} alt="ZionDesk" />
         </Link>
         <nav className={`d-nav ${menu ? 'is-open' : ''}`}>
-          {NAV.map((n) =>
+          {(preview ? NAV.filter((n) => n.key !== 'branches') : navFor(session.remote ? session.role : null)).map((n) =>
             preview ? (
               <span key={n.to} data-nav={n.key} className={preview.active === n.key ? 'active' : ''}>
                 {t(`dash.nav.${n.key}`)}
@@ -278,7 +281,7 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
         </div>
       </header>
       <div className="d-body">
-        <Rail />
+        {session.role !== 'branch' && <Rail />}
         <main className="d-main">{children}</main>
       </div>
     </div>
@@ -313,6 +316,9 @@ function Shell() {
   const { loading, live, settings } = useWorkspace()
   const { pathname } = useLocation()
   const { t } = useT()
+  const session = useSession()
+  // Branch leaders only use Branch reports (and Help).
+  if (session.remote && session.role === 'branch' && !/^\/dashboard\/(branches|help)/.test(pathname)) return <Navigate to="/dashboard/branches" replace />
   if (loading)
     return (
       <div className="d-loading" role="status">

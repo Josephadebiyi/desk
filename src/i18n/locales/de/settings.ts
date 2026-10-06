@@ -30,6 +30,7 @@ const settings: Dict['settings'] = {
       admin: 'Alles – Mitglieder, Spenden, Nachrichten, Einstellungen, Import & Export.',
       finance: 'Spenden, Ausgaben und Finanzberichte. Kann Mitglieder sehen, aber nicht bearbeiten.',
       leader: 'Mitglieder, Veranstaltungen, Nachrichten und Design. Kein Zugriff auf Spenden.',
+      branch: "Sendet den Monatsbericht seines Standorts. Sieht keine Mitglieder, Spenden oder Nachrichten.",
     },
   },
   account: {

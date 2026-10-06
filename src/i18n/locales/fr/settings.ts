@@ -30,6 +30,7 @@ const settings: Dict['settings'] = {
       admin: 'Tout : membres, dons, messages, paramètres, import et export.',
       finance: 'Dons, dépenses et rapports financiers. Peut voir les membres sans les modifier.',
       leader: 'Membres, événements, messages et design. Pas d’accès aux dons.',
+      branch: "Envoie le rapport mensuel de son antenne. Ne voit ni les membres, ni les dons, ni les messages.",
     },
   },
   account: {

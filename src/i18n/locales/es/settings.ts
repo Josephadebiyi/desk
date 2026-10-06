@@ -30,6 +30,7 @@ const settings: Dict['settings'] = {
       admin: 'Todo: miembros, ofrendas, mensajes, configuración, importar y exportar.',
       finance: 'Ofrendas, gastos e informes financieros. Puede ver miembros pero no editarlos.',
       leader: 'Miembros, eventos, mensajes y diseño. Sin acceso a ofrendas.',
+      branch: "Envía el informe mensual de su sede. No ve miembros, ofrendas ni mensajes.",
     },
   },
   account: {

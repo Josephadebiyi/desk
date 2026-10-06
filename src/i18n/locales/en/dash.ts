@@ -9,6 +9,7 @@ export default {
     events: 'Events',
     design: 'Design Studio',
     reports: 'Reports',
+    branches: "Branch reports",
     settings: 'Settings',
     help: 'Help',
     links: 'Links & QR codes',

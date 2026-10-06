@@ -12,7 +12,7 @@ import startTrial from '../api/start-trial'
 import { asEmailLang } from '../src/emails/strings'
 import { admin, db, HttpError, requireCaller, route } from './db'
 import { configured, env } from './env'
-import { runDaily, runHourly } from './jobs'
+import { dailySlot, hourlySlot, lastRuns, once, runDaily, runHourly, startScheduler } from './jobs'
 import { appRoutes } from './routes/app'
 import { accountRoutes } from './routes/account'
 import { googleRoutes } from './routes/google'
@@ -24,6 +24,7 @@ import { whatsappRoutes } from './routes/whatsapp'
 import { publicRoutes } from './routes/public'
 import { validUnsubscribe } from './lifecycle'
 import { engageRoutes } from './routes/engage'
+import { branchRoutes } from './routes/branches'
 import { whatsappTemplateCheck } from './messaging'
 
 const app = express()
@@ -91,7 +92,14 @@ app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few
 
 // Which settings are present (names only — never values), plus the deployed commit.
 app.get('/api/health', async (_req, res) =>
-  res.json({ ok: true, ...configured, whatsappTemplateCheck: await whatsappTemplateCheck(), commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) }),
+  res.json({
+    ok: true,
+    ...configured,
+    whatsappTemplateCheck: await whatsappTemplateCheck(),
+    scheduler: process.env.RUN_SCHEDULER === '1',
+    lastJobRuns: await lastRuns(),
+    commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7),
+  }),
 )
 
 /* AI — signed-in users only; usage is recorded server-side. */
@@ -148,6 +156,7 @@ app.use('/api', accountRoutes)
 app.use('/api', googleRoutes)
 app.use('/api', adminRoutes)
 app.use('/api', engageRoutes)
+app.use('/api', branchRoutes)
 
 /* Render Cron Jobs call these with Authorization: Bearer $CRON_SECRET */
 const cron = (fn: () => Promise<unknown>) =>
@@ -169,8 +178,8 @@ const unsubPage = (msg: string) =>
 app.get('/api/email/unsubscribe', unsubscribe)
 app.post('/api/email/unsubscribe', unsubscribe)
 
-app.post('/api/cron/hourly', cron(runHourly))
-app.post('/api/cron/daily', cron(runDaily))
+app.post('/api/cron/hourly', cron(() => once('hourly', hourlySlot(), runHourly)))
+app.post('/api/cron/daily', cron(() => once('daily', dailySlot(), runDaily)))
 
 app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Not found')))
 
@@ -188,6 +197,8 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (status >= 500) console.error('[api]', err)
   res.status(status).json({ error: err instanceof HttpError ? err.message : 'Something went wrong. Please try again.' })
 })
+
+if (process.env.RUN_SCHEDULER === '1') startScheduler()
 
 app.listen(env.port, () => {
   console.log(`ZionDesk server on :${env.port} — supabase:${configured.supabase} email:${configured.email} sms:${configured.sms} whatsapp:${configured.whatsapp}`)

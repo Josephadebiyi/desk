@@ -15,6 +15,7 @@ import { withChurchName } from '../src/emails/sender'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
 import { runSignupReminders, runWelcomeFallback } from './lifecycle'
 import { runFollowups } from './attendance'
+import { runBranchReminders } from './branches'
 
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 
@@ -69,7 +70,8 @@ export async function runDaily() {
   const birthdays = await runBirthdays().catch((e) => (console.error('[birthdays]', e), 0))
   const signupReminders = await runSignupReminders().catch((e) => (console.error('[signup reminders]', e), null))
   const followups = await runFollowups().catch((e) => (console.error('[followups]', e), null))
-  return { birthdays, billing, promos, signupReminders, followups }
+  const branchReports = await runBranchReminders().catch((e) => (console.error('[branch reminders]', e), null))
+  return { birthdays, billing, promos, signupReminders, followups, branchReports }
 }
 
 /**
@@ -199,4 +201,57 @@ async function endPromos() {
     await tellAdmins(c.id, c.name, 'promoEnded', { plan: PLAN_LABEL[r.plan] ?? r.plan })
   }
   return { ended: due?.length ?? 0 }
+}
+
+/* ───────── running the jobs ───────── */
+
+/**
+ * Runs a job at most once per slot (a day or an hour), whoever triggers it: Render Cron Jobs,
+ * the built-in scheduler, or both. Needs the job_runs table (migration 0010).
+ */
+export async function once<T>(job: 'daily' | 'hourly', slot: string, fn: () => Promise<T>): Promise<T | { skipped: string }> {
+  const { error } = await db().from('job_runs').insert({ job, slot })
+  if (error) {
+    if (error.code === '23505') return { skipped: `${job} already ran for ${slot}` }
+    // job_runs not created yet (migration 0010): run without the lock, as before.
+    if (error.code !== '42P01' && error.code !== 'PGRST205') throw error
+    console.warn('[job] job_runs table missing — run migration 0010')
+  }
+  console.log(`[job] ${job} ${slot} started`)
+  const result = await fn()
+  console.log(`[job] ${job} ${slot} done ${JSON.stringify(result)}`)
+  return result
+}
+export const dailySlot = (d = new Date()) => d.toISOString().slice(0, 10)
+export const hourlySlot = (d = new Date()) => d.toISOString().slice(0, 13)
+
+/** Last time each job ran (for /api/health; cached for a minute). */
+let runsCache: { at: number; value: { daily: string | null; hourly: string | null } } | null = null
+export async function lastRuns() {
+  if (runsCache && Date.now() - runsCache.at < 60_000) return runsCache.value
+  runsCache = { at: Date.now(), value: await readRuns() }
+  return runsCache.value
+}
+async function readRuns() {
+  const pick = async (job: string) => (await db().from('job_runs').select('slot').eq('job', job).order('slot', { ascending: false }).limit(1).maybeSingle()).data?.slot ?? null
+  try {
+    return { daily: await pick('daily'), hourly: await pick('hourly') }
+  } catch {
+    return { daily: null, hourly: null }
+  }
+}
+
+/**
+ * Built-in scheduler (RUN_SCHEDULER=1): hourly jobs every hour, daily jobs once a day from 07:00 UTC.
+ * Use it when the service has no Render Cron Jobs. Safe alongside them — each slot runs once.
+ */
+export function startScheduler() {
+  const tick = async () => {
+    const now = new Date()
+    await once('hourly', hourlySlot(now), runHourly).catch((e) => console.error('[scheduler hourly]', e))
+    if (now.getUTCHours() >= 7) await once('daily', dailySlot(now), runDaily).catch((e) => console.error('[scheduler daily]', e))
+  }
+  setTimeout(tick, 60_000)
+  setInterval(tick, 5 * 60_000)
+  console.log('[scheduler] built-in scheduler on (hourly + daily at 07:00 UTC)')
 }

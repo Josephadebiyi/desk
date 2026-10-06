@@ -20,7 +20,7 @@ import { Flag, LangCards } from '../i18n/Flags'
 import { getSignupCode } from '../lib/signupCode'
 import { ONLINE_GIVING } from '../lib/features'
 
-const ROLES: Role[] = ['admin', 'finance', 'leader']
+const ROLES: Role[] = ['admin', 'finance', 'leader', 'branch']
 
 type Tab = 'account' | 'language' | 'profile' | 'structure' | 'team' | 'plan' | 'ai' | 'integrations' | 'data'
 const CURRENCIES: readonly string[] = CHURCH_CURRENCIES
@@ -390,8 +390,10 @@ function Structure() {
 }
 
 function Team() {
-  const { team, inviteTeam, updateTeam, removeTeam } = useWorkspace()
-  const [f, setF] = useState<{ name: string; email: string; role: Role }>({ name: '', email: '', role: 'leader' })
+  const { team, inviteTeam, updateTeam, removeTeam, settings } = useWorkspace()
+  const [f, setF] = useState<{ name: string; email: string; role: Role; branch: string }>({ name: '', email: '', role: 'leader', branch: '' })
+  // Branch leaders usually lead a branch other than the first (main) one.
+  const defaultBranch = settings.branches[1] ?? settings.branches[0] ?? ''
   const [error, setError] = useState('')
   const { t } = useT()
   return (
@@ -417,7 +419,8 @@ function Team() {
               {tm.status === 'Invited' && <span className="d-pill">{t('settings.team.pending')}</span>}
               <select className="st-role" value={tm.role} onChange={async (e) => {
                 const role = e.target.value as Role
-                if (await confirmAction({ title: t('cf.roleTitle', { name: tm.name, role: tEnum('role', role) }) })) updateTeam(tm.id, { role })
+                const branch = role === 'branch' ? tm.branch || defaultBranch : null
+                if (await confirmAction({ title: t('cf.roleTitle', { name: tm.name, role: tEnum('role', role) + (branch ? ` · ${branch}` : '') }) })) updateTeam(tm.id, { role, branch })
               }} aria-label={t('settings.team.roleFor', { name: tm.name })}>
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -425,6 +428,24 @@ function Team() {
                   </option>
                 ))}
               </select>
+              {tm.role === 'branch' && (
+                <select
+                  className="st-role"
+                  value={tm.branch ?? ''}
+                  aria-label={t('br.branch')}
+                  onChange={async (e) => {
+                    const branch = e.target.value
+                    if (await confirmAction({ title: t('cf.roleTitle', { name: tm.name, role: `${tEnum('role', 'branch')} · ${branch}` }) })) updateTeam(tm.id, { role: 'branch', branch })
+                  }}
+                >
+                  {!tm.branch && <option value="">{t('br.branch')}</option>}
+                  {settings.branches.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              )}
               <button type="button" className="d-circle d-circle-sm" aria-label={t('settings.removeX', { name: tm.name })} onClick={withConfirm({ title: t('cf.teamRemoveTitle', { name: tm.name }), body: t('cf.teamRemoveBody'), danger: true, confirmLabel: t('cf.remove') }, () => removeTeam(tm.id))}>
                 <Trash2 size={13} />
               </button>
@@ -438,10 +459,11 @@ function Team() {
           e.preventDefault()
           if (!f.name.trim()) return setError(t('settings.team.errName'))
           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) return setError(t('common.invalidEmail'))
+          if (f.role === 'branch' && !f.branch) return setError(t('br.errBranch'))
           setError('')
           if (!(await confirmAction({ title: t('cf.inviteTitle', { name: f.name.trim() }), body: t('cf.inviteBody', { email: f.email.trim() }), confirmLabel: t('cf.inviteBtn') }))) return
-          inviteTeam({ name: f.name.trim(), email: f.email.trim(), role: f.role })
-          setF({ name: '', email: '', role: 'leader' })
+          inviteTeam({ name: f.name.trim(), email: f.email.trim(), role: f.role, branch: f.role === 'branch' ? f.branch : null })
+          setF({ name: '', email: '', role: 'leader', branch: '' })
         }}
       >
         <div className="d-panel-head">
@@ -457,7 +479,7 @@ function Team() {
         </label>
         <label className="d-field">
           <span>{t('settings.team.role')}</span>
-          <select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Role })}>
+          <select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Role, branch: e.target.value === 'branch' ? f.branch || defaultBranch : '' })}>
             {ROLES.map((r) => (
               <option key={r} value={r}>
                 {tEnum('role', r)}
@@ -465,6 +487,18 @@ function Team() {
             ))}
           </select>
         </label>
+        {f.role === 'branch' && (
+          <label className="d-field">
+            <span>{t('br.branch')}</span>
+            <select value={f.branch} onChange={(e) => setF({ ...f, branch: e.target.value })}>
+              {settings.branches.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {error && <p className="d-errors">{error}</p>}
         <div className="d-form-actions">
           <button type="submit" className="d-btn d-btn-ink">

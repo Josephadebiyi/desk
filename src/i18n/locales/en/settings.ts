@@ -29,6 +29,7 @@ export default {
       admin: 'Everything — members, giving, messaging, settings, import & export.',
       finance: 'Giving, expenses and finance reports. Can view members but not edit them.',
       leader: 'Members, events, messaging and design. No access to giving.',
+      branch: "Sends their branch’s monthly report. Can’t see members, giving or messages.",
     },
   },
   account: {

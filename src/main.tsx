@@ -23,6 +23,7 @@ import Settings from './dashboard/Settings.tsx'
 import Help from './dashboard/Help.tsx'
 import Links from './dashboard/Links.tsx'
 import Attendance from './dashboard/Attendance.tsx'
+import Branches from './dashboard/Branches.tsx'
 import { CheckinPage, GivePage, JoinPage } from './pages/Public.tsx'
 import { isAdminHost } from './lib/site'
 import { captureSignupCode } from './lib/signupCode'
@@ -111,6 +112,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="help" element={<Help />} />
           <Route path="links" element={<Links />} />
           <Route path="attendance" element={<Attendance />} />
+          <Route path="branches" element={<Branches />} />
           <Route path="*" element={<Placeholder />} />
         </Route>
         <Route path="*" element={<App />} />

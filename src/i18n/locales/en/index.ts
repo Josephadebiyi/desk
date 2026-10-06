@@ -23,8 +23,9 @@ import auth from './auth'
 import legal from './legal'
 import att from './att'
 import cf from './cf'
+import br from './br'
 
-const en = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att, cf }
+const en = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att, cf, br }
 
 export type Dict = typeof en
 export default en

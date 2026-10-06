@@ -51,12 +51,14 @@ export interface Member {
 
 export type MemberInput = Omit<Member, 'id' | 'communications' | 'giving'>
 
-export type Role = 'admin' | 'finance' | 'leader'
+/** branch = a branch leader: only sends their own branch's monthly report. */
+export type Role = 'admin' | 'finance' | 'leader' | 'branch'
 
 export const ROLE_LABEL: Record<Role, string> = {
   admin: 'Administrator',
   finance: 'Finance',
   leader: 'Ministry leader',
+  branch: 'Branch leader',
 }
 
 export const can = {
@@ -64,6 +66,8 @@ export const can = {
   editMembers: (r: Role) => r === 'admin' || r === 'leader',
   deleteMembers: (r: Role) => r === 'admin',
   importExport: (r: Role) => r === 'admin',
+  /** HQ side of branch reports (see every branch, review, remind). */
+  viewBranchReports: (r: Role) => r === 'admin' || r === 'finance',
 }
 
 /** Random id (UUID, so it is also a valid database primary key). */
