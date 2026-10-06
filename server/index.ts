@@ -24,6 +24,7 @@ import { whatsappRoutes } from './routes/whatsapp'
 import { publicRoutes } from './routes/public'
 import { validUnsubscribe } from './lifecycle'
 import { engageRoutes } from './routes/engage'
+import { whatsappTemplateCheck } from './messaging'
 
 const app = express()
 app.set('trust proxy', 1) // Render sits behind a proxy; needed for per-IP rate limits
@@ -89,7 +90,9 @@ app.use('/api/whatsapp', whatsappRoutes) // raw body for signature checks
 app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
 
 // Which settings are present (names only — never values), plus the deployed commit.
-app.get('/api/health', (_req, res) => res.json({ ok: true, ...configured, commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) }))
+app.get('/api/health', async (_req, res) =>
+  res.json({ ok: true, ...configured, whatsappTemplateCheck: await whatsappTemplateCheck(), commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) }),
+)
 
 /* AI — signed-in users only; usage is recorded server-side. */
 app.get('/api/ai', (req, res) => aiHandler(req, res))

@@ -61,6 +61,7 @@ export function personalize(raw: string, lang: EmailLang, vars: Record<string, s
 
 /** Plain-language reasons for Twilio / WhatsApp error codes churches are likely to hit. */
 const TWILIO_ERRORS: Record<string, string> = {
+  '21656': 'The WhatsApp template in TWILIO_WHATSAPP_CONTENT_SID doesn’t match: it must be a Text template with exactly one variable, {{1}} (see /api/health → whatsappTemplateCheck).',
   '63016': 'WhatsApp only allows free text within 24 hours of the member messaging you. Outside that window an approved WhatsApp template is needed (TWILIO_WHATSAPP_CONTENT_SID).',
   '63015': 'The Twilio WhatsApp sandbox only delivers to phones that first sent the sandbox "join" code.',
   '63003': 'This number is not on WhatsApp.',
@@ -100,7 +101,7 @@ export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: stri
               To: `whatsapp:${to}`,
               ContentSid: env.twilioWhatsappContentSid,
               // WhatsApp template variables can't contain new lines or long runs of spaces.
-              ContentVariables: JSON.stringify({ 1: body.replace(/\s*\n+\s*/g, ' · ').replace(/ {4,}/g, ' ').slice(0, 1000) }),
+              ContentVariables: JSON.stringify({ 1: body.replace(/\s*\n+\s*/g, ' · ').replace(/ {4,}/g, ' ').slice(0, 900) }),
               ...callback,
             }
           : { From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body, ...callback },
@@ -209,4 +210,38 @@ export async function sendCampaign(campaignId: string, byName: string) {
   const waiting = channel !== 'Email' ? !(channel === 'SMS' ? configured.sms : configured.whatsapp) : !configured.email
   console.log(`[campaign] ${campaignId} ${channel} recipients=${rows.length} sent=${sent} failed=${failed} queued=${rows.length - sent - failed}${waiting ? ' (channel not switched on)' : ''}${firstError ? ` firstError="${firstError}"` : ''}`)
   return { recipients: rows.length, sent, failed, queued: rows.length - sent - failed, error: firstError, waiting }
+}
+
+/**
+ * Checks the Twilio WhatsApp template once (cached): it must be a Text template, approved by WhatsApp,
+ * with exactly one variable {{1}} — that's what twilio() fills. Shown on /api/health as whatsappTemplateCheck.
+ */
+let templateCheck: { at: number; result: string } | null = null
+export async function whatsappTemplateCheck(): Promise<string> {
+  if (!env.twilioWhatsappContentSid || !env.twilioSid || !env.twilioToken) return 'not set'
+  if (templateCheck && Date.now() - templateCheck.at < 10 * 60_000) return templateCheck.result
+  const auth = { Authorization: 'Basic ' + Buffer.from(`${env.twilioSid}:${env.twilioToken}`).toString('base64') }
+  const base = `https://content.twilio.com/v1/Content/${env.twilioWhatsappContentSid}`
+  let result = 'ok'
+  try {
+    const r = await fetch(base, { headers: auth })
+    if (!r.ok) result = r.status === 404 ? 'template not found (wrong HX… id?)' : `could not read template (${r.status})`
+    else {
+      const c = (await r.json()) as { friendly_name?: string; types?: Record<string, unknown>; variables?: Record<string, string> }
+      const types = Object.keys(c.types ?? {})
+      const vars = Object.keys(c.variables ?? {})
+      if (!types.includes('twilio/text')) result = `"${c.friendly_name}" is a ${types.join(', ').replace(/twilio\//g, '') || 'unknown'} template — it must be Text`
+      else if (vars.length !== 1 || vars[0] !== '1') result = `"${c.friendly_name}" has variables [${vars.join(', ') || 'none'}] — it must have exactly one: {{1}}`
+      else {
+        const a = await fetch(`${base}/ApprovalRequests`, { headers: auth })
+        const st = a.ok ? ((await a.json()) as { whatsapp?: { status?: string; rejection_reason?: string } }).whatsapp : undefined
+        if (st?.status && st.status !== 'approved') result = `"${c.friendly_name}" is ${st.status} by WhatsApp${st.rejection_reason ? `: ${st.rejection_reason}` : ''} — wait for Approved`
+        else if (!st?.status) result = `"${c.friendly_name}" was never submitted for WhatsApp approval`
+      }
+    }
+  } catch (e) {
+    result = `could not check (${e instanceof Error ? e.message : 'network'})`
+  }
+  templateCheck = { at: Date.now(), result }
+  return result
 }
