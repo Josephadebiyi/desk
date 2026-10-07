@@ -9,7 +9,7 @@ import './public.css'
 export type LegalDoc = 'terms' | 'privacy' | 'cookies' | 'dpa' | 'subprocessors' | 'refunds' | 'aup'
 
 /** Number of sections in each document (keys h1…hN / b1…bN in the "legal" namespace). */
-const SECTIONS: Record<Exclude<LegalDoc, 'subprocessors'>, number> = { terms: 14, privacy: 14, cookies: 4, dpa: 9, refunds: 6, aup: 6 }
+const SECTIONS: Record<Exclude<LegalDoc, 'subprocessors'>, number> = { terms: 14, privacy: 15, cookies: 4, dpa: 9, refunds: 6, aup: 6 }
 const DOCS: LegalDoc[] = ['terms', 'privacy', 'cookies', 'dpa', 'subprocessors', 'refunds', 'aup']
 export const LEGAL_PATH: Record<LegalDoc, string> = { terms: '/terms', privacy: '/privacy', cookies: '/cookies', dpa: '/dpa', subprocessors: '/subprocessors', refunds: '/refunds', aup: '/acceptable-use' }
 

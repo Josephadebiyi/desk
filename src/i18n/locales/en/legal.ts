@@ -101,6 +101,8 @@ export default {
     b13: 'When you use Ellen or AI flyers, the content you send is processed by Anthropic to produce the answer. It isn’t used to train AI models. Avoid adding sensitive details that aren’t needed. Birthday prayers are also written by Anthropic (Claude), using a member’s first name, age group, ministry and language only.',
     h14: 'How to make a request',
     b14: 'Use Account settings to download or delete your data, or email us. Church members should contact their church first; we’ll pass on and support requests we receive. We may need to verify your identity.',
+    h15: "Google user data",
+    b15: "If a church connects Google to create Google Meet links, ZionDesk asks only for permission to create and manage calendar events (the calendar.events scope) plus the account’s email address. We use it solely to create, update and delete the Google Calendar events and Meet links for events the church schedules in ZionDesk. We don’t read other calendar entries, and we don’t sell this data, use it for advertising, or use it to train AI models. Access tokens are stored encrypted and removed when the church disconnects Google (Settings) or deletes its account; you can also revoke access at any time at myaccount.google.com/permissions.\nZionDesk’s use and transfer of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
   },
   cookies: {
     sub: 'ZionDesk uses only the storage needed to run the app. No advertising, no analytics trackers, no selling of data.',

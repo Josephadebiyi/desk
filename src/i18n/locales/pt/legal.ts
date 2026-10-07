@@ -103,6 +103,8 @@ const legal: Dict['legal'] = {
     b13: 'Quando usa a Ellen ou os flyers com IA, o conteúdo enviado é processado pela Anthropic para gerar a resposta. Não é usado para treinar modelos de IA. Evite incluir dados sensíveis desnecessários. As orações de aniversário também são escritas pela Anthropic (Claude), apenas com o primeiro nome, a faixa etária, o ministério e o idioma do membro.',
     h14: 'Como fazer um pedido',
     b14: 'Use A minha conta para descarregar ou eliminar os seus dados, ou escreva-nos. Os membros devem contactar primeiro a sua igreja; encaminharemos e apoiaremos os pedidos que recebermos. Poderemos ter de verificar a sua identidade.',
+    h15: "Dados de utilizador Google",
+    b15: "Se uma igreja ligar o Google para criar links do Google Meet, o ZionDesk pede apenas permissão para criar e gerir eventos de calendário (a permissão calendar.events) e o endereço de e-mail da conta. Usamo-la apenas para criar, atualizar e eliminar os eventos do Google Calendar e os links do Meet dos eventos que a igreja agenda no ZionDesk. Não lemos outras entradas do calendário e não vendemos estes dados, nem os usamos para publicidade ou para treinar modelos de IA. Os tokens de acesso são guardados encriptados e removidos quando a igreja desliga o Google (Definições) ou elimina a conta; também pode revogar o acesso em myaccount.google.com/permissions.\nA utilização e transferência pelo ZionDesk de informações recebidas das APIs Google cumprem a Política de Dados do Utilizador dos Serviços de API Google, incluindo os requisitos de Utilização Limitada.",
   },
   cookies: {
     sub: 'O ZionDesk só usa o armazenamento necessário para funcionar. Sem publicidade, sem rastreadores analíticos e sem venda de dados.',
