@@ -1,0 +1,525 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>ZionDesk launch v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Inter:wght@500;600;700;800&family=Caveat:wght@700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
+<script src="words-v4.js"></script>
+<style>
+  /* ZionDesk palette — deliberately not the reference's colours */
+  :root { --p: #6c34ff; --p2: #8f63ff; --l: #c4ec62; --ink: #14121c; --cream: #f6f2ea; --coral: #ff5a4e; --desk: #1b1440; --lav: #e9e2ff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; font-family: Inter, sans-serif; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  .sc { position: absolute; inset: 0; display: none; overflow: hidden; }
+  .cam { position: absolute; inset: 0; transform-origin: 50% 45%; }
+  .abs { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  .center { position: absolute; left: 50%; top: 50%; }
+  .cream { background: radial-gradient(75% 55% at 50% 45%, #fffdf8 0%, var(--cream) 60%, #e7dfd1 100%); }
+  .night { background: radial-gradient(70% 55% at 50% 45%, #241d3f 0%, #0d0b17 80%); }
+  .violet { background: radial-gradient(65% 50% at 50% 45%, #8f63ff 0%, #6c34ff 45%, #2a138a 100%); }
+  .desk { background-color: var(--desk); background-image:
+      linear-gradient(rgba(196,236,98,.13) 2px, transparent 2px), linear-gradient(90deg, rgba(196,236,98,.13) 2px, transparent 2px),
+      linear-gradient(rgba(233,226,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(233,226,255,.06) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px; }
+  .vig::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(80% 60% at 50% 45%, transparent 40%, rgba(0,0,0,.6)); }
+  .disp { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.035em; line-height: 1.04; color: var(--ink); white-space: nowrap; text-align: center; }
+  .serif { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+  .w { display: inline-block; }
+  .bub { font-family: Inter; font-weight: 600; font-size: 62px; line-height: 1.15; padding: 30px 46px; border-radius: 56px; max-width: 860px; white-space: nowrap; box-shadow: 0 24px 50px -24px rgba(20,18,28,.35); }
+  .bub.in { background: #fff; color: var(--ink); border-bottom-left-radius: 14px; }
+  .bub.out { background: var(--l); color: #17200a; border-bottom-right-radius: 14px; }
+  .dots { display: flex; gap: 16px; padding: 34px 44px; border-radius: 50px; background: #fff; border-bottom-left-radius: 14px; box-shadow: 0 24px 50px -24px rgba(20,18,28,.35); }
+  .dots i { width: 26px; height: 26px; border-radius: 50%; background: #b9b3c9; display: block; }
+  .tile { width: 250px; height: 250px; border-radius: 60px; display: grid; place-items: center; box-shadow: 0 34px 60px -24px rgba(0,0,0,.6), inset 0 -8px 0 rgba(0,0,0,.12); }
+  .tile svg { width: 120px; height: 120px; }
+  .tlabel { position: absolute; top: 272px; left: 50%; transform: translateX(-50%); font-family: 'Bricolage Grotesque'; font-weight: 700; font-size: 40px; color: #fff; white-space: nowrap; text-shadow: 0 4px 20px rgba(0,0,0,.5); }
+  .badge { position: absolute; right: -14px; top: -14px; width: 74px; height: 74px; border-radius: 50%; background: var(--coral); color: #fff; font: 800 34px Inter; display: grid; place-items: center; box-shadow: 0 10px 24px rgba(255,90,78,.5); }
+  .phone { width: 560px; height: 1140px; border-radius: 86px; background: #0e0c16; padding: 22px; box-shadow: 0 70px 140px -40px rgba(0,0,0,.75), inset 0 0 0 3px #2c2840; }
+  .phone .scr { width: 100%; height: 100%; border-radius: 66px; overflow: hidden; background: #efe9f9; position: relative; }
+  .chip { display: flex; align-items: center; gap: 16px; padding: 18px 30px 18px 18px; border-radius: 999px; background: #fff; font: 700 42px Inter; color: var(--ink); white-space: nowrap; box-shadow: 0 20px 44px -18px rgba(0,0,0,.45); }
+  .chip i { font-style: normal; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; }
+  .card { border-radius: 34px; overflow: hidden; background: #fff; box-shadow: 0 60px 120px -40px rgba(30,15,90,.6), 0 0 0 2px rgba(20,18,28,.06); }
+  .card img { width: 100%; display: block; }
+  .paper { background: #fffdf7; border-radius: 22px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.6); padding: 46px 50px; font-family: Inter; color: var(--ink); }
+  .hand { font-family: Caveat, cursive; font-weight: 700; color: #2b3b8f; }
+  .sub { position: absolute; left: 70px; right: 70px; bottom: 200px; text-align: center; font: 600 46px/1.28 Inter; color: #fff; text-shadow: 0 3px 18px rgba(0,0,0,.85); letter-spacing: -0.01em; }
+  .sub b { color: var(--l); font-weight: 700; }
+  .sub.onlight { color: var(--ink); text-shadow: 0 0 22px rgba(255,255,255,.95); }
+  .sub.onlight b { color: var(--p); }
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: .06; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  #flash { position: absolute; inset: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- 1 hook --><section class="sc cream" id="s1"><div class="cam" id="c1"><div class="abs" id="s1tiles"></div><div class="center" id="s1a"></div><div class="center" id="s1five"></div><div class="center" id="s1b"></div></div></section>
+  <!-- 2 the five tools --><section class="sc desk vig" id="s2"><div class="cam" id="c2"><div class="abs" id="s2tiles"></div><div class="center" id="s2label"></div></div></section>
+  <!-- 3 every Monday --><section class="sc cream" id="s3"><div class="cam" id="c3"><svg class="abs" id="s3thread" width="1080" height="1920" style="overflow:visible"></svg><div class="abs" id="s3tiles"></div><div class="center" id="s3text"></div></div></section>
+  <!-- 4 why? / it's the process --><section class="sc cream" id="s4"><div class="cam" id="c4"><div class="abs" id="s4head"></div><div class="abs" id="s4thread"></div></div></section>
+  <!-- 5 no. that's the problem --><section class="sc night" id="s5"><div class="cam" id="c5"><div class="center" id="s5no"></div><div class="center" id="s5a"></div><div class="center" id="s5b"></div></div></section>
+  <!-- 6 cracks --><section class="sc night" id="s6"><div class="cam" id="c6"><div class="abs" id="s6tiles"></div><svg class="abs" id="s6crack" width="1080" height="1920" style="overflow:visible"></svg><div class="abs" id="s6people"></div><div class="center" id="s6text"></div></div></section>
+  <!-- 7 nobody calls / nobody notices --><section class="sc night" id="s7"><div class="cam" id="c7"><div class="abs" id="s7card"></div><div class="abs" id="s7phone"></div><div class="abs" id="s7cal"></div><div class="center" id="s7text"></div></div></section>
+  <!-- 8 so we built ZionDesk --><section class="sc violet" id="s8"><div class="cam" id="c8"><div class="abs" id="s8tiles"></div><div class="center" id="s8glow" style="width:1100px;height:1100px;border-radius:50%;background:radial-gradient(circle, rgba(196,236,98,.55), rgba(196,236,98,0) 62%)"></div><div class="center" id="s8logo"><img src="../public/brand/mark.png" style="width:400px;display:block" /></div><div class="center" id="s8word"></div><div class="center" id="s8text"></div></div></section>
+  <!-- 9 QR register --><section class="sc desk vig" id="s9"><div class="cam" id="c9"><div class="abs" id="s9qr"></div><div class="abs" id="s9phone"><div class="phone"><div class="scr"><img src="shots/phone-join.png" style="width:100%" /></div></div></div><div class="abs" id="s9ok"></div></div></section>
+  <!-- 10 follow-ups --><section class="sc cream" id="s10"><div class="cam" id="c10"><div class="abs" id="s10phone"><div class="phone"><div class="scr" id="s10scr"></div></div></div><div class="abs" id="s10chips"></div><div class="abs" id="s10auto"></div></div></section>
+  <!-- 11 dashboard --><section class="sc cream" id="s11"><div class="cam" id="c11"><div class="abs" id="s11card"><div class="card" style="width:980px"><img src="shots/overview.png" /></div></div><div class="abs" id="s11chips"></div><div class="center" id="s11text"></div></div></section>
+  <!-- 12 flyer + less/more time --><section class="sc night" id="s12"><div class="cam" id="c12"><div class="abs" id="s12bub"></div><div class="abs" id="s12flyers"></div><div class="abs" id="s12post"></div><div class="abs" id="s12hearts"></div><div class="center" id="s12a"></div><div class="center" id="s12b"></div></div></section>
+  <!-- 13 offer --><section class="sc violet" id="s13"><div class="cam" id="c13"><div class="center" id="s13count"></div><div class="center" id="s13pct"></div><div class="center" id="s13code"></div></div></section>
+  <!-- 14 end --><section class="sc cream" id="s14"><div class="cam" id="c14"><div class="center" id="s14logo"></div><div class="center" id="s14line"></div><div class="center" id="s14url"></div></div></section>
+  <div id="flash"></div>
+  <div class="sub" id="sub"></div>
+  <div class="grain"></div>
+</div>
+<script>
+const W = window.WORDS
+const NOSUB = location.search.includes('nosub')
+const clean = (w) => w.toLowerCase().replace(/[^a-z0-9'-]/g, '')
+function T(word, n = 1, end = false) {
+  let c = 0
+  for (const x of W) if (clean(x.w) === clean(word) && ++c === n) return end ? x.e : x.s
+  throw new Error('word ' + word + ' #' + n)
+}
+const E = (w, n = 1) => T(w, n, true)
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const P = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, k) => a + (b - a) * k
+const eo = (k) => 1 - Math.pow(1 - k, 3)
+const eo5 = (k) => 1 - Math.pow(1 - k, 5)
+const eio = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+const back = (k, s = 1.7) => 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2)
+const pop = (t, t0, d = 0.32, s = 2.2) => back(P(t, t0, t0 + d), s)
+const $ = (id) => document.getElementById(id)
+function put(el, o) {
+  el.style.transform = `${o.persp ? `perspective(1800px) rotateX(${o.rx || 0}deg) rotateY(${o.ry || 0}deg) ` : ''}translate(${o.x ?? 0}px, ${o.y ?? 0}px)${o.c ? ' translate(-50%, -50%)' : ''} rotate(${o.r ?? 0}deg) scale(${o.s ?? 1})`
+  el.style.opacity = o.o ?? 1
+  el.style.filter = o.blur ? `blur(${o.blur}px)` : ''
+}
+function h(tag, cls, html, parent, style) {
+  const e = document.createElement(tag)
+  if (cls) e.className = cls
+  if (html != null) e.innerHTML = html
+  if (style) e.setAttribute('style', style)
+  if (parent) parent.appendChild(e)
+  return e
+}
+/** Kinetic words: each word drops in on its spoken time. list: [[html, t, style?]] */
+function say(t, el, list, o = {}) {
+  el.innerHTML = ''
+  const line = h('div', 'disp', '', el, `font-size:${o.size ?? 104}px;${o.style ?? ''}`)
+  for (const [text, ts, st] of list) {
+    if (text === '<br/>') { if (t >= ts - 0.05) h('br', null, null, line); continue }
+    if (t < ts - 0.05) continue
+    const k = back(P(t, ts - 0.05, ts + 0.25), 2.4)
+    const w = h('span', 'w', text, line, `margin:0 .12em;${st || ''}`)
+    w.style.transform = `translateY(${lerp(70, 0, k)}px) scale(${lerp(0.6, 1, k)}) rotate(${lerp(-6, 0, k)}deg)`
+    w.style.opacity = P(t, ts - 0.05, ts + 0.06)
+  }
+  el.style.transform = `translate(-50%, -50%) translate(${o.x || 0}px, ${o.y || 0}px) scale(${o.s ?? 1})`
+  el.style.opacity = o.o ?? 1
+}
+const shake = (t, t0, amp = 18, d = 0.35) => { const k = P(t, t0, t0 + d); return k > 0 && k < 1 ? Math.sin(k * 60) * amp * (1 - k) : 0 }
+
+const ICON = {
+  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="#14121c" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
+  form: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+  sheet: '<svg viewBox="0 0 24 24" fill="none" stroke="#14121c" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  give: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+}
+// Tools in ZionDesk-family colours (not the reference's): white, violet, lime, indigo, coral
+const TOOLS = [
+  { k: 'qr', label: 'QR code site', bg: '#ffffff', t: () => T('qr') },
+  { k: 'form', label: 'Visitor form', bg: '#8f63ff', t: () => T('google') },
+  { k: 'sheet', label: 'Spreadsheet', bg: '#c4ec62', t: () => T('spreadsheet') },
+  { k: 'chat', label: 'Group chat', bg: '#3b2f86', t: () => T('whatsapp') },
+  { k: 'give', label: 'Giving app', bg: '#ff5a4e', t: () => T('another') },
+]
+
+/* ───────── subtitles (the script, phrase by phrase) ───────── */
+const PH = []
+{
+  let a = 0
+  W.forEach((w, i) => {
+    const end = /[.?!…"]$/.test(w.w)
+    const long = i - a >= 8 && /,$/.test(w.w)
+    if (end || long || i === W.length - 1) { PH.push([a, i]); a = i + 1 }
+  })
+}
+const SUB_SCENES = new Set(['s2', 's9', 's10'])
+function subtitles(t, light, scene) {
+  const el = $('sub')
+  if (NOSUB || !SUB_SCENES.has(scene)) return (el.innerHTML = '')
+  const ph = PH.find(([a, b]) => t >= W[a].s - 0.15 && t <= W[b].e + 0.35)
+  if (!ph) return (el.innerHTML = '')
+  el.className = 'sub' + (light ? ' onlight' : '')
+  el.innerHTML = W.slice(ph[0], ph[1] + 1).map((w) => (t >= w.s ? (t < w.e + 0.08 ? `<b>${w.w}</b>` : w.w) : `<span style="opacity:.28">${w.w}</span>`)).join(' ')
+}
+
+/* ───────── scenes: [id, start, end, light background?, entry: 'whip'|'zoom'|'flash'|'cut'] ───────── */
+const S = [
+  ['s1', -1, T('a') - 0.35, 1, 'cut'],
+  ['s2', T('a') - 0.35, T('and') - 0.3, 0, 'whip'],
+  ['s3', T('and') - 0.3, T('why', 2) - 0.45, 1, 'zoom'],
+  ['s4', T('why', 2) - 0.45, T('no') - 0.12, 1, 'whip'],
+  ['s5', T('no') - 0.12, T('because') - 0.3, 0, 'flash'],
+  ['s6', T('because') - 0.3, T('first-time') - 0.35, 0, 'zoom'],
+  ['s7', T('first-time') - 0.35, T('so') - 0.3, 0, 'whip'],
+  ['s8', T('so') - 0.3, T('newcomers', 2) - 0.35, 0, 'flash'],
+  ['s9', T('newcomers', 2) - 0.35, T('follow-ups') - 0.3, 0, 'whip'],
+  ['s10', T('follow-ups') - 0.3, T('members') - 0.3, 1, 'whip'],
+  ['s11', T('members') - 0.3, T('need', 2) - 0.3, 1, 'zoom'],
+  ['s12', T('need', 2) - 0.3, T('first') - 0.45, 0, 'whip'],
+  ['s13', T('first') - 0.45, T('ziondesk', 2) - 0.4, 0, 'flash'],
+  ['s14', T('ziondesk', 2) - 0.4, 999, 1, 'zoom'],
+]
+const DURATION = window.DURATION
+
+/* ───────── build static pieces ───────── */
+function tileEl(tool, parent, withLabel = true) {
+  const d = h('div', 'abs', '', parent)
+  h('div', 'tile', ICON[tool.k], d, `background:${tool.bg}`)
+  if (withLabel) h('div', 'tlabel', tool.label, d)
+  return d
+}
+const t1 = TOOLS.map((tool) => tileEl(tool, $('s1tiles'), false))
+const t2 = TOOLS.map((tool, i) => { const d = tileEl(tool, $('s2tiles')); h('div', 'badge', [3, 12, 7, 99, 5][i], d.firstChild); return d })
+const t3 = TOOLS.map((tool) => tileEl(tool, $('s3tiles'), false))
+const t6 = TOOLS.slice(0, 4).map((tool) => tileEl(tool, $('s6tiles'), false))
+const t8 = TOOLS.map((tool) => tileEl(tool, $('s8tiles'), false))
+
+// scene 4: chat thread
+$('s4head').innerHTML = `<div style="width:1080px;padding:120px 60px 30px;display:flex;align-items:center;gap:26px;border-bottom:2px solid rgba(20,18,28,.08)">
+  <div style="width:110px;height:110px;border-radius:50%;background:var(--p);display:grid;place-items:center;font:800 44px 'Bricolage Grotesque';color:#fff">CW</div>
+  <div><div style="font:800 52px 'Bricolage Grotesque';color:var(--ink);letter-spacing:-.02em">Church workers 🙏</div><div style="font:500 32px Inter;color:#7d7590">Pastor, Media, Ushers, Finance +18</div></div></div>`
+const th = $('s4thread')
+const m1 = h('div', 'abs bub out', 'Why do we need 5 apps for one Sunday? 🤔', th, 'font-size:50px;white-space:normal;width:700px')
+const d1 = h('div', 'abs dots', '<i></i><i></i><i></i>', th)
+const m2 = h('div', 'abs bub in', 'Why?', th, 'font-size:120px;padding:40px 70px')
+const d2 = h('div', 'abs dots', '<i></i><i></i><i></i>', th)
+const m3 = h('div', 'abs bub in', 'It’s the process. 🤷🏾‍♂️', th, 'font-size:74px')
+const sender = (el, name) => h('div', null, name, el, 'position:absolute;top:-46px;left:12px;font:600 30px Inter;color:#8a83a0')
+sender(m2, 'Media team')
+sender(m3, 'Admin')
+
+// scene 6: people on a floor
+const PEOPLE = ['#e3824f', '#3f8f7a', '#c4ec62', '#8f63ff', '#ffb547']
+const ppl = PEOPLE.map((c, i) => h('div', 'abs', `<svg width="150" height="260" viewBox="-75 -250 150 260"><circle cx="0" cy="-200" r="46" fill="#f0d6bf" opacity=".95"/><path d="M-66 0V-110Q-66-160 0-160Q66-160 66-110V0Z" fill="${c}"/></svg>`, $('s6people')))
+
+// scene 7: visitor card, phone, calendar
+$('s7card').innerHTML = `<div class="paper" style="width:700px;transform-origin:50% 50%">
+  <div style="font:800 54px 'Bricolage Grotesque';letter-spacing:-.02em">Welcome! First time? 👋</div>
+  <div style="margin-top:34px;font:500 30px Inter;color:#8a83a0">Name</div><div class="hand" style="font-size:72px;border-bottom:3px dashed #ddd2c4">Ada Okafor</div>
+  <div style="margin-top:22px;font:500 30px Inter;color:#8a83a0">Phone</div><div class="hand" style="font-size:72px;border-bottom:3px dashed #ddd2c4">+234 803 •••• •••</div></div>`
+$('s7phone').innerHTML = `<div style="width:520px;padding:40px;border-radius:44px;background:#1f1a33;color:#fff;text-align:center;box-shadow:0 50px 100px -30px rgba(0,0,0,.7)">
+  <div style="font:600 32px Inter;color:#a59cc4">Calls this week</div><div style="font:800 190px 'Bricolage Grotesque';line-height:1;margin-top:10px" id="s7zero">0</div><div style="font:600 32px Inter;color:#a59cc4">to Ada</div></div>`
+$('s7cal').innerHTML = `<div style="display:flex;gap:26px">${['Sun 6', 'Sun 13', 'Sun 20'].map((d) => `<div class="s7day" style="width:260px;height:300px;border-radius:36px;background:#fffdf7;position:relative;box-shadow:0 30px 60px -24px rgba(0,0,0,.6);text-align:center;padding-top:40px"><div style="font:800 30px Inter;color:#8a83a0;letter-spacing:.08em">${d.split(' ')[0].toUpperCase()}</div><div style="font:800 120px 'Bricolage Grotesque';color:var(--ink);line-height:1.1">${d.split(' ')[1]}</div><div class="s7x" style="position:absolute;inset:0;display:grid;place-items:center;font:700 260px Caveat;color:var(--coral)">✕</div></div>`).join('')}</div>`
+
+// scene 9: QR card
+$('s9qr').innerHTML = `<div class="paper" style="width:440px;text-align:center;padding:40px">
+  <div style="font:800 46px 'Bricolage Grotesque'">New here?</div><div style="font:500 28px Inter;color:#8a83a0;margin:6px 0 22px">Scan to say hello 👋</div>
+  <div style="position:relative;width:330px;height:330px;margin:0 auto" id="s9code"></div></div>`
+;(() => {
+  let r = 7; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280)
+  const n = 25, c = 330 / n; let s = ''
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const f = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9); if (!f && rnd() > 0.52) s += `<rect x="${x * c}" y="${y * c}" width="${c + 0.4}" height="${c + 0.4}" fill="#14121c"/>` }
+  const fd = (x, y) => (s += `<rect x="${x * c}" y="${y * c}" width="${7 * c}" height="${7 * c}" fill="#14121c"/><rect x="${(x + 1) * c}" y="${(y + 1) * c}" width="${5 * c}" height="${5 * c}" fill="#fff"/><rect x="${(x + 2) * c}" y="${(y + 2) * c}" width="${3 * c}" height="${3 * c}" fill="#6c34ff"/>`)
+  fd(0, 0); fd(n - 7, 0); fd(0, n - 7)
+  $('s9code').innerHTML = `<svg width="330" height="330">${s}</svg><div id="s9beam" style="position:absolute;left:-12px;width:354px;height:10px;border-radius:5px;background:var(--l);box-shadow:0 0 34px 10px rgba(196,236,98,.8)"></div>`
+})()
+$('s9ok').innerHTML = `<div class="chip"><i style="background:#22c55e;color:#fff">✓</i>Ada registered</div>`
+
+// scene 10: follow-up chat on the phone, three channels, three languages
+$('s10scr').innerHTML = `<div style="height:170px;background:var(--p);color:#fff;display:flex;align-items:flex-end;gap:20px;padding:0 34px 26px">
+  <div style="width:76px;height:76px;border-radius:50%;background:var(--l);display:grid;place-items:center;color:var(--ink);font:800 30px Inter">GC</div>
+  <div><div style="font:700 34px Inter">Grace Chapel</div><div style="font:500 24px Inter;opacity:.8">via ZionDesk</div></div></div>
+  <div class="abs bub in" id="f1" style="left:30px;top:220px;font-size:32px;padding:22px 28px;white-space:normal;max-width:430px">Hi Ada! 😊 So lovely having you with us on Sunday. See you this week? 🙏</div>
+  <div class="abs bub in" id="f2" style="left:30px;top:470px;font-size:32px;padding:22px 28px;white-space:normal;max-width:430px">¡Hola Pedro! Te esperamos el domingo 🙌</div>
+  <div class="abs bub in" id="f3" style="left:30px;top:650px;font-size:32px;padding:22px 28px;white-space:normal;max-width:430px">Bonjour Aïcha ! On pense à toi cette semaine 💜</div>
+  <div class="abs bub out" id="f4" style="right:30px;top:850px;font-size:32px;padding:22px 28px">Thank you! I'll be there 🙌</div>`
+const CH = [['WhatsApp', '💬', '#c4ec62'], ['SMS', '✉️', '#e9e2ff'], ['Email', '📧', '#ffd7d2']]
+const ch10 = CH.map(([label, icon, bg]) => h('div', 'abs chip', `<i style="background:${bg}">${icon}</i>${label}`, $('s10chips')))
+$('s10auto').innerHTML = `<div class="chip" style="background:var(--ink);color:#fff"><i style="background:var(--l);color:var(--ink)">⚡</i>Automatically</div>`
+
+// scene 11: dashboard chips
+const F11 = [['Members', '👥', 'members'], ['Attendance', '✅', 'attendance'], ['Giving', '💜', 'giving', 2], ['Events', '📅', 'events'], ['Branch reports 3/3', '🏛️', "branches'"]]
+const ch11 = F11.map(([label, icon]) => h('div', 'abs chip', `<i style="background:var(--lav)">${icon}</i>${label}`, $('s11chips')))
+
+// scene 12: flyers
+$('s12bub').innerHTML = `<div class="bub out" style="font-size:80px">Need a flyer? 🎨</div>`
+const FLY = [['#6c34ff', 'SUNDAY<br/>SERVICE', '#c4ec62'], ['#c4ec62', 'YOUTH<br/>NIGHT', '#14121c'], ['#ff5a4e', 'THANKS<br/>GIVING', '#fff'], ['#14121c', 'PRAYER<br/>& PRAISE', '#c4ec62']]
+const fly = FLY.map(([bg, txt, fg]) => h('div', 'abs', `<div style="width:330px;height:440px;border-radius:26px;background:${bg};box-shadow:0 40px 80px -30px rgba(0,0,0,.7);padding:34px;display:flex;flex-direction:column;justify-content:flex-end;border:6px solid #fff"><div style="font:800 64px/0.92 'Bricolage Grotesque';color:${fg};letter-spacing:-.03em">${txt}</div><div style="font:600 24px Inter;color:${fg};opacity:.8;margin-top:14px">Grace Chapel · 9AM</div></div>`, $('s12flyers')))
+
+$('s12post').innerHTML = `<div style="width:640px;border-radius:36px;background:#fff;overflow:hidden;box-shadow:0 60px 120px -40px rgba(0,0,0,.8)">
+  <div style="display:flex;align-items:center;gap:18px;padding:22px 26px"><div style="width:70px;height:70px;border-radius:50%;padding:4px;background:conic-gradient(#c4ec62,#6c34ff,#ff5a4e,#c4ec62)"><div style="width:100%;height:100%;border-radius:50%;background:#6c34ff;border:3px solid #fff;display:grid;place-items:center;color:#fff;font:800 22px Inter">GC</div></div>
+  <div style="font:700 30px Inter;color:#14121c">gracechapel</div><div style="margin-left:auto;font:800 34px Inter;color:#14121c">···</div></div>
+  <div style="height:640px;background:#6c34ff;padding:56px;display:flex;flex-direction:column;justify-content:flex-end;position:relative">
+    <div style="position:absolute;right:-60px;top:-60px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,#c4ec62,rgba(196,236,98,0) 65%)"></div>
+    <div style="font:800 118px/.9 'Bricolage Grotesque';color:#c4ec62;letter-spacing:-.04em">SUNDAY<br/>SERVICE</div>
+    <div style="font:italic 400 52px 'Instrument Serif';color:#fff;margin-top:14px">You belong here.</div>
+    <div style="font:600 26px Inter;color:#fff;opacity:.8;margin-top:16px">This Sunday · 9AM · Grace Chapel</div></div>
+  <div style="display:flex;gap:28px;padding:22px 28px 6px;font-size:46px"><span id="s12like">♡</span><span>💬</span><span>➤</span></div>
+  <div style="padding:0 28px 26px;font:700 30px Inter;color:#14121c"><span id="s12likes">0</span> likes</div></div>`
+const hearts12 = Array.from({ length: 14 }, (_, i) => h('div', 'abs', ['❤️', '💜', '💚'][i % 3], $('s12hearts'), 'font-size:64px'))
+
+/* ───────── render a moment ───────── */
+function seek(t) {
+  let light = 0, flash = 0, scene = ''
+  for (const [id, a, b, isLight, entry] of S) {
+    const el = $(id)
+    const on = t >= a && t < b
+    el.style.display = on ? 'block' : 'none'
+    if (!on) continue
+    light = isLight
+    scene = id
+    const k = P(t, a, a + 0.42)
+    const cam = $('c' + id.slice(1))
+    const push = lerp(1, 1.07, eio(P(t, a, b)))
+    if (entry === 'whip') cam.style.transform = `translateX(${(1 - eo5(k)) * 1100}px) scale(${push})`, (cam.style.filter = k < 1 ? `blur(${(1 - k) * 24}px)` : '')
+    else if (entry === 'zoom') cam.style.transform = `scale(${push * lerp(1.35, 1, eo5(k))})`, (cam.style.filter = k < 1 ? `blur(${(1 - k) * 16}px)` : '')
+    else cam.style.transform = `scale(${push})`, (cam.style.filter = '')
+    if (entry === 'flash') flash = Math.max(flash, 1 - P(t, a, a + 0.35))
+  }
+  $('flash').style.background = `rgba(255,255,255,${flash * 0.85})`
+
+  /* 1 · hook: "Why does your church need FIVE different apps… just to run one Sunday?" */
+  {
+    say(t, $('s1a'), [['Why does your', T('why')], ['church', T('church')], ['<br/>', T('need')], ['need', T('need')]], { y: -470, size: 96 })
+    const f = pop(t, T('five') - 0.05, 0.4, 2.6)
+    put($('s1five'), { c: true, y: -40 + shake(t, T('five'), 14), s: lerp(0.2, 1, f), o: P(t, T('five') - 0.05, T('five') + 0.05) })
+    $('s1five').innerHTML = `<div class="disp" style="font-size:560px;color:var(--p);line-height:.8">5</div><div class="disp serif" style="font-size:118px;margin-top:-10px">different apps…</div>`
+    say(t, $('s1b'), [['just to run', T('just')], ['one', T('one')], ['<br/>', T('sunday')], ['Sunday?', T('sunday'), 'background:var(--l);padding:0 .14em;border-radius:18px']], { y: 470, size: 92 })
+    t1.forEach((d, i) => {
+      const spot = [[40, 640], [790, 600], [20, 1010], [810, 1060], [415, 1620]][i]
+      const k = pop(t, T('five') + 0.12 + i * 0.07, 0.35)
+      put(d, { x: spot[0] + Math.sin(t * 1.3 + i) * 10, y: spot[1] + Math.cos(t * 1.1 + i) * 12, s: 0.6 * k, r: Math.sin(t * 2 + i) * 8, o: P(t, T('five') + 0.12 + i * 0.07, T('five') + 0.2 + i * 0.07) })
+    })
+  }
+
+  /* 2 · the five tools land on the desk, badges pile up */
+  {
+    const pos = [[120, 290, -8], [660, 370, 7], [140, 760, 5], [690, 840, -6], [410, 1180, 4]]
+    t2.forEach((d, i) => {
+      const t0 = TOOLS[i].t() - 0.15
+      const k = eo5(P(t, t0, t0 + 0.45))
+      const [x, y, r] = pos[i]
+      put(d, { x: x + (1 - k) * (i % 2 ? 900 : -900), y: y - (1 - k) * 200, r: r + (1 - k) * (i % 2 ? 40 : -40) + Math.sin(t * 1.3 + i) * 2, s: lerp(1.4, 1, k), o: P(t, t0, t0 + 0.12) })
+      const b = d.querySelector('.badge')
+      const bk = pop(t, t0 + 0.55, 0.3)
+      b.style.transform = `scale(${bk})`; b.style.opacity = P(t, t0 + 0.55, t0 + 0.6)
+    })
+  }
+
+  /* 3 · "every Monday, someone has to stitch it all together" — a thread sews the tiles */
+  {
+    const pos = [[110, 330], [720, 400], [130, 1110], [720, 1180], [415, 120]]
+    t3.forEach((d, i) => put(d, { x: pos[i][0], y: pos[i][1], s: 0.72, r: [-8, 7, 5, -6, 0][i] + Math.sin(t * 2 + i) * 3, o: 1 }))
+    const prog = P(t, T('stitch') - 0.2, E('together.') + 0.6)
+    const pts = [[505, 210], [200, 420], [810, 490], [220, 1200], [810, 1270]]
+    let d = `M${pts[0][0]} ${pts[0][1]}`
+    for (let i = 1; i < pts.length; i++) d += ` Q${(pts[i - 1][0] + pts[i][0]) / 2 + 120} ${(pts[i - 1][1] + pts[i][1]) / 2 - 140} ${pts[i][0]} ${pts[i][1]}`
+    $('s3thread').innerHTML = `<path d="${d}" fill="none" stroke="#ff5a4e" stroke-width="9" stroke-linecap="round" stroke-dasharray="26 18" pathLength="1000" style="stroke-dashoffset:${(1 - prog) * 1000};" /><path d="${d}" fill="none" stroke="#f6f2ea" stroke-width="12" pathLength="1000" stroke-dasharray="1000 1000" stroke-dashoffset="${-prog * 1000}" />`
+    say(t, $('s3text'), [['And every', T('and')], ['Monday,', T('monday'), 'color:var(--p)'], ['<br/>', T('someone')], ['someone has to', T('someone')], ['<br/>', T('stitch')], ['<span class="serif" style="font-size:1.15em">stitch it all together.</span>', T('stitch')]], { y: -60, size: 92 })
+  }
+
+  /* 4 · the chat: "Why?" … typing … "It's the process." */
+  {
+    const base = $('s4')
+    const q = eo5(P(t, S[3][1], S[3][1] + 0.45))
+    put(m1, { x: 1080 - 60 - 700, y: 330 - (1 - q) * 60, o: q, s: lerp(0.9, 1, q) })
+    const dt1 = P(t, S[3][1] + 0.15, T('why', 2) - 0.05)
+    put(d1, { x: 60, y: 640, o: dt1 > 0 && dt1 < 1 ? 1 : 0, s: 1 + Math.sin(t * 14) * 0.03 })
+    d1.querySelectorAll('i').forEach((i, n) => (i.style.transform = `translateY(${Math.sin(t * 9 - n * 0.9) * 8}px)`))
+    const w = pop(t, T('why', 2) - 0.05, 0.38, 2.8)
+    const zoomWhy = eio(P(t, T('why', 2) + 0.35, T('why', 2, true) + 0.7))
+    put(m2, { x: 60, y: 640 - zoomWhy * 40, s: w * lerp(1, 1.12, zoomWhy), o: P(t, T('why', 2) - 0.05, T('why', 2)), r: shake(t, T('why', 2), 2.5) })
+    const dt2 = P(t, T('why', 2, true) + 0.25, T("it's") - 0.05)
+    put(d2, { x: 60, y: 980, o: dt2 > 0 && dt2 < 1 ? 1 : 0 })
+    d2.querySelectorAll('i').forEach((i, n) => (i.style.transform = `translateY(${Math.sin(t * 9 - n * 0.9) * 8}px)`))
+    const p3 = pop(t, T("it's") - 0.05, 0.35)
+    put(m3, { x: 60, y: 980, s: p3, o: P(t, T("it's") - 0.05, T("it's")) })
+    // dramatic darkening + push on "the process"
+    const dark = P(t, E('process."') + 0.1, S[3][2])
+    base.style.background = dark > 0 ? `radial-gradient(70% 55% at 50% 45%, rgba(36,29,63,${dark}) 0%, rgba(13,11,23,${dark}) 80%), var(--cream)` : ''
+    // camera dives into "Why?", then slides to "It's the process."
+    const z1 = eio(P(t, T('why', 2) - 0.1, T('why', 2) + 0.45))
+    const z2 = eio(P(t, T("it's") - 0.2, T("it's") + 0.4))
+    const dx = lerp(310, 120, z2) * z1, dy = lerp(114, -196, z2) * z1
+    const zs = 1 + lerp(0.55, 0.26, z2) * z1 + dark * 0.2
+    $('c4').style.transform += ` scale(${zs}) translate(${dx}px, ${dy}px) rotate(${shake(t, T('why', 2), 0.8)}deg)`
+  }
+
+  /* 5 · "No." · "That's not a process." · "That's the problem." */
+  {
+    const n = pop(t, T('no') - 0.02, 0.3, 3)
+    put($('s5no'), { c: true, y: -520 + shake(t, T('no'), 22), s: lerp(2.6, 1, eo5(P(t, T('no') - 0.02, T('no') + 0.3))), o: P(t, T('no') - 0.02, T('no') + 0.06) })
+    $('s5no').innerHTML = `<div class="disp" style="font-size:330px;color:var(--coral)">No.</div>`
+    const strike = eo(P(t, E('process.', 2) - 0.05, E('process.', 2) + 0.35))
+    say(t, $('s5a'), [["That's not a", T("that's")], [`<span style="position:relative">process.<i style="position:absolute;left:-4%;top:52%;height:14px;border-radius:7px;background:var(--coral);width:${strike * 108}%;transform:rotate(-4deg)"></i></span>`, T('process.', 2)]], { y: -40, size: 100, style: 'color:#fff' })
+    const pb = pop(t, T('problem.') - 0.04, 0.35, 2.6)
+    say(t, $('s5b'), [["That's the", T("that's", 2)], ['<br/>', T('problem.')], [`<span style="display:inline-block;background:var(--l);color:var(--ink);padding:.04em .2em;border-radius:24px;transform:scale(${pb}) rotate(-3deg)">problem.</span>`, T('problem.')]], { y: 300 + shake(t, T('problem.'), 10), size: 116, style: 'color:#fff' })
+  }
+
+  /* 6 · tools don't talk → people slip through the cracks */
+  {
+    const talk = P(t, T('tools') - 0.1, T('other,') + 0.3)
+    const pos = [[90, 250], [390, 210], [690, 250], [390, 520]]
+    t6.forEach((d, i) => put(d, { x: pos[i][0], y: pos[i][1], s: 0.62 * pop(t, S[5][1] + 0.1 + i * 0.08, 0.35), r: Math.sin(t * 3 + i) * 4, o: 1 - P(t, T('people') + 0.3, T('people') + 0.8) * 0.6 }))
+    const split = eo(P(t, T('slip') - 0.2, T('cracks.') + 0.3))
+    $('s6crack').innerHTML = `<path d="M60 1180 L1020 1180" stroke="rgba(233,226,255,.35)" stroke-width="6"/>` +
+      (split > 0 ? `<path d="M540 ${1180 - 20 * split} L505 ${1230} L560 ${1290} L515 ${1360} L555 ${1180 + 260 * split}" stroke="#ff5a4e" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - split}"/><ellipse cx="540" cy="1184" rx="${150 * split}" ry="${22 * split}" fill="#05040a"/>` : '')
+    ppl.forEach((p, i) => {
+      const xs = [110, 300, 465, 630, 820]
+      const fall = i === 2 ? eio(P(t, T('slip') + 0.05, T('cracks.') + 0.5)) : 0
+      put(p, { x: xs[i], y: 920 + fall * 520, s: lerp(1, 0.6, fall), o: (1 - fall) * pop(t, S[5][1] + 0.2 + i * 0.06, 0.3), r: fall * 25 })
+    })
+    say(t, $('s6text'), [['when your tools', T('when')], ["don't talk", T("don't"), 'color:var(--coral)'], ['<br/>', T('people')], ['people', T('people')], ['<span class="serif">slip through the cracks.</span>', T('slip'), 'color:var(--l)']], { y: 560, size: 78, style: 'color:#fff' })
+  }
+
+  /* 7 · a visitor's card · nobody calls · three Sundays · nobody notices */
+  {
+    const c = eo5(P(t, S[6][1], S[6][1] + 0.5))
+    const drop = eio(P(t, T('nobody') + 0.1, E('calls.') + 0.6))
+    put($('s7card'), { x: 190, y: lerp(300, 230, c) + drop * 900, r: lerp(-10, -4, c) + drop * 30, s: lerp(0.8, 1, c) * lerp(1, 0.8, drop), o: c * (1 - P(drop, 0.6, 1)) })
+    const ph = pop(t, T('nobody') - 0.05, 0.35)
+    put($('s7phone'), { x: 280, y: 860, s: ph * (1 - P(t, T('member') - 0.4, T('member'))), o: P(t, T('nobody') - 0.05, T('nobody')) * (1 - P(t, T('member') - 0.4, T('member'))) })
+    $('s7zero').style.color = t > E('calls.') ? 'var(--coral)' : '#fff'
+    const cal = eo5(P(t, T('member') - 0.2, T('member') + 0.3))
+    put($('s7cal'), { x: 540 - 415, y: lerp(900, 640, cal), o: cal })
+    document.querySelectorAll('#s7cal .s7x').forEach((x, i) => {
+      const t0 = T('three') + i * 0.28
+      x.style.opacity = P(t, t0, t0 + 0.08)
+      x.style.transform = `scale(${pop(t, t0, 0.3, 2.6)}) rotate(${-8 + i * 6}deg)`
+    })
+    const fade = P(t, T('nobody', 2), E('notices.') + 0.5)
+    $('s7cal').style.filter = `grayscale(${fade}) blur(${fade * 3}px)`
+    const lines = t < T('member') - 0.2
+      ? [['A first-time visitor', T('first-time')], ['<br/>', T('fills')], ['fills a card…', T('fills')], ['<br/>', T('and', 2)], ['and', T('and', 2)], ['nobody calls.', T('nobody'), 'color:var(--coral)']]
+      : [['A member misses', T('member')], ['<br/>', T('three')], ['three Sundays…', T('three'), 'color:var(--l)'], ['<br/>', T('and', 3)], ['and', T('and', 3)], ['nobody notices.', T('nobody', 2), 'color:var(--coral)']]
+    say(t, $('s7text'), lines, { y: t < T('member') - 0.2 ? 620 : 420, size: 80, style: 'color:#fff' })
+  }
+
+  /* 8 · "So we built ZionDesk." — the five tools collapse into one */
+  {
+    const come = eio(P(t, S[7][1], T('ziondesk') - 0.05))
+    t8.forEach((d, i) => {
+      const ang = (i / 5) * Math.PI * 2
+      const R = lerp(520, 0, come)
+      put(d, { x: 540 - 125 + Math.cos(ang + come * 2) * R, y: 820 - 125 + Math.sin(ang + come * 2) * R, s: lerp(0.7, 0.2, come), r: come * 180, o: 1 - P(t, T('ziondesk') - 0.12, T('ziondesk') + 0.05) })
+    })
+    const m = pop(t, T('ziondesk') - 0.05, 0.45, 2.4)
+    put($('s8logo'), { c: true, y: -120, s: m, o: P(t, T('ziondesk') - 0.08, T('ziondesk')), r: lerp(-20, 0, m) })
+    const g = P(t, T('ziondesk'), T('ziondesk') + 1.4)
+    put($('s8glow'), { c: true, y: -120, s: lerp(0.4, 1.25, eo(g)), o: g * (0.6 + Math.sin(t * 3) * 0.1) })
+    $('s8word').innerHTML = `<div class="disp" style="font-size:150px;color:#fff;letter-spacing:-.04em">ZionDesk<span style="color:var(--l)">.</span></div>`
+    const wd = eo5(P(t, T('ziondesk') + 0.25, T('ziondesk') + 0.8))
+    put($('s8word'), { c: true, y: 240 + (1 - wd) * 60, o: wd })
+    say(t, $('s8text'), [['One place', T('one', 3)], ['<br/>', T('for', 5)], ['for your', T('for', 5)], ['<span class="serif">whole church.</span>', T('whole'), 'color:var(--l)']], { y: 520, size: 82, style: 'color:#fff' })
+  }
+
+  /* 9 · one QR code → registered */
+  {
+    put($('s9qr'), { x: 70, y: 520, r: -5 + Math.sin(t) * 1.5, s: pop(t, S[8][1] + 0.1, 0.4), o: 1 })
+    const ph = eo5(P(t, T('register') - 0.2, T('qr', 2) + 0.1))
+    put($('s9phone'), { persp: true, ry: lerp(-35, -12, ph), rx: 6, x: lerp(1100, 470, ph), y: 360, s: 0.92, o: 1 })
+    const sc = P(t, T('qr', 2) - 0.1, E('code.', 2) + 0.2)
+    $('s9beam').style.top = lerp(0, 320, Math.sin(sc * Math.PI)) + 'px'
+    $('s9beam').style.opacity = sc > 0 && sc < 1 ? 1 : 0
+    const ok = pop(t, E('code.', 2) + 0.05, 0.35, 2.6)
+    put($('s9ok'), { x: 300, y: 240, s: ok, o: P(t, E('code.', 2) + 0.05, E('code.', 2) + 0.12) })
+  }
+
+  /* 10 · follow-ups: WhatsApp, SMS, email · automatically · in each person's language */
+  {
+    const pz = eo5(P(t, S[9][1], S[9][1] + 0.5))
+    put($('s10phone'), { x: 260, y: lerp(560, 330, pz), r: lerp(6, -2, pz), s: 1 })
+    ;['f1', 'f2', 'f3', 'f4'].forEach((id, i) => {
+      const t0 = [T('go'), T('in'), T('own'), T('language.') + 0.4][i]
+      const k = pop(t, t0, 0.32)
+      $(id).style.transform = `scale(${k})`; $(id).style.transformOrigin = i === 3 ? '100% 100%' : '0 100%'; $(id).style.opacity = P(t, t0, t0 + 0.06)
+    })
+    ch10.forEach((d, i) => {
+      const t0 = [T('whatsapp', 2), T('sms'), T('email')][i]
+      const k = pop(t, t0 - 0.05, 0.32)
+      put(d, { x: [40, 680, 60][i], y: [260, 520, 1420][i] + Math.sin(t * 2 + i) * 8, s: k, o: P(t, t0 - 0.05, t0), r: [-6, 5, -3][i] })
+    })
+    const zin = eio(P(t, T('go') - 0.2, T('go') + 0.5)) * (1 - eio(P(t, T('automatically') - 0.3, T('automatically') + 0.2)))
+    const zl = eio(P(t, T('in') - 0.1, T('own') + 0.3)) * (1 - eio(P(t, T('language.') + 0.2, T('language.') + 0.8)))
+    $('c10').style.transform += ` scale(${1 + zin * 0.45 + zl * 0.3}) translate(${zin * 15}px, ${zin * 214 + zl * 40}px)`
+    const a = pop(t, T('automatically') - 0.05, 0.35, 2.6)
+    put($('s10auto'), { x: 560, y: 1300 + shake(t, T('automatically'), 8), s: a * 1.15, o: P(t, T('automatically') - 0.05, T('automatically')), r: 4 })
+  }
+
+  /* 11 · all in one dashboard */
+  {
+    const k = eo5(P(t, S[10][1], S[10][1] + 0.6))
+    const all = eio(P(t, T('all', 2) - 0.1, E('dashboard.') + 0.3))
+    put($('s11card'), { persp: true, rx: lerp(28, 8, k) * (1 - all), ry: lerp(-14, 0, k) * (1 - all), x: 50, y: lerp(900, 720, k) - all * 60, s: lerp(0.85, 1, k) * lerp(1, 1.05, all) })
+    const spots = [[60, 380], [600, 330], [70, 1330], [650, 1380], [250, 1560]]
+    const times = [T('members'), T('attendance'), T('giving', 2), T('events'), T("branches'")]
+    ch11.forEach((d, i) => {
+      const kk = pop(t, times[i] - 0.05, 0.32)
+      put(d, { x: lerp(spots[i][0], 400, all), y: lerp(spots[i][1], 900, all) + Math.sin(t * 2 + i) * 6, s: kk * lerp(1, 0.3, all), o: P(t, times[i] - 0.05, times[i]) * (1 - P(all, 0.7, 1)), r: [-5, 4, 3, -4, 2][i] })
+    })
+    say(t, $('s11text'), [['All in', T('all', 2)], ['<span class="serif">one dashboard.</span>', T('one', 5), 'color:var(--p)']], { y: -650, size: 104 })
+  }
+
+  /* 12 · "Need a flyer?" · designers · less time chasing spreadsheets · more time with people */
+  {
+    const b = pop(t, S[11][1] + 0.1, 0.35)
+    const out = P(t, T('less') - 0.3, T('less'))
+    put($('s12bub'), { x: 240, y: 300 - out * 200, s: b, o: 1 - out })
+    fly.forEach((f, i) => {
+      const t0 = T('designers') + i * 0.12
+      const k = eo5(P(t, t0, t0 + 0.5))
+      put(f, { x: 375 + (i - 1.5) * 190 * k, y: 760 + Math.abs(i - 1.5) * 40 * k - out * 1200, r: (i - 1.5) * 12 * k, s: lerp(0.5, 0.95, k), o: P(t, t0, t0 + 0.1) * (1 - out) })
+    })
+    // the flyer goes live as a post: likes count up, hearts float
+    const po = eo5(P(t, T('make') - 0.1, T('make') + 0.45))
+    put($('s12post'), { persp: true, rx: lerp(25, 0, po), x: 220, y: lerp(1300, 520, po) - out * 1400, s: lerp(0.7, 1, po), r: lerp(8, -2, po), o: P(t, T('make') - 0.1, T('make')) * (1 - out) })
+    $('s12like').textContent = t > T('you.') ? '❤️' : '♡'
+    $('s12like').style.display = 'inline-block'; $('s12like').style.transform = `scale(${t > T('you.') ? pop(t, T('you.'), 0.3, 3) : 1})`
+    $('s12likes').textContent = Math.round(lerp(0, 1284, eo(P(t, T('you.'), T('less') - 0.2)))).toLocaleString('en-US')
+    hearts12.forEach((e, i) => {
+      const t0 = T('you.') + i * 0.07
+      const k = P(t, t0, t0 + 1.4)
+      put(e, { x: 300 + ((i * 53) % 380) + Math.sin(k * 6 + i) * 40, y: 1250 - k * 700, s: lerp(0.5, 1.2, k), o: Math.sin(k * Math.PI) * (1 - out) })
+    })
+    fly.forEach((f) => (f.style.opacity = String(Number(f.style.opacity) * (1 - po * 0.75))))
+    const strike = eo(P(t, E('spreadsheets.') - 0.1, E('spreadsheets.') + 0.3))
+    say(t, $('s12a'), [['Less time', T('less')], ['<br/>', T('chasing')], [`<span style="position:relative">chasing spreadsheets.<i style="position:absolute;left:-2%;top:54%;height:12px;border-radius:6px;background:var(--coral);width:${strike * 104}%"></i></span>`, T('chasing')]], { y: -220, size: 92, style: 'color:#fff', o: P(t, T('less') - 0.1, T('less')) })
+    say(t, $('s12b'), [['More time', T('more')], ['<br/>', T('with', 2)], ['<span class="serif" style="font-size:1.25em">with people.</span>', T('with', 2), 'color:var(--l)']], { y: 200, size: 104, style: 'color:#fff' })
+  }
+
+  /* 13 · offer: first 100 churches · 40% off · CHRISTALONE */
+  {
+    const cn = Math.round(lerp(0, 100, eo(P(t, T('first') - 0.1, T('churches', 1) + 0.2))))
+    $('s13count').innerHTML = `<div class="disp" style="font-size:250px;color:#fff">${cn}</div><div class="disp serif" style="font-size:84px;color:var(--lav)">first churches</div>`
+    put($('s13count'), { c: true, y: -520, s: pop(t, S[12][1] + 0.1, 0.4), o: 1 })
+    const pc = pop(t, T('forty') - 0.05, 0.4, 2.8)
+    $('s13pct').innerHTML = `<div class="disp" style="font-size:300px;color:var(--l);text-shadow:0 20px 60px rgba(0,0,0,.35)">40%<span style="font-size:.38em;color:#fff;margin-left:.15em">off</span></div>`
+    put($('s13pct'), { c: true, y: -20 + shake(t, T('forty'), 14), s: pc, o: P(t, T('forty') - 0.05, T('forty')), r: -3 })
+    const word = 'CHRISTALONE', ty = P(t, T('christ') - 0.1, E('alone.'))
+    const typed = word.slice(0, Math.round(ty * word.length))
+    $('s13code').innerHTML = `<div style="display:flex;align-items:center;gap:8px;width:860px;height:170px;border-radius:40px;background:#fff;padding:0 46px;font:700 92px 'JetBrains Mono';letter-spacing:.04em;color:var(--ink);box-shadow:0 22px 0 -6px var(--ink)">${typed}<i style="display:inline-block;width:8px;height:96px;background:var(--p);opacity:${Math.floor(t * 2.5) % 2 ? 1 : 0.15}"></i></div><div style="font:600 34px Inter;color:#fff;text-align:center;margin-top:30px;opacity:.85">Use code at sign-up</div>`
+    put($('s13code'), { c: true, y: 420, s: eo5(P(t, T('with', 3) - 0.2, T('with', 3) + 0.3)), o: P(t, T('with', 3) - 0.2, T('with', 3)) })
+  }
+
+  /* 14 · end card */
+  {
+    $('s14logo').innerHTML = `<div style="display:flex;align-items:center;gap:34px"><img src="../public/brand/mark.png" style="width:220px" /><div class="disp" style="font-size:150px;color:var(--p)">ZionDesk<span style="color:var(--ink)">.</span></div></div>`
+    const l = pop(t, T('ziondesk', 2) - 0.1, 0.5, 2)
+    put($('s14logo'), { c: true, y: -180, s: lerp(0.7, 1, l), o: P(t, T('ziondesk', 2) - 0.1, T('ziondesk', 2)) })
+    say(t, $('s14line'), [['Built for', T('built', 2)], ['<span class="serif" style="font-size:1.2em;color:var(--p)">the Church.</span>', T('the', 6)]], { y: 90, size: 96 })
+    const u = pop(t, E('church.', 3) + 0.4, 0.4)
+    $('s14url').innerHTML = `<div style="padding:26px 60px;border-radius:999px;background:var(--ink);color:#fff;font:800 54px 'Bricolage Grotesque';letter-spacing:-.01em">ziondesk.com</div>`
+    put($('s14url'), { c: true, y: 360, s: u, o: P(t, E('church.', 3) + 0.4, E('church.', 3) + 0.5) })
+  }
+
+  subtitles(t, light, scene)
+}
+window.seek = seek
+window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map((i) => (i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))))).then(() => { seek(0); return true })
+</script>
+</body>
+</html>

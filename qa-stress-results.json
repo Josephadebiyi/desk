@@ -1,0 +1,146 @@
+{
+  "scope": "Local isolated API; integrations disabled; no authenticated database workflows",
+  "smoke": [
+    {
+      "name": "health",
+      "expected": 200,
+      "status": 200,
+      "ms": 2.068916999999942,
+      "pass": true
+    },
+    {
+      "name": "unknown API",
+      "expected": 404,
+      "status": 404,
+      "ms": 2.5553330000000187,
+      "pass": true
+    },
+    {
+      "name": "campaign requires sign-in",
+      "expected": 401,
+      "status": 401,
+      "ms": 2.3414160000000948,
+      "pass": true
+    },
+    {
+      "name": "team requires sign-in",
+      "expected": 401,
+      "status": 401,
+      "ms": 1.3341249999999718,
+      "pass": true
+    },
+    {
+      "name": "transfer requires sign-in",
+      "expected": 401,
+      "status": 401,
+      "ms": 1.0345419999999876,
+      "pass": true
+    },
+    {
+      "name": "cron requires secret",
+      "expected": 401,
+      "status": 401,
+      "ms": 1.6280000000000427,
+      "pass": true
+    },
+    {
+      "name": "WhatsApp rejects unsigned webhook",
+      "expected": 401,
+      "status": 401,
+      "ms": 3.4149999999999636,
+      "pass": true
+    },
+    {
+      "name": "Twilio rejects unsigned webhook",
+      "expected": 403,
+      "status": 403,
+      "ms": 1.6178330000000187,
+      "pass": true
+    },
+    {
+      "name": "CORS rejects unknown origin",
+      "expected": 403,
+      "status": 403,
+      "ms": 1.088707999999997,
+      "pass": true
+    },
+    {
+      "name": "CORS accepts site origin",
+      "expected": 204,
+      "status": 204,
+      "ms": 0.5260419999999613,
+      "pass": true
+    },
+    {
+      "name": "invalid unsubscribe",
+      "expected": 400,
+      "status": 400,
+      "ms": 1.2121669999999085,
+      "pass": true
+    },
+    {
+      "name": "invalid trial email",
+      "expected": 400,
+      "status": 400,
+      "ms": 7.8279999999999745,
+      "pass": true
+    },
+    {
+      "name": "malformed JSON",
+      "expected": 400,
+      "status": 400,
+      "ms": 1.585540999999921,
+      "pass": true
+    }
+  ],
+  "load": [
+    {
+      "concurrency": 10,
+      "count": 10000,
+      "seconds": 1.74,
+      "requestsPerSecond": 5745,
+      "p50ms": 1.3,
+      "p95ms": 4.38,
+      "p99ms": 8.71,
+      "errors": 0,
+      "unexpected": 0,
+      "statuses": {
+        "200": 3334,
+        "401": 3333,
+        "404": 3333
+      }
+    },
+    {
+      "concurrency": 50,
+      "count": 10000,
+      "seconds": 1.36,
+      "requestsPerSecond": 7378,
+      "p50ms": 5.86,
+      "p95ms": 12.34,
+      "p99ms": 23.51,
+      "errors": 0,
+      "unexpected": 0,
+      "statuses": {
+        "200": 3334,
+        "401": 3333,
+        "404": 3333
+      }
+    },
+    {
+      "concurrency": 100,
+      "count": 10000,
+      "seconds": 1.03,
+      "requestsPerSecond": 9713,
+      "p50ms": 9.1,
+      "p95ms": 15.55,
+      "p99ms": 19.67,
+      "errors": 0,
+      "unexpected": 0,
+      "statuses": {
+        "200": 3334,
+        "401": 3333,
+        "404": 3333
+      }
+    }
+  ]
+}

@@ -193,9 +193,11 @@ if (existsSync(dist)) {
 /* Errors → JSON (never leak stack traces) */
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   void _next
-  const status = err instanceof HttpError ? err.status : 500
+  // Express body-parser errors are client errors, not application failures.
+  const parserError = err as { type?: string } | null
+  const status = err instanceof HttpError ? err.status : parserError?.type === 'entity.parse.failed' ? 400 : parserError?.type === 'entity.too.large' ? 413 : 500
   if (status >= 500) console.error('[api]', err)
-  res.status(status).json({ error: err instanceof HttpError ? err.message : 'Something went wrong. Please try again.' })
+  res.status(status).json({ error: err instanceof HttpError ? err.message : status === 400 ? 'Invalid JSON request body.' : status === 413 ? 'Request body is too large.' : 'Something went wrong. Please try again.' })
 })
 
 if (process.env.RUN_SCHEDULER === '1') startScheduler()
