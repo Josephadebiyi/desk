@@ -61,7 +61,7 @@ export function personalize(raw: string, lang: EmailLang, vars: Record<string, s
 
 /** Plain-language reasons for Twilio / WhatsApp error codes churches are likely to hit. */
 const TWILIO_ERRORS: Record<string, string> = {
-  '21656': 'The WhatsApp template in TWILIO_WHATSAPP_CONTENT_SID doesn’t match: it must be a Text template with exactly one variable, {{1}} (see /api/health → whatsappTemplateCheck).',
+  '21656': 'The WhatsApp template in TWILIO_WHATSAPP_CONTENT_SID doesn’t match: it must be a Text or Quick Reply template with exactly one variable, {{1}} (see /api/health → whatsappTemplateCheck).',
   '63016': 'WhatsApp only allows free text within 24 hours of the member messaging you. Outside that window an approved WhatsApp template is needed (TWILIO_WHATSAPP_CONTENT_SID).',
   '63015': 'The Twilio WhatsApp sandbox only delivers to phones that first sent the sandbox "join" code.',
   '63003': 'This number is not on WhatsApp.',
@@ -213,7 +213,7 @@ export async function sendCampaign(campaignId: string, byName: string) {
 }
 
 /**
- * Checks the Twilio WhatsApp template once (cached): it must be a Text template, approved by WhatsApp,
+ * Checks the Twilio WhatsApp template once (cached): it must be a Text or Quick Reply template, approved by WhatsApp,
  * with exactly one variable {{1}} — that's what twilio() fills. Shown on /api/health as whatsappTemplateCheck.
  */
 let templateCheck: { at: number; result: string } | null = null
@@ -230,7 +230,8 @@ export async function whatsappTemplateCheck(): Promise<string> {
       const c = (await r.json()) as { friendly_name?: string; types?: Record<string, unknown>; variables?: Record<string, string> }
       const types = Object.keys(c.types ?? {})
       const vars = Object.keys(c.variables ?? {})
-      if (!types.includes('twilio/text')) result = `"${c.friendly_name}" is a ${types.join(', ').replace(/twilio\//g, '') || 'unknown'} template — it must be Text`
+      // Text or Quick Reply (buttons) both work: ZionDesk fills {{1}} with the message.
+      if (!types.some((x) => x === 'twilio/text' || x === 'twilio/quick-reply')) result = `"${c.friendly_name}" is a ${types.join(', ').replace(/twilio\//g, '') || 'unknown'} template — it must be Text or Quick Reply`
       else if (vars.length !== 1 || vars[0] !== '1') result = `"${c.friendly_name}" has variables [${vars.join(', ') || 'none'}] — it must have exactly one: {{1}}`
       else {
         const a = await fetch(`${base}/ApprovalRequests`, { headers: auth })
