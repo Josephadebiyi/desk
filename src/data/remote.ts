@@ -124,6 +124,7 @@ type ChurchRow = {
   phone: string
   email: string
   denomination: string
+  sms_sender?: string | null
   currency: string
   plan: Settings['plan']
   branches: string[]
@@ -145,6 +146,7 @@ export const settingsFromRow = (c: ChurchRow): Settings => ({
   phone: c.phone,
   email: c.email,
   denomination: c.denomination,
+  smsSender: c.sms_sender ?? null,
   currency: c.currency,
   branches: c.branches,
   departments: c.departments,
@@ -166,6 +168,7 @@ const settingsToRow = (p: Partial<Settings>) => {
   for (const k of ['location', 'phone', 'email', 'denomination', 'currency', 'branches', 'departments', 'funds', 'payout'] as const) if (p[k] !== undefined) r[k] = p[k]
   if (p.givingSlug !== undefined) r.slug = p.givingSlug
   if (p.logoUrl !== undefined) r.logo_url = p.logoUrl
+  if (p.smsSender !== undefined) r.sms_sender = p.smsSender || null
   return r
 }
 

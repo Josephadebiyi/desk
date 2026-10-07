@@ -15,7 +15,7 @@ const settings: Dict['settings'] = {
       ellen: { title: 'Ellen', text: 'A Ellen responde no idioma em que escreve e, por defeito, no idioma da app.' },
     },
   },
-  profile: { currencyFallback: "A Flutterwave ainda não aceita ofertas online em {currency}: as ofertas com cartão serão cobradas em USD. As transferências bancárias continuam em {currency}.", logo: "Logótipo da igreja", title: 'Perfil da igreja', churchName: 'Nome da igreja', location: 'Localização', phone: 'Telefone', email: 'E-mail da secretaria', denomination: 'Denominação', currency: 'Moeda', save: 'Guardar perfil' },
+  profile: { smsSender: "Nome do remetente SMS", smsSenderHint: "Os SMS mostram «{name}» como remetente nos países que o permitem (quase toda a Europa e África). Até 11 letras ou números. Nos EUA, Canadá e Nigéria os SMS saem do número do ZionDesk e o nome da igreja aparece no início de cada mensagem.", smsSenderErr: "Use até 11 letras, números ou espaços, com pelo menos uma letra.", currencyFallback: "A Flutterwave ainda não aceita ofertas online em {currency}: as ofertas com cartão serão cobradas em USD. As transferências bancárias continuam em {currency}.", logo: "Logótipo da igreja", title: 'Perfil da igreja', churchName: 'Nome da igreja', location: 'Localização', phone: 'Telefone', email: 'E-mail da secretaria', denomination: 'Denominação', currency: 'Moeda', save: 'Guardar perfil' },
   structure: { branches: 'Sedes', addBranch: 'Adicionar sede', departments: 'Departamentos', addDept: 'Adicionar departamento', funds: 'Fundos de ofertas', addFund: 'Adicionar fundo' },
   team: {
     title: 'Equipa e funções',

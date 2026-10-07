@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
 import { PageHead, Tabs, planName, tEnum } from './kit'
 import { confirmAction, withConfirm } from './confirm'
+import { defaultSmsSender, SMS_SENDER_MAX, validSmsSender } from '../lib/smsSender'
 import { useMembers } from './store'
 import { type Role } from './types'
 import { useWorkspace, type PlanId, type Settings as S } from './workspace'
@@ -268,6 +269,7 @@ function Profile() {
   const [ok, setOk] = useState(false)
   const [logoBusy, setLogoBusy] = useState(false)
   const [logoError, setLogoError] = useState('')
+  const [senderError, setSenderError] = useState('')
   const field = (k: keyof S, label: string, type = 'text') => (
     <label className="d-field">
       <span>{label}</span>
@@ -280,8 +282,11 @@ function Profile() {
       onSubmit={async (e: FormEvent) => {
         e.preventDefault()
         if (!f.churchName.trim()) return
+        const sender = (f.smsSender ?? '').trim()
+        if (sender && !validSmsSender(sender)) return setSenderError(t('settings.profile.smsSenderErr'))
+        setSenderError('')
         if (!(await confirmAction({ title: t('cf.profileTitle'), confirmLabel: t('cf.save') }))) return
-        updateSettings({ churchName: f.churchName.trim(), location: f.location, phone: f.phone, email: f.email, denomination: f.denomination, currency: f.currency })
+        updateSettings({ churchName: f.churchName.trim(), location: f.location, phone: f.phone, email: f.email, denomination: f.denomination, currency: f.currency, smsSender: sender || null })
         setOk(true)
         setTimeout(() => setOk(false), 2000)
       }}
@@ -328,6 +333,16 @@ function Profile() {
             ))}
           </select>
           {chargeCurrency(f.currency) !== f.currency && <small className="d-muted">{t('settings.profile.currencyFallback', { currency: f.currency })}</small>}
+        </label>
+        <label className={`d-field ${senderError ? 'has-error' : ''}`}>
+          <span>{t('settings.profile.smsSender')}</span>
+          <input
+            value={f.smsSender ?? ''}
+            maxLength={SMS_SENDER_MAX}
+            placeholder={defaultSmsSender(f.churchName || settings.churchName)}
+            onChange={(e) => setF({ ...f, smsSender: e.target.value.replace(/[^A-Za-z0-9 ]/g, '') })}
+          />
+          <small className="d-muted">{senderError || t('settings.profile.smsSenderHint', { name: (f.smsSender || '').trim() || defaultSmsSender(f.churchName || settings.churchName) })}</small>
         </label>
       </div>
       <div className="d-form-actions">

@@ -15,7 +15,7 @@ const settings: Dict['settings'] = {
       ellen: { title: 'Ellen', text: 'Ellen répond dans la langue dans laquelle vous écrivez, et par défaut dans la langue de l’application.' },
     },
   },
-  profile: { currencyFallback: "Flutterwave ne prend pas encore en charge les dons en ligne en {currency} : les dons par carte seront encaissés en USD. Les virements bancaires restent en {currency}.", logo: "Logo de l’église", title: 'Profil de l’église', churchName: 'Nom de l’église', location: 'Lieu', phone: 'Téléphone', email: 'E-mail du secrétariat', denomination: 'Dénomination', currency: 'Devise', save: 'Enregistrer le profil' },
+  profile: { smsSender: "Nom d’expéditeur SMS", smsSenderHint: "Les SMS affichent « {name} » comme expéditeur dans les pays qui l’autorisent (presque toute l’Europe et l’Afrique). Jusqu’à 11 lettres ou chiffres. Aux États-Unis, au Canada et au Nigeria, les SMS partent du numéro ZionDesk et le nom de l’église figure au début de chaque message.", smsSenderErr: "Utilisez jusqu’à 11 lettres, chiffres ou espaces, avec au moins une lettre.", currencyFallback: "Flutterwave ne prend pas encore en charge les dons en ligne en {currency} : les dons par carte seront encaissés en USD. Les virements bancaires restent en {currency}.", logo: "Logo de l’église", title: 'Profil de l’église', churchName: 'Nom de l’église', location: 'Lieu', phone: 'Téléphone', email: 'E-mail du secrétariat', denomination: 'Dénomination', currency: 'Devise', save: 'Enregistrer le profil' },
   structure: { branches: 'Sites', addBranch: 'Ajouter un site', departments: 'Départements', addDept: 'Ajouter un département', funds: 'Fonds de dons', addFund: 'Ajouter un fonds' },
   team: {
     title: 'Équipe et rôles',

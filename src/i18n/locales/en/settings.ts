@@ -14,7 +14,7 @@ export default {
       ellen: { title: 'Ellen', text: 'Ellen replies in the language you write in, and in your app language by default.' },
     },
   },
-  profile: { currencyFallback: "Online gifts in {currency} aren’t supported by Flutterwave yet — card gifts will be collected in USD. Bank transfers stay in {currency}.", logo: "Church logo", title: 'Church profile', churchName: 'Church name', location: 'Location', phone: 'Phone', email: 'Office email', denomination: 'Denomination', currency: 'Currency', save: 'Save profile' },
+  profile: { smsSender: "SMS sender name", smsSenderHint: "Texts show “{name}” as the sender in countries that allow sender names (most of Europe and Africa). Up to 11 letters or numbers. In the US, Canada and Nigeria texts come from ZionDesk’s number, and the church name starts every message.", smsSenderErr: "Use up to 11 letters, numbers or spaces, with at least one letter.", currencyFallback: "Online gifts in {currency} aren’t supported by Flutterwave yet — card gifts will be collected in USD. Bank transfers stay in {currency}.", logo: "Church logo", title: 'Church profile', churchName: 'Church name', location: 'Location', phone: 'Phone', email: 'Office email', denomination: 'Denomination', currency: 'Currency', save: 'Save profile' },
   structure: { branches: 'Branches', addBranch: 'Add a branch', departments: 'Departments', addDept: 'Add a department', funds: 'Giving funds', addFund: 'Add a fund' },
   team: {
     title: 'Team & roles',

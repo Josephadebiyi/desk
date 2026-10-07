@@ -23,6 +23,8 @@ export interface Settings {
   phone: string
   email: string
   denomination: string
+  /** SMS sender name (up to 11 letters/numbers); null = made from the church name. */
+  smsSender?: string | null
   currency: string
   branches: string[]
   departments: string[]

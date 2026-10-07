@@ -14,6 +14,11 @@ import { compose, sendEmails } from './mail'
 import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
 import { logOutbound } from './inbox'
+import { defaultSmsSender, validSmsSender } from '../src/lib/smsSender'
+
+/** The church's SMS sender name: its saved choice, else one made from its name. */
+export const smsSenderOf = (c: { name?: string | null; sms_sender?: string | null } | null) =>
+  c?.sms_sender && validSmsSender(c.sms_sender) ? c.sms_sender : c?.name ? defaultSmsSender(c.name) : null
 
 const TPL: Record<EmailLang, Record<string, string>> = { en: enTpl, es: esTpl, fr: frTpl, de: deTpl, pt: ptTpl }
 const LOCALE: Record<EmailLang, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
@@ -83,18 +88,36 @@ const TWILIO_ERRORS: Record<string, string> = {
 }
 export const twilioReason = (code: string | number | undefined, fallback = '') => (code ? TWILIO_ERRORS[String(code)] ?? `Twilio error ${code}${fallback ? `: ${fallback}` : ''}` : fallback)
 
-/** `freeform`: a reply inside WhatsApp's 24-hour window (no template needed). */
-export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string, opts: { freeform?: boolean } = {}) {
+/** Twilio errors that mean "this sender name can't be used for this number" — resend from the shared sender. */
+const SENDER_NAME_REFUSED = new Set([21212, 21612, 21606, 21659, 21660, 21661])
+/** Countries where an unregistered sender name fails or is filtered (US/Canada: not allowed; Nigeria: needs registration). */
+const NO_SENDER_NAME = (process.env.SMS_NAME_SKIP ?? '+1,+234').split(',').map((x) => x.trim()).filter(Boolean)
+
+class TwilioError extends Error {
+  constructor(message: string, readonly code?: number) {
+    super(message)
+  }
+}
+
+/**
+ * `freeform`: a reply inside WhatsApp's 24-hour window (no template needed).
+ * `sender`: SMS only — the church's own sender name (e.g. "GraceChapel"); falls back to ZionDesk's shared sender
+ * where names aren't accepted.
+ */
+export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string, opts: { freeform?: boolean; sender?: string | null } = {}): Promise<string | undefined> {
   if (!/^\+\d{8,15}$/.test(to)) throw new Error(TWILIO_ERRORS['21211'])
+  if (channel === 'SMS' && opts.sender && !NO_SENDER_NAME.some((p) => to.startsWith(p))) {
+    try {
+      return await twilioPost({ From: opts.sender, To: to, Body: body })
+    } catch (e) {
+      if (!(e instanceof TwilioError && e.code && SENDER_NAME_REFUSED.has(e.code))) throw e
+      console.warn(`[sms] sender name "${opts.sender}" refused for ${to.slice(0, 4)}… (${e.code}) — using the shared sender`)
+    }
+  }
   const from = channel === 'SMS' ? env.twilioSmsFrom : env.twilioWhatsappFrom
-  // Twilio reports the final delivery result (delivered / failed + reason) to this webhook.
-  const callback: Record<string, string> = env.apiUrl.startsWith('https://') ? { StatusCallback: `${env.apiUrl}/api/twilio/status` } : {}
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.twilioSid}/Messages.json`, {
-    method: 'POST',
-    headers: { Authorization: 'Basic ' + Buffer.from(`${env.twilioSid}:${env.twilioToken}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(
+  return twilioPost(
       channel === 'SMS' && env.twilioMessagingService
-        ? { MessagingServiceSid: env.twilioMessagingService, To: to, Body: body, ...callback }
+        ? { MessagingServiceSid: env.twilioMessagingService, To: to, Body: body }
         : channel === 'WhatsApp' && env.twilioWhatsappContentSid && !opts.freeform
           ? {
               From: `whatsapp:${from.replace(/^whatsapp:/, '')}`,
@@ -102,13 +125,21 @@ export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: stri
               ContentSid: env.twilioWhatsappContentSid,
               // WhatsApp template variables can't contain new lines or long runs of spaces.
               ContentVariables: JSON.stringify({ 1: body.replace(/\s*\n+\s*/g, ' · ').replace(/ {4,}/g, ' ').slice(0, 900) }),
-              ...callback,
             }
-          : { From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body, ...callback },
-    ),
+          : { From: channel === 'WhatsApp' ? `whatsapp:${from.replace(/^whatsapp:/, '')}` : from, To: channel === 'WhatsApp' ? `whatsapp:${to}` : to, Body: body },
+  )
+}
+
+async function twilioPost(params: Record<string, string>) {
+  // Twilio reports the final delivery result (delivered / failed + reason) to this webhook.
+  const callback: Record<string, string> = env.apiUrl.startsWith('https://') ? { StatusCallback: `${env.apiUrl}/api/twilio/status` } : {}
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.twilioSid}/Messages.json`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + Buffer.from(`${env.twilioSid}:${env.twilioToken}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ ...callback, ...params }),
   })
   const data = (await res.json().catch(() => ({}))) as { sid?: string; message?: string; code?: number }
-  if (!res.ok) throw new Error(twilioReason(data.code, data.message ?? `Twilio ${res.status}`))
+  if (!res.ok) throw new TwilioError(twilioReason(data.code, data.message ?? `Twilio ${res.status}`), data.code)
   return data.sid
 }
 
@@ -138,7 +169,7 @@ export async function recordDeliveryStatus(sid: string, status: string, errorCod
 export async function sendCampaign(campaignId: string, byName: string) {
   const { data: c, error } = await db().from('campaigns').select('*').eq('id', campaignId).single()
   if (error || !c) throw new Error('Campaign not found')
-  const { data: church } = await db().from('churches').select('name').eq('id', c.church_id).single()
+  const { data: church } = await db().from('churches').select('*').eq('id', c.church_id).single()
   const { data: overrides } = await db().from('message_templates').select('key, lang, text').eq('church_id', c.church_id)
   const churchName = church?.name ?? ''
   const channel = c.channel as 'SMS' | 'WhatsApp' | 'Email'
@@ -187,7 +218,7 @@ export async function sendCampaign(campaignId: string, byName: string) {
       let err: string | null = null
       if (ready) {
         try {
-          providerId = channel === 'WhatsApp' && configured.whatsappCloud ? await sendWhatsApp(to, text, lang) : await twilio(channel, to, text)
+          providerId = channel === 'WhatsApp' && configured.whatsappCloud ? await sendWhatsApp(to, text, lang) : await twilio(channel, to, text, { sender: smsSenderOf(church) })
           status = 'sent'
         } catch (e) {
           status = 'failed'

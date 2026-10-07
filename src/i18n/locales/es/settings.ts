@@ -15,7 +15,7 @@ const settings: Dict['settings'] = {
       ellen: { title: 'Ellen', text: 'Ellen responde en el idioma en que escribes y, por defecto, en el idioma de la app.' },
     },
   },
-  profile: { currencyFallback: "Flutterwave aún no admite ofrendas en línea en {currency}: las ofrendas con tarjeta se cobrarán en USD. Las transferencias bancarias siguen en {currency}.", logo: "Logo de la iglesia", title: 'Perfil de la iglesia', churchName: 'Nombre de la iglesia', location: 'Ubicación', phone: 'Teléfono', email: 'Correo de la oficina', denomination: 'Denominación', currency: 'Moneda', save: 'Guardar perfil' },
+  profile: { smsSender: "Nombre del remitente SMS", smsSenderHint: "Los SMS muestran «{name}» como remitente en los países que lo permiten (casi toda Europa y África). Hasta 11 letras o números. En EE. UU., Canadá y Nigeria los SMS salen del número de ZionDesk y el nombre de la iglesia va al inicio de cada mensaje.", smsSenderErr: "Usa hasta 11 letras, números o espacios, con al menos una letra.", currencyFallback: "Flutterwave aún no admite ofrendas en línea en {currency}: las ofrendas con tarjeta se cobrarán en USD. Las transferencias bancarias siguen en {currency}.", logo: "Logo de la iglesia", title: 'Perfil de la iglesia', churchName: 'Nombre de la iglesia', location: 'Ubicación', phone: 'Teléfono', email: 'Correo de la oficina', denomination: 'Denominación', currency: 'Moneda', save: 'Guardar perfil' },
   structure: { branches: 'Sedes', addBranch: 'Añadir sede', departments: 'Departamentos', addDept: 'Añadir departamento', funds: 'Fondos de ofrendas', addFund: 'Añadir fondo' },
   team: {
     title: 'Equipo y roles',
