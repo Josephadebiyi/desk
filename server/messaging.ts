@@ -76,7 +76,7 @@ const TWILIO_ERRORS: Record<string, string> = {
   '21614': 'This number cannot receive SMS.',
   '21408': 'Sending to this country is not enabled in the Twilio account (Messaging → Geo permissions).',
   '21610': 'This person has replied STOP and opted out of messages.',
-  '63032': 'This person has blocked or opted out of WhatsApp messages from this sender.',
+  '63032': 'WhatsApp (Meta) won’t deliver marketing templates to this number — it may be in Meta’s marketing experiment, or the person turned off marketing messages from you. Try a Utility template, or ask them to message you first.',
   '63049': 'WhatsApp (Meta) chose not to deliver this message. This happens with marketing-style messages to people who rarely interact.',
   '63007': 'The WhatsApp sender number is not set up on Twilio (check TWILIO_WHATSAPP_FROM).',
   '63112': 'The WhatsApp Business account behind the sender is disabled or not approved yet.',
