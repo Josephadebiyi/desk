@@ -2,6 +2,7 @@ import {
   BarChart3,
   Bell,
   CalendarDays,
+  ChevronDown,
   HelpCircle,
   LayoutGrid,
   MessageSquareText,
@@ -15,7 +16,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { NotificationsMenu, ProfileMenu } from './TopMenus'
 import { useSession } from '../lib/session'
@@ -51,6 +52,63 @@ const NAV = [
 ]
 /** Menu items per role: branch leaders only see their branch reports; ministry leaders don't see branch finance. */
 const navFor = (role: Role | null) => (role === 'branch' ? NAV.filter((n) => n.key === 'branches') : role === 'leader' ? NAV.filter((n) => n.key !== 'branches') : NAV)
+/** The top menu groups related pages so it stays short (6 entries instead of 11). */
+const GROUPS: { key: string; items: string[] }[] = [
+  { key: 'overview', items: ['overview'] },
+  { key: 'ai', items: ['ai'] },
+  { key: 'people', items: ['members', 'attendance'] },
+  { key: 'finance', items: ['giving', 'branches'] },
+  { key: 'outreach', items: ['messaging', 'events', 'design', 'links'] },
+  { key: 'reports', items: ['reports'] },
+]
+type NavItem = (typeof NAV)[number]
+
+/** One menu entry: a link, or a group button with a dropdown of its pages. */
+function NavGroup({ group, items, unread, onGo, previewActive }: { group: string; items: NavItem[]; unread: number; onGo: () => void; previewActive?: string }) {
+  const { t } = useT()
+  const { pathname } = useLocation()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => setOpen(false), [pathname])
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', esc)
+    return () => (document.removeEventListener('mousedown', close), document.removeEventListener('keydown', esc))
+  }, [open])
+  const link = (n: NavItem, label = t(`dash.nav.${n.key}`)) => (
+    <NavLink key={n.to} to={n.key === 'messaging' && unread ? `${n.to}?tab=inbox` : n.to} end={'end' in n ? n.end : undefined} onClick={onGo}>
+      {label}
+      {n.key === 'messaging' && unread > 0 && <i className="m-badge">{unread}</i>}
+    </NavLink>
+  )
+  if (previewActive !== undefined) {
+    const active = items.some((n) => n.key === previewActive)
+    return (
+      <span data-nav={group} className={active ? 'active' : ''}>
+        {items.length === 1 ? t(`dash.nav.${items[0].key}`) : t(`dash.nav.${group}`)}
+      </span>
+    )
+  }
+  if (items.length === 1) return link(items[0])
+  const active = items.some((n) => pathname.startsWith(n.to))
+  const badge = items.some((n) => n.key === 'messaging') ? unread : 0
+  return (
+    <div className={`d-navgroup ${open ? 'is-open' : ''}`} ref={ref}>
+      <button type="button" className={active ? 'active' : ''} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        {t(`dash.nav.${group}`)}
+        {badge > 0 && <i className="m-badge">{badge}</i>}
+        <ChevronDown size={14} />
+      </button>
+      <div className="d-navdrop" role="menu">
+        <small className="d-navhead">{t(`dash.nav.${group}`)}</small>
+        {items.map((n) => link(n))}
+      </div>
+    </div>
+  )
+}
 
 function useTrial() {
   const [params] = useSearchParams()
@@ -241,18 +299,13 @@ export function DashboardFrame({ children, preview }: { children: ReactNode; pre
           <img src={theme === 'dark' ? '/brand/logo-lime.webp' : '/brand/logo-color.webp'} alt="ZionDesk" />
         </Link>
         <nav className={`d-nav ${menu ? 'is-open' : ''}`}>
-          {(preview ? NAV.filter((n) => n.key !== 'branches') : navFor(session.remote ? session.role : null)).map((n) =>
-            preview ? (
-              <span key={n.to} data-nav={n.key} className={preview.active === n.key ? 'active' : ''}>
-                {t(`dash.nav.${n.key}`)}
-              </span>
-            ) : (
-              <NavLink key={n.to} to={n.key === 'messaging' && unread ? `${n.to}?tab=inbox` : n.to} end={n.end} onClick={() => setMenu(false)}>
-                {t(`dash.nav.${n.key}`)}
-                {n.key === 'messaging' && unread > 0 && <i className="m-badge">{unread}</i>}
-              </NavLink>
-            ),
-          )}
+          {(() => {
+            const allowed = preview ? NAV : navFor(session.remote ? session.role : null)
+            return GROUPS.map((g) => {
+              const items = g.items.map((k) => allowed.find((n) => n.key === k)).filter((n): n is NavItem => Boolean(n))
+              return items.length ? <NavGroup key={g.key} group={g.key} items={items} unread={unread} onGo={() => setMenu(false)} previewActive={preview?.active} /> : null
+            })
+          })()}
         </nav>
         <div className="d-top-end">
           {!session.remote && <RoleSwitch />}

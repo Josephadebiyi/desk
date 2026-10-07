@@ -1,6 +1,6 @@
 import type { Dict } from '../en'
 const dash: Dict['dash'] = {
-  nav: { attendance: 'Presenças', overview: 'Visão geral', ai: 'Pergunte à Ellen', members: 'Membros', giving: 'Ofertas', messaging: 'Mensagens', events: 'Eventos', design: 'Estúdio de design', reports: 'Relatórios', settings: 'Definições', links: 'Ligações e códigos QR', help: 'Ajuda', branches: "Relatórios das filiais" },
+  nav: { attendance: 'Presenças', overview: 'Visão geral', ai: 'Pergunte à Ellen', members: 'Membros', giving: 'Ofertas', messaging: 'Mensagens', events: 'Eventos', design: 'Estúdio de design', reports: 'Relatórios', settings: 'Definições', links: 'Ligações e códigos QR', help: 'Ajuda', branches: "Relatórios das filiais", people: "Pessoas", finance: "Finanças", outreach: "Comunicação" },
   rail: { label: 'Ações rápidas', search: 'Pesquisar membros', addMember: 'Adicionar membro', import: 'Importar membros' },
   billing: {
     tag: "Pagamento",
