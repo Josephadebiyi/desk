@@ -1,5 +1,6 @@
 import type { Dict } from '../en'
 const msg: Dict['msg'] = {
+  smsAllowance: "SMS mensuels : {used} / {limit} segments utilisés · {remaining} restants. Réinitialisation chaque mois civil (UTC). Les messages longs utilisent plusieurs segments ; les tentatives comptent.",
   title: 'Messages',
   what: 'messages',
   sent: 'Messages envoyés',

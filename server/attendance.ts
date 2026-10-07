@@ -15,7 +15,7 @@ import { db } from './db'
 import { configured, env } from './env'
 import { logOutbound } from './inbox'
 import { compose, sendEmail } from './mail'
-import { phoneOf, twilio } from './messaging'
+import { phoneOf, twilio, smsSenderOf } from './messaging'
 import { sendWhatsApp } from './whatsapp'
 
 /** Plans that include automatic follow-ups. */
@@ -121,7 +121,7 @@ export const defaultFollowupText = (lang: string) => DEFAULT_TEXT[asEmailLang(la
 
 /** Sends one check-up message: WhatsApp → SMS → email, whichever the person has. */
 export async function sendFollowup(churchId: string, a: Absentee, byName: string, custom = '') {
-  const { data: church } = await db().from('churches').select('name').eq('id', churchId).single()
+  const { data: church } = await db().from('churches').select('*').eq('id', churchId).single()
   const churchName = church?.name ?? ''
   const first = a.name.split(' ')[0]
   const text = (custom.trim() || defaultFollowupText(a.language)).replace(/\{first_name\}/g, first).replace(/\{church\}/g, churchName)
@@ -135,7 +135,7 @@ export async function sendFollowup(churchId: string, a: Absentee, byName: string
     await logOutbound({ churchId, memberId: a.memberId, name: a.name, to: wa, channel, body, providerId, byName })
   } else if (a.phone && configured.sms) {
     const body = withChurchName(text, churchName)
-    providerId = await twilio('SMS', phoneOf(a.phone), body)
+    providerId = await twilio('SMS', phoneOf(a.phone), body, { sender: smsSenderOf(church), churchId })
     channel = 'SMS'
     await logOutbound({ churchId, memberId: a.memberId, name: a.name, to: a.phone, channel, body, providerId, byName })
   } else if (a.email && configured.email) {

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarClock, Check, Info, Languages, Mail, MessageCircle, MessageSquareText, PencilLine, RotateCcw, Send, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { api, apiChurch } from '../lib/api'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import Inbox, { useInboxUnread } from './Inbox'
 import { AskAI, audienceLabel, audienceMembers, AudiencePicker, fmtDate, Kpi, Modal, NoAccess, PageHead, Tabs, tEnum, today } from './kit'
@@ -132,6 +133,17 @@ function Compose() {
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [editing, setEditing] = useState(false)
+  const [smsAllowance, setSmsAllowance] = useState<{ used: number; limit: number; remaining: number } | null>(null)
+  const [smsUsageError, setSmsUsageError] = useState('')
+  const churchId = apiChurch()
+  useEffect(() => {
+    let active = true
+    if (channel !== 'SMS' || !churchId) return
+    api<{ used: number; limit: number; remaining: number }>('/sms/usage')
+      .then(value => { if (active) { setSmsAllowance(value); setSmsUsageError('') } })
+      .catch(error => { if (active) { setSmsAllowance(null); setSmsUsageError(error instanceof Error ? error.message : 'SMS usage unavailable') } })
+    return () => { active = false }
+  }, [channel, churchId, campaigns])
 
   useEffect(() => {
     if (!toast) return
@@ -231,6 +243,8 @@ function Compose() {
         <Kpi icon={<Send size={17} />} value={campaigns.length} label={t('msg.sent')} />
         <Kpi icon={<Users size={17} />} value={campaigns.reduce((s, c) => s + c.recipients, 0)} label={t('msg.reached')} />
       </PageHead>
+      {channel === 'SMS' && smsAllowance && <p role="status" className="d-hint-box">{t('msg.smsAllowance', { used: smsAllowance.used, limit: smsAllowance.limit, remaining: smsAllowance.remaining })}</p>}
+      {channel === 'SMS' && smsUsageError && <p role="alert" className="d-hint-box">{smsUsageError}</p>}
 
       <p className="d-hint-box">
         <Info size={15} /> {t('msg.deliveryNote')}

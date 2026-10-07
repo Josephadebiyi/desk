@@ -7,7 +7,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { withChurchName } from '../src/emails/sender'
 import { db, HttpError } from './db'
 import { configured, env } from './env'
-import { twilio } from './messaging'
+import { twilio, smsSenderOf } from './messaging'
 import { sendWhatsApp } from './whatsapp'
 
 export type InboxChannel = 'WhatsApp' | 'SMS'
@@ -89,7 +89,7 @@ export async function recordInbound(p: { from: string; channel: InboxChannel; bo
 export async function sendReply(conversationId: string, churchId: string, body: string, byName: string) {
   const { data: conv } = await db().from('conversations').select('*').eq('id', conversationId).maybeSingle()
   if (!conv || conv.church_id !== churchId) throw new HttpError(404, 'Conversation not found')
-  const { data: church } = await db().from('churches').select('name, default_language').eq('id', churchId).single()
+  const { data: church } = await db().from('churches').select('*').eq('id', churchId).single()
   const { data: member } = conv.member_id ? await db().from('members').select('language').eq('id', conv.member_id).maybeSingle() : { data: null }
   const text = withChurchName(body.trim(), church?.name ?? '')
   const open = conv.last_inbound_at && Date.now() - new Date(conv.last_inbound_at).getTime() < 23.5 * 3600e3
@@ -99,7 +99,7 @@ export async function sendReply(conversationId: string, churchId: string, body: 
   const providerId =
     channel === 'WhatsApp' && configured.whatsappCloud
       ? await sendWhatsApp(conv.phone, text, member?.language ?? church?.default_language ?? 'en', { freeform: Boolean(open) })
-      : await twilio(channel, conv.phone, text, { freeform: Boolean(open) })
+      : await twilio(channel, conv.phone, text, { freeform: Boolean(open), sender: smsSenderOf(church), churchId })
   const { data: msg } = await db()
     .from('conversation_messages')
     .insert({ conversation_id: conv.id, church_id: churchId, direction: 'out', body: text, provider_id: providerId ?? null, by_name: byName })

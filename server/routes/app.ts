@@ -12,8 +12,10 @@ import { configured, env } from '../env'
 import { compose, sendEmail } from '../mail'
 import { sendCampaign } from '../messaging'
 import { ageOn, birthdayPrayers, prayersEnabled } from '../prayers'
+import { smsUsage } from '../smsQuota'
 
 export const appRoutes = Router()
+appRoutes.get('/sms/usage', requireCaller(), route(async (req, res) => { res.json(await smsUsage(req.caller!.churchId)) }))
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ROLE_NAME: Record<string, Record<string, string>> = {

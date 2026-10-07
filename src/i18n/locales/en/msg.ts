@@ -1,4 +1,5 @@
 export default {
+  smsAllowance: 'Monthly SMS: {used} / {limit} segments used · {remaining} remaining. Resets each calendar month (UTC). Long messages use multiple segments; sending attempts count toward the allowance.',
   title: 'Messaging',
   what: 'messaging',
   sent: 'Messages sent',

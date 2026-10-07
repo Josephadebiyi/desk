@@ -15,6 +15,7 @@ import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
 import { logOutbound } from './inbox'
 import { defaultSmsSender, validSmsSender } from '../src/lib/smsSender'
+import { reserveSms } from './smsQuota'
 
 /** The church's SMS sender name: its saved choice, else one made from its name. */
 export const smsSenderOf = (c: { name?: string | null; sms_sender?: string | null } | null) =>
@@ -104,8 +105,12 @@ class TwilioError extends Error {
  * `sender`: SMS only — the church's own sender name (e.g. "GraceChapel"); falls back to ZionDesk's shared sender
  * where names aren't accepted.
  */
-export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string, opts: { freeform?: boolean; sender?: string | null } = {}): Promise<string | undefined> {
+export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: string, opts: { freeform?: boolean; sender?: string | null; churchId?: string } = {}): Promise<string | undefined> {
   if (!/^\+\d{8,15}$/.test(to)) throw new Error(TWILIO_ERRORS['21211'])
+  if (channel === 'SMS') {
+    if (!opts.churchId) throw new Error('A church is required to send SMS.')
+    await reserveSms(opts.churchId, body)
+  }
   if (channel === 'SMS' && opts.sender && !NO_SENDER_NAME.some((p) => to.startsWith(p))) {
     try {
       return await twilioPost({ From: opts.sender, To: to, Body: body })
@@ -218,7 +223,7 @@ export async function sendCampaign(campaignId: string, byName: string) {
       let err: string | null = null
       if (ready) {
         try {
-          providerId = channel === 'WhatsApp' && configured.whatsappCloud ? await sendWhatsApp(to, text, lang) : await twilio(channel, to, text, { sender: smsSenderOf(church) })
+          providerId = channel === 'WhatsApp' && configured.whatsappCloud ? await sendWhatsApp(to, text, lang) : await twilio(channel, to, text, { sender: smsSenderOf(church), churchId: c.church_id })
           status = 'sent'
         } catch (e) {
           status = 'failed'
