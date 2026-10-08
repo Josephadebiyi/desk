@@ -16,6 +16,7 @@
  *   GET  /api/admin/payments             recent subscription payments and gifts
  *   GET  /api/admin/system               which integrations have keys (booleans only)
  */
+import { billingCurrency } from '../../src/lib/currency'
 import { Router, type NextFunction, type Request, type Response } from 'express'
 import { PLAN_PRICES, type FlwCurrency } from '../../src/lib/currency'
 import { db, HttpError, requireUser, route } from '../db'
@@ -124,7 +125,7 @@ adminRoutes.get(
     // Monthly recurring revenue per currency (active paid plans at list price).
     const mrr: Record<string, number> = {}
     for (const c of list.filter((c) => c.plan_status === 'active')) {
-      const cur = (c.currency === 'NGN' ? 'NGN' : 'USD') as FlwCurrency
+      const cur = billingCurrency(c.currency)
       mrr[cur] = (mrr[cur] ?? 0) + (PLAN_PRICES[cur]?.[c.plan as 'essentials'] ?? 0)
     }
     // Last 6 months: sign-ups and subscription revenue by currency.

@@ -3,9 +3,10 @@
  *
  * - A church picks its currency at sign-up (pre-selected from the visitor's region).
  * - Giving is charged in the church's currency when Flutterwave can collect it, else USD.
- * - ZionDesk's prices are set in USD ($8.99 · $21.99 · $43.99) and charged through Paystack.
- *   Nigerian churches are billed in naira (NGN); everyone else in USD. Other local prices below are
- *   shown for reference only (Paystack charges USD and the payer's bank converts).
+ * - ZionDesk's main prices are in USD ($8.99 · $21.99 · $43.99).
+ *   African countries Paystack serves pay in their own currency through Paystack (NGN, GHS, KES, ZAR, XOF —
+ *   one Paystack business account per country). Everyone else pays through Stripe in EUR, GBP or USD.
+ *   Other local prices below are display guides only.
  *   Local prices are set by hand (not live exchange rates) so a church's monthly bill never
  *   moves with the exchange rate. Review them a few times a year.
  */
@@ -26,12 +27,17 @@ export const chargeCurrency = (c: unknown): FlwCurrency => (isFlwCurrency(c) ? c
 /** The currency ZionDesk's prices are set in. */
 export const BASE_CURRENCY = 'USD' as const
 
-/** Currencies Paystack charges plans in for ZionDesk (a Nigerian Paystack business: NGN + USD). */
-export const BILLING_CURRENCIES = ['NGN', 'USD'] as const
+/** Currencies churches are billed in: Stripe (USD, EUR, GBP) and Paystack (African currencies). Others → USD. */
+export const BILLING_CURRENCIES = ['USD', 'EUR', 'GBP', 'NGN', 'GHS', 'KES', 'ZAR', 'XOF'] as const
 export type BillingCurrency = (typeof BILLING_CURRENCIES)[number]
+/** Charged through Stripe. */
+export const STRIPE_CURRENCIES: BillingCurrency[] = ['USD', 'EUR', 'GBP']
+/** African currencies Paystack can charge — each needs the Paystack business account of that country. */
+export const PAYSTACK_CURRENCIES: BillingCurrency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'XOF']
 
-/** Monthly plan prices: USD is the main price; NGN is billed; the others are reference prices for display. */
-export const PLAN_PRICES: Partial<Record<FlwCurrency, Record<PlanId, number>>> = {
+type PriceCurrency = BillingCurrency | 'UGX' | 'TZS' | 'RWF' | 'XAF' | 'ZMW'
+/** Monthly plan prices (USD is the main price; billed currencies are fixed; UGX…ZMW are display guides). */
+export const PLAN_PRICES: Record<PriceCurrency, Record<PlanId, number>> = {
   EUR: { essentials: 8, plus: 19.99, max: 39.99 },
   USD: { essentials: 8.99, plus: 21.99, max: 43.99 },
   GBP: { essentials: 6.99, plus: 16.99, max: 34.99 },
@@ -47,24 +53,25 @@ export const PLAN_PRICES: Partial<Record<FlwCurrency, Record<PlanId, number>>> =
   ZMW: { essentials: 229, plus: 579, max: 1159 },
 }
 
-/** Currency the church's plan is billed in: naira for Nigerian churches, USD for everyone else. */
-export const billingCurrency = (churchCurrency: unknown): BillingCurrency => (churchCurrency === 'NGN' ? 'NGN' : 'USD')
+/** Currency the church's plan is billed in: its own when we have prices for it, else USD. */
+export const billingCurrency = (churchCurrency: unknown): BillingCurrency =>
+  BILLING_CURRENCIES.includes(churchCurrency as BillingCurrency) ? (churchCurrency as BillingCurrency) : 'USD'
 
 /** The USD price and, when the church/visitor uses another currency we have a price for, that local price
  *  (`billed`: true when that's the currency they're actually charged in, i.e. NGN). */
 export const priceWithLocal = (plan: PlanId, currency: unknown) => {
   const base = { currency: BASE_CURRENCY as string, amount: PLAN_PRICES.USD![plan] }
   const c = typeof currency === 'string' ? (currency as FlwCurrency) : 'USD'
-  const amount = c !== 'USD' ? PLAN_PRICES[c]?.[plan] : undefined
+  const amount = c !== 'USD' ? PLAN_PRICES[c as PriceCurrency]?.[plan] : undefined
   return { base, local: amount ? { currency: c as string, amount, billed: billingCurrency(c) === c } : null }
 }
 
-/** Extra designer flyer request (beyond the monthly allowance), per billing currency. */
-export const EXTRA_DESIGN_PRICE: Record<BillingCurrency, number> = { USD: 10, NGN: 14500 }
+/** Extra designer flyer request (beyond the monthly allowance), per billing currency (≈ $10). */
+export const EXTRA_DESIGN_PRICE: Record<BillingCurrency, number> = { USD: 10, EUR: 9, GBP: 8, NGN: 14500, GHS: 145, KES: 1300, ZAR: 175, XOF: 5800 }
 
 export const planPrice = (plan: PlanId, churchCurrency: unknown) => {
   const currency = billingCurrency(churchCurrency)
-  return { currency, amount: PLAN_PRICES[currency]![plan] }
+  return { currency, amount: PLAN_PRICES[currency][plan] }
 }
 
 export const formatMoney = (amount: number, currency: string, locale = 'en-US') =>

@@ -53,6 +53,11 @@ export const env = {
   // Paystack (plan billing). Live keys start sk_live_ / pk_live_.
   paystackSecretKey: v('PAYSTACK_SECRET_KEY'),
   paystackPublicKey: v('PAYSTACK_PUBLIC_KEY'),
+  // Other countries' Paystack business accounts (each charges its own currency).
+  paystackKeys: { GH: v('PAYSTACK_GH_SECRET_KEY'), KE: v('PAYSTACK_KE_SECRET_KEY'), ZA: v('PAYSTACK_ZA_SECRET_KEY'), CI: v('PAYSTACK_CI_SECRET_KEY') } as Record<string, string>,
+  // Stripe (churches outside Nigeria, USD). Prefer a restricted key (rk_live_…) with Billing/Checkout/Customers/Products write access.
+  stripeSecretKey: v('STRIPE_SECRET_KEY'),
+  stripeWebhookSecret: v('STRIPE_WEBHOOK_SECRET'),
   // Optional override, e.g. https://api.flutterwave.com/v3
   flwBaseUrl: (v('FLUTTERWAVE_BASE_URL') || 'https://api.flutterwave.com/v3').replace(/\/+$/, '').replace(/^(https:\/\/[^/]+)$/, '$1/v3'),
   flwWebhookHash: v('FLW_WEBHOOK_HASH') || v('FLUTTERWAVE_WEBHOOK_SECRET_HASH') || v('FLUTTERWAVE_WEBHOOK_HASH'), // the "Secret hash" you set on the webhook
@@ -98,5 +103,6 @@ export const configured = {
   prayers: Boolean(process.env.ANTHROPIC_API_KEY),
   admin: env.adminEmails.length > 0,
   flutterwave: Boolean(env.flwSecretKey),
-  paystack: Boolean(env.paystackSecretKey),
+  paystack: Boolean(env.paystackSecretKey || Object.values(env.paystackKeys).some(Boolean)),
+  stripe: Boolean(env.stripeSecretKey),
 }

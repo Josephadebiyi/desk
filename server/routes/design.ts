@@ -14,8 +14,8 @@ import { configured, env } from '../env'
 import { randomUUID } from 'node:crypto'
 import { sendEmails } from '../mail'
 import { createCheckout } from '../flutterwave'
-import { billingCurrency, EXTRA_DESIGN_PRICE } from '../../src/lib/currency'
-import { paystackCheckout } from './payments'
+import { EXTRA_DESIGN_PRICE } from '../../src/lib/currency'
+import { paystackCheckout, providerFor, stripeCheckout } from './payments'
 
 export const designRoutes = Router()
 
@@ -135,18 +135,22 @@ designRoutes.post(
 export const INCLUDED_REQUESTS = 8
 /** Price of one extra request: $10, or ₦14,500 for churches billed in naira. */
 export const extraRequestPrice = (churchCurrency: unknown) => {
-  const currency = billingCurrency(churchCurrency)
+  // The currency the church will actually be charged in (same rule as plans).
+  const currency = providerFor(churchCurrency).currency
   return { amount: EXTRA_DESIGN_PRICE[currency], currency }
 }
 
-/** Checkout for an extra request: Paystack when configured, else the older Flutterwave flow. */
+/** Checkout for an extra request: same provider rule as plans (Paystack for African currencies, Stripe for EUR/GBP/USD). */
 async function extraCheckout(r: { churchId: string; requestId: string; title: string; currency: unknown; email: string; name: string; logo?: string }) {
-  const price = extraRequestPrice(r.currency)
+  const route = providerFor(r.currency)
+  if (route.provider === 'stripe')
+    return stripeCheckout({ churchId: r.churchId, kind: 'design_request', currency: route.currency, amount: EXTRA_DESIGN_PRICE[route.currency], email: r.email, name: r.name, designRequestId: r.requestId, title: r.title })
   if (configured.paystack)
     return paystackCheckout(
-      { churchId: r.churchId, kind: 'design_request', amount: price.amount, currency: price.currency, email: r.email, name: r.name, designRequestId: r.requestId, metadata: { request: r.requestId } },
+      { churchId: r.churchId, kind: 'design_request', amount: EXTRA_DESIGN_PRICE[route.currency], currency: route.currency, email: r.email, name: r.name, designRequestId: r.requestId, metadata: { request: r.requestId } },
       async () => ({ amount: EXTRA_DESIGN_PRICE.NGN }),
     )
+  const price = extraRequestPrice(r.currency)
   const txRef = `zd-design-${randomUUID()}`
   await db().from('online_payments').insert({ church_id: r.churchId, kind: 'design_request', design_request_id: r.requestId, tx_ref: txRef, amount: price.amount, currency: price.currency, name: r.name, email: r.email })
   return createCheckout({

@@ -92,7 +92,8 @@ const settings: Dict['settings'] = {
     billingFailed: 'Le paiement n’a pas abouti. Vous n’avez pas été débité — veuillez réessayer.',
     renews: 'renouvellement le {date}',
     subscribe: 'S’abonner',
-    noteLive: "Les formules sont facturées chaque mois via Paystack et se renouvellent automatiquement. Vous pouvez activer ou désactiver le renouvellement ci-dessous à tout moment.",
+    noteLive: "Les formules sont facturées chaque mois par carte (Stripe, ou Paystack en Afrique) et se renouvellent automatiquement. Vous pouvez activer ou désactiver le renouvellement ci-dessous à tout moment.",
+    portal: "Gérer la facturation et les factures",
     status: {
       expired: "Forfait terminé — choisissez un forfait pour continuer",
       trial: 'Essai gratuit',

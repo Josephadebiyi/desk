@@ -17,6 +17,7 @@ const SUBPROCESSORS = [
   { id: 'supabase', name: 'Supabase, Inc.', where: 'USA / EU (project region)' },
   { id: 'render', name: 'Render Services, Inc.', where: 'USA' },
   { id: 'resend', name: 'Resend (Plus Five Five, Inc.)', where: 'USA' },
+  { id: 'stripe', name: 'Stripe Payments Europe, Ltd.', where: 'Ireland / USA' },
   { id: 'paystack', name: 'Paystack Payments Ltd (a Stripe company)', where: 'Nigeria / USA' },
   { id: 'flutterwave', name: 'Flutterwave, Inc.', where: 'Nigeria / USA' },
   { id: 'anthropic', name: 'Anthropic, PBC', where: 'USA' },

@@ -91,7 +91,8 @@ export default {
     billingFailed: 'The payment didn’t go through. You haven’t been charged — please try again.',
     renews: 'renews {date}',
     subscribe: 'Subscribe',
-    noteLive: "Plans are charged monthly through Paystack and renew automatically. You can switch auto-renew off or on below at any time.",
+    noteLive: "Plans are charged monthly by card (Stripe, or Paystack in Africa) and renew automatically. You can switch auto-renew off or on below at any time.",
+    portal: "Manage billing & invoices",
     status: {
       expired: "Plan ended — choose a plan to continue",
       trial: 'Free trial',

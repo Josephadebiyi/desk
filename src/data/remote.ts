@@ -138,6 +138,7 @@ type ChurchRow = {
   payout_account?: Settings['payoutAccount']
   plan_status?: Settings['planStatus']
   plan_renews_at?: string | null
+  stripe_customer_id?: string | null
 }
 
 export const settingsFromRow = (c: ChurchRow): Settings => ({
@@ -158,6 +159,7 @@ export const settingsFromRow = (c: ChurchRow): Settings => ({
   onlineGiving: Boolean(c.flw_subaccount_id),
   planStatus: c.plan_status,
   planRenewsAt: c.plan_renews_at ?? null,
+  billingPortal: Boolean(c.stripe_customer_id),
   logoUrl: c.logo_url,
 })
 

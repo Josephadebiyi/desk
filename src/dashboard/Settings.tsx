@@ -707,6 +707,26 @@ function Plan() {
         })}
       </div>
       <p className="d-hint-box">{live ? t('settings.plan.noteLive') : t('settings.plan.note')}</p>
+      {live && settings.billingPortal && (
+        <div className="d-form-actions" style={{ justifyContent: 'flex-start' }}>
+          <button
+            type="button"
+            className="d-btn"
+            disabled={busy !== ''}
+            onClick={async () => {
+              setBusy('portal')
+              try {
+                window.location.href = (await api<{ link: string }>('/billing/portal', {})).link
+              } catch (e) {
+                setError(e instanceof Error ? e.message : String(e))
+                setBusy('')
+              }
+            }}
+          >
+            {busy === 'portal' ? t('common.loading') : t('settings.plan.portal')}
+          </button>
+        </div>
+      )}
       <p className="d-notes">
         {billingCurrency(settings.currency) === settings.currency ? t('settings.plan.billedIn', { currency: settings.currency }) : t('settings.plan.eurFallback', { currency: settings.currency })}
       </p>

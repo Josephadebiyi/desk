@@ -53,6 +53,8 @@ export interface Settings {
   /** Live: church logo (Supabase storage). */
   logoUrl?: string | null
   planRenewsAt?: string | null
+  /** Card billing through Stripe: the church can open Stripe's portal (card, invoices). */
+  billingPortal?: boolean
 }
 
 /** Shareable public link (registration form or giving page) with its QR code. */
