@@ -77,7 +77,7 @@ export default {
       redeemed: "Promo applied — your plan is free until {date}. We’ll remind you before it ends.",
     },
     billedIn: "Your plan is billed in {currency}.",
-    eurFallback: "We don’t have a local price in {currency} yet, so your plan is billed in euros (EUR).",
+    eurFallback: "Your plan is billed in US dollars (USD). Prices in {currency} are shown as a guide — your bank converts the payment.",
     accessUntil: "access until {date}",
     autoRenew: "Auto-renew",
     autoRenewOn: "Your plan renews automatically on {date}. Turn this off to stop future payments — you keep everything until then.",
@@ -91,7 +91,7 @@ export default {
     billingFailed: 'The payment didn’t go through. You haven’t been charged — please try again.',
     renews: 'renews {date}',
     subscribe: 'Subscribe',
-    noteLive: "Plans are charged monthly through Flutterwave and renew automatically. You can switch auto-renew off or on below at any time.",
+    noteLive: "Plans are charged monthly through Paystack and renew automatically. You can switch auto-renew off or on below at any time.",
     status: {
       expired: "Plan ended — choose a plan to continue",
       trial: 'Free trial',

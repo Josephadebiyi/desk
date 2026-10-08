@@ -9,6 +9,7 @@ import { tr, useT } from '../i18n'
 import { AiFlyer } from './AiFlyer'
 import { AskAI, fmtDate, Kpi, PageHead, PlanGate, Tabs } from './kit'
 import { confirmAction, withConfirm } from './confirm'
+import { formatMoney } from '../lib/currency'
 import { useWorkspace, type DesignRequest } from './workspace'
 import { api } from '../lib/api'
 import { remote } from '../lib/supabase'
@@ -202,21 +203,23 @@ async function shrink(file: File): Promise<string | undefined> {
   }
 }
 
-/** This month's designer-request allowance (Ministry Max: 8 included, then €10 each). */
+/** This month's designer-request allowance (Ministry Max: 8 included, then $10 / ₦14,500 each). */
 function useRequestQuota() {
-  const [q, setQ] = useState<{ used: number; included: number } | null>(null)
+  const [q, setQ] = useState<{ used: number; included: number; extra?: { amount: number; currency: string } } | null>(null)
   useEffect(() => {
     if (!remote) return
-    api<{ used: number; included: number }>('/design/requests/quota').then(setQ).catch(() => setQ(null))
+    api<{ used: number; included: number; extra?: { amount: number; currency: string } }>('/design/requests/quota').then(setQ).catch(() => setQ(null))
   }, [])
   return q
 }
+/** The extra-request price as text, e.g. "$10" or "₦14,500". */
+const extraPriceText = (q: { extra?: { amount: number; currency: string } } | null, locale: string) => (q?.extra ? formatMoney(q.extra.amount, q.extra.currency, locale) : '$10')
 
 function BriefChat({ onDone, onCancel }: { onDone: (r: DesignRequest) => void; onCancel: () => void }) {
   const { addRequest } = useWorkspace()
   const quota = useRequestQuota()
   const extra = !!quota && quota.used >= quota.included
-  const { t } = useT()
+  const { t, locale } = useT()
   const [step, setStep] = useState(0)
   const [lines, setLines] = useState<ChatLine[]>([{ from: 'ai', text: QUESTIONS[0].ask }])
   const [brief, setBrief] = useState<Record<string, string>>({})
@@ -397,7 +400,7 @@ function BriefChat({ onDone, onCancel }: { onDone: (r: DesignRequest) => void; o
             type="button"
             className="d-btn d-btn-ink"
             onClick={withConfirm(
-              { title: t('cf.requestTitle'), body: t('cf.requestBody', { title: brief.title || t('design.requestFallback') }), confirmLabel: extra ? t('design.payAndSend') : t('design.sendTeam') },
+              { title: t('cf.requestTitle'), body: t('cf.requestBody', { title: brief.title || t('design.requestFallback') }), confirmLabel: extra ? t('design.payAndSend', { price: extraPriceText(quota, locale) }) : t('design.sendTeam') },
               () =>
                 onDone(
                   addRequest({
@@ -409,9 +412,9 @@ function BriefChat({ onDone, onCancel }: { onDone: (r: DesignRequest) => void; o
                 ),
             )}
           >
-            <Send size={15} /> {extra ? t('design.payAndSend') : t('design.sendTeam')}
+            <Send size={15} /> {extra ? t('design.payAndSend', { price: extraPriceText(quota, locale) }) : t('design.sendTeam')}
           </button>
-          {quota && <p className="brief-quota">{extra ? t('design.extraCost', { included: quota.included }) : t('design.quota', { used: quota.used, included: quota.included })}</p>}
+          {quota && <p className="brief-quota">{extra ? t('design.extraCost', { included: quota.included, price: extraPriceText(quota, locale) }) : t('design.quota', { used: quota.used, included: quota.included })}</p>}
         </div>
       )}
     </div>
@@ -440,7 +443,8 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
     const id = setInterval(() => void reload(), 30_000)
     return () => clearInterval(id)
   }, [reload])
-  const { t } = useT()
+  const { t, locale } = useT()
+  const payQuota = useRequestQuota()
   const [text, setText] = useState('')
   const left = useCountdown(req.dueAt)
   const idx = STATUSES.indexOf(req.status)
@@ -463,7 +467,7 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
         </div>
         {req.status === 'Awaiting payment' && (
           <div className="req-pay">
-            <p>{t('design.awaitingPay')}</p>
+            <p>{t('design.awaitingPay', { price: extraPriceText(payQuota, locale) })}</p>
             <button
               type="button"
               className="d-btn d-btn-ink"
@@ -476,7 +480,7 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
                   .catch((e) => window.alert(e instanceof Error ? e.message : String(e)))
               }
             >
-              {t('design.payNow')}
+              {t('design.payNow', { price: extraPriceText(payQuota, locale) })}
             </button>
           </div>
         )}
@@ -561,7 +565,7 @@ function RequestCard({ r, onOpen }: { r: DesignRequest; onOpen: () => void }) {
 
 function DesignTeam() {
   const { requests } = useWorkspace()
-  const { t } = useT()
+  const { t, locale } = useT()
   const [params] = useSearchParams()
   const [mode, setMode] = useState<'list' | 'new' | string>(params.get('request') && params.get('paid') !== '1' ? params.get('request')! : 'list')
   const quota = useRequestQuota()
@@ -583,7 +587,7 @@ function DesignTeam() {
         </button>
       </div>
       {params.get('paid') === '1' && <p className="d-hint-box st-billing-ok">{t('design.paid')}</p>}
-      {quota && <p className="brief-quota">{quota.used >= quota.included ? t('design.extraCost', { included: quota.included }) : t('design.quota', { used: quota.used, included: quota.included })}</p>}
+      {quota && <p className="brief-quota">{quota.used >= quota.included ? t('design.extraCost', { included: quota.included, price: extraPriceText(quota, locale) }) : t('design.quota', { used: quota.used, included: quota.included })}</p>}
       <section className="d-panel dt-how">
         <h3>{t('design.how.title')}</h3>
         <ol>

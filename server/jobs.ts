@@ -13,6 +13,7 @@ import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
+import { disableSubscription, subscriptionsOf } from './paystack'
 import { runSignupReminders, runWelcomeFallback } from './lifecycle'
 import { runFollowups } from './attendance'
 import { runBranchReminders } from './branches'
@@ -193,9 +194,12 @@ export async function runBilling() {
 async function endPromos() {
   const { data: due } = await db().from('promo_redemptions').select('id, church_id, plan').eq('status', 'active').lt('ends_at', new Date().toISOString())
   for (const r of due ?? []) {
-    const { data: c } = await db().from('churches').select('id, name, flw_subscription_email').eq('id', r.church_id).single()
+    const { data: c } = await db().from('churches').select('id, name, flw_subscription_email, paystack_customer_code').eq('id', r.church_id).single()
     if (!c) continue
     if (c.flw_subscription_email) for (const s of await listSubscriptions(c.flw_subscription_email)) if (s.status === 'active') await cancelSubscription(s.id).catch(() => undefined)
+    // Stop the discounted Paystack subscription (no surprise charges); the church re-subscribes at the regular price.
+    if (c.paystack_customer_code)
+      for (const s of await subscriptionsOf(c.paystack_customer_code)) if (s.status === 'active' || s.status === 'attention') await disableSubscription(s.subscription_code, s.email_token).catch(() => undefined)
     await db().from('churches').update({ plan_status: 'cancelled' }).eq('id', c.id)
     await db().from('promo_redemptions').update({ status: 'ended' }).eq('id', r.id)
     await tellAdmins(c.id, c.name, 'promoEnded', { plan: PLAN_LABEL[r.plan] ?? r.plan })

@@ -3,8 +3,9 @@
  *
  * - A church picks its currency at sign-up (pre-selected from the visitor's region).
  * - Giving is charged in the church's currency when Flutterwave can collect it, else USD.
- * - ZionDesk's prices are set in EUR (€8 · €19.99 · €39.99). Churches are billed in their own
- *   currency at the fixed local prices below (≈ the euro price), else in EUR.
+ * - ZionDesk's prices are set in USD ($8.99 · $21.99 · $43.99) and charged through Paystack.
+ *   Nigerian churches are billed in naira (NGN); everyone else in USD. Other local prices below are
+ *   shown for reference only (Paystack charges USD and the payer's bank converts).
  *   Local prices are set by hand (not live exchange rates) so a church's monthly bill never
  *   moves with the exchange rate. Review them a few times a year.
  */
@@ -23,9 +24,13 @@ export const isFlwCurrency = (c: unknown): c is FlwCurrency => FLW_CURRENCIES.in
 export const chargeCurrency = (c: unknown): FlwCurrency => (isFlwCurrency(c) ? c : 'USD')
 
 /** The currency ZionDesk's prices are set in. */
-export const BASE_CURRENCY = 'EUR' as const
+export const BASE_CURRENCY = 'USD' as const
 
-/** Monthly plan prices per billing currency: EUR is the main price; the others are rounded local equivalents. */
+/** Currencies Paystack charges plans in for ZionDesk (a Nigerian Paystack business: NGN + USD). */
+export const BILLING_CURRENCIES = ['NGN', 'USD'] as const
+export type BillingCurrency = (typeof BILLING_CURRENCIES)[number]
+
+/** Monthly plan prices: USD is the main price; NGN is billed; the others are reference prices for display. */
 export const PLAN_PRICES: Partial<Record<FlwCurrency, Record<PlanId, number>>> = {
   EUR: { essentials: 8, plus: 19.99, max: 39.99 },
   USD: { essentials: 8.99, plus: 21.99, max: 43.99 },
@@ -42,18 +47,20 @@ export const PLAN_PRICES: Partial<Record<FlwCurrency, Record<PlanId, number>>> =
   ZMW: { essentials: 229, plus: 579, max: 1159 },
 }
 
-/** Currency the church's plan is billed in (its own when we have a local price, else EUR). */
-export const billingCurrency = (churchCurrency: unknown): FlwCurrency => {
-  const c = chargeCurrency(churchCurrency)
-  return PLAN_PRICES[c] ? c : BASE_CURRENCY
+/** Currency the church's plan is billed in: naira for Nigerian churches, USD for everyone else. */
+export const billingCurrency = (churchCurrency: unknown): BillingCurrency => (churchCurrency === 'NGN' ? 'NGN' : 'USD')
+
+/** The USD price and, when the church/visitor uses another currency we have a price for, that local price
+ *  (`billed`: true when that's the currency they're actually charged in, i.e. NGN). */
+export const priceWithLocal = (plan: PlanId, currency: unknown) => {
+  const base = { currency: BASE_CURRENCY as string, amount: PLAN_PRICES.USD![plan] }
+  const c = typeof currency === 'string' ? (currency as FlwCurrency) : 'USD'
+  const amount = c !== 'USD' ? PLAN_PRICES[c]?.[plan] : undefined
+  return { base, local: amount ? { currency: c as string, amount, billed: billingCurrency(c) === c } : null }
 }
 
-/** The euro price and, when different, what the visitor/church pays in their own currency. */
-export const priceWithLocal = (plan: PlanId, currency: unknown) => {
-  const base = { currency: BASE_CURRENCY as string, amount: PLAN_PRICES.EUR![plan] }
-  const local = planPrice(plan, currency)
-  return { base, local: local.currency === BASE_CURRENCY ? null : local }
-}
+/** Extra designer flyer request (beyond the monthly allowance), per billing currency. */
+export const EXTRA_DESIGN_PRICE: Record<BillingCurrency, number> = { USD: 10, NGN: 14500 }
 
 export const planPrice = (plan: PlanId, churchCurrency: unknown) => {
   const currency = billingCurrency(churchCurrency)

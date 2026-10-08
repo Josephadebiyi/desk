@@ -78,7 +78,7 @@ const settings: Dict['settings'] = {
       redeemed: "Promoção aplicada — o seu plano é grátis até {date}. Avisamos antes de terminar.",
     },
     billedIn: "O seu plano é faturado em {currency}.",
-    eurFallback: "Ainda não temos preço local em {currency}, por isso o seu plano é faturado em euros (EUR).",
+    eurFallback: "O seu plano é faturado em dólares americanos (USD). Os preços em {currency} são indicativos: o seu banco converte o pagamento.",
     accessUntil: "acesso até {date}",
     autoRenew: "Renovação automática",
     autoRenewOn: "O seu plano renova automaticamente a {date}. Desligue para parar os próximos pagamentos — mantém tudo até lá.",
@@ -92,7 +92,7 @@ const settings: Dict['settings'] = {
     billingFailed: 'O pagamento não foi concluído. Não foi cobrado — tente novamente.',
     renews: 'renova a {date}',
     subscribe: 'Subscrever',
-    noteLive: "Os planos são cobrados mensalmente através da Flutterwave e renovam automaticamente. Pode ligar ou desligar a renovação automática abaixo a qualquer momento.",
+    noteLive: "Os planos são cobrados mensalmente através da Paystack e renovam automaticamente. Pode ligar ou desligar a renovação automática abaixo a qualquer momento.",
     status: {
       expired: "Plano terminado — escolha um plano para continuar",
       trial: 'Avaliação gratuita',

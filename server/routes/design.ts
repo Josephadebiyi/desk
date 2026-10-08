@@ -14,6 +14,8 @@ import { configured, env } from '../env'
 import { randomUUID } from 'node:crypto'
 import { sendEmails } from '../mail'
 import { createCheckout } from '../flutterwave'
+import { billingCurrency, EXTRA_DESIGN_PRICE } from '../../src/lib/currency'
+import { paystackCheckout } from './payments'
 
 export const designRoutes = Router()
 
@@ -131,7 +133,31 @@ designRoutes.post(
 
 /** Designer requests included in Ministry Max each calendar month; extras are paid one by one. */
 export const INCLUDED_REQUESTS = 8
-export const EXTRA_REQUEST = { amount: 10, currency: 'EUR' }
+/** Price of one extra request: $10, or ₦14,500 for churches billed in naira. */
+export const extraRequestPrice = (churchCurrency: unknown) => {
+  const currency = billingCurrency(churchCurrency)
+  return { amount: EXTRA_DESIGN_PRICE[currency], currency }
+}
+
+/** Checkout for an extra request: Paystack when configured, else the older Flutterwave flow. */
+async function extraCheckout(r: { churchId: string; requestId: string; title: string; currency: unknown; email: string; name: string; logo?: string }) {
+  const price = extraRequestPrice(r.currency)
+  if (configured.paystack)
+    return paystackCheckout({ churchId: r.churchId, kind: 'design_request', amount: price.amount, currency: price.currency, email: r.email, name: r.name, designRequestId: r.requestId, metadata: { request: r.requestId } })
+  const txRef = `zd-design-${randomUUID()}`
+  await db().from('online_payments').insert({ church_id: r.churchId, kind: 'design_request', design_request_id: r.requestId, tx_ref: txRef, amount: price.amount, currency: price.currency, name: r.name, email: r.email })
+  return createCheckout({
+    txRef,
+    amount: price.amount,
+    currency: price.currency,
+    redirectUrl: `${env.apiUrl}/api/payments/return`,
+    customer: { email: r.email, name: r.name },
+    title: 'ZionDesk design team',
+    description: `Extra flyer request: ${r.title}`,
+    logo: r.logo,
+    meta: { kind: 'design_request', church: r.churchId, request: r.requestId },
+  })
+}
 
 const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 const monthStart = () => {
@@ -172,7 +198,8 @@ designRoutes.get(
   '/design/requests/quota',
   requireCaller(['admin', 'leader']),
   route(async (req, res) => {
-    res.json({ used: await requestsThisMonth(req.caller!.churchId), included: INCLUDED_REQUESTS, extra: EXTRA_REQUEST })
+    const { data: church } = await db().from('churches').select('currency').eq('id', req.caller!.churchId).single()
+    res.json({ used: await requestsThisMonth(req.caller!.churchId), included: INCLUDED_REQUESTS, extra: extraRequestPrice(church?.currency) })
   }),
 )
 
@@ -182,7 +209,7 @@ designRoutes.post(
   requireCaller(['admin', 'leader']),
   route(async (req, res) => {
     const churchId = req.caller!.churchId
-    const { data: church } = await db().from('churches').select('name, plan, plan_status, logo_url').eq('id', churchId).single()
+    const { data: church } = await db().from('churches').select('name, plan, plan_status, logo_url, currency').eq('id', churchId).single()
     if (church?.plan !== 'max' || !['trial', 'active', 'past_due'].includes(church.plan_status)) throw new HttpError(403, 'Design-team requests are part of Ministry Max.')
     const b = req.body ?? {}
     const id = /^[0-9a-f-]{36}$/i.test(String(b.id)) ? String(b.id) : randomUUID()
@@ -199,20 +226,8 @@ designRoutes.post(
       await notifyDesigners(id, '', { name: req.caller!.name, email: req.caller!.email })
       return res.json({ id, status: 'Submitted', used: used + 1, included: INCLUDED_REQUESTS })
     }
-    // Extra request: €10 one-off payment through Flutterwave, tracked in online_payments.
-    const txRef = `zd-design-${randomUUID()}`
-    await db().from('online_payments').insert({ church_id: churchId, kind: 'design_request', design_request_id: id, tx_ref: txRef, amount: EXTRA_REQUEST.amount, currency: EXTRA_REQUEST.currency, name: req.caller!.name, email: req.caller!.email })
-    const link = await createCheckout({
-      txRef,
-      amount: EXTRA_REQUEST.amount,
-      currency: EXTRA_REQUEST.currency,
-      redirectUrl: `${env.apiUrl}/api/payments/return`,
-      customer: { email: req.caller!.email, name: req.caller!.name || church.name },
-      title: 'ZionDesk design team',
-      description: `Extra flyer request: ${title}`,
-      logo: church.logo_url ?? undefined,
-      meta: { kind: 'design_request', church: churchId, request: id },
-    })
+    // Extra request: a one-off payment ($10 / ₦14,500), tracked in online_payments.
+    const link = await extraCheckout({ churchId, requestId: id, title, currency: church.currency, email: req.caller!.email, name: req.caller!.name || church.name, logo: church.logo_url ?? undefined })
     res.json({ id, status: 'Awaiting payment', link, used, included: INCLUDED_REQUESTS })
   }),
 )
@@ -225,18 +240,8 @@ designRoutes.post(
     const { data: r } = await db().from('design_requests').select('id, church_id, title, status').eq('id', String(req.params.id)).maybeSingle()
     if (!r || r.church_id !== req.caller!.churchId) throw new HttpError(404, 'Request not found')
     if (r.status !== 'Awaiting payment') return res.json({ paid: true })
-    const txRef = `zd-design-${randomUUID()}`
-    await db().from('online_payments').insert({ church_id: r.church_id, kind: 'design_request', design_request_id: r.id, tx_ref: txRef, amount: EXTRA_REQUEST.amount, currency: EXTRA_REQUEST.currency, name: req.caller!.name, email: req.caller!.email })
-    const link = await createCheckout({
-      txRef,
-      amount: EXTRA_REQUEST.amount,
-      currency: EXTRA_REQUEST.currency,
-      redirectUrl: `${env.apiUrl}/api/payments/return`,
-      customer: { email: req.caller!.email, name: req.caller!.name },
-      title: 'ZionDesk design team',
-      description: `Extra flyer request: ${r.title}`,
-      meta: { kind: 'design_request', church: r.church_id, request: r.id },
-    })
+    const { data: church } = await db().from('churches').select('currency').eq('id', r.church_id).single()
+    const link = await extraCheckout({ churchId: r.church_id, requestId: r.id, title: r.title, currency: church?.currency, email: req.caller!.email, name: req.caller!.name })
     res.json({ link })
   }),
 )

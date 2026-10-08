@@ -96,7 +96,7 @@ export default {
     kicker: 'Pricing', h2: 'Simple pricing for every church', sub: 'Start with a {days}-day free trial. Change plans anytime.', perMonth: '/month', local: '≈ {amount}/month in your currency', cta: 'Start free trial',
     essentials: { blurb: 'Complete church management', badge: '', f: 'Unlimited members|Sunday QR check-ins & attendance|7 AI flyers per month|Member & ministry team management|Email & SMS in 5 languages|Financial tracking & reporting|Events & online meetings|Ellen, your AI assistant|Priority customer support' },
     plus: { blurb: 'Everything, plus design & giving', badge: 'Most popular', f: 'Everything in Essentials|12 AI flyers per month|Design Studio — flyers & posters|Online giving & donations|ZionDesk Payments or your own bank|QR codes for sign-up, giving & events|Branded church giving page|Automatic follow-ups after missed Sundays' },
-    max: { blurb: 'All features + our design team', badge: 'All features', f: 'Everything in Ministry Plus|Unlimited AI flyers|8 designer flyer requests a month (extras €10)|Chat directly with your designer|Ellen gathers your event details & inspiration|Finished flyers delivered within 48 hours' },
+    max: { blurb: 'All features + our design team', badge: 'All features', f: 'Everything in Ministry Plus|Unlimited AI flyers|8 designer flyer requests a month (extras $10)|Chat directly with your designer|Ellen gathers your event details & inspiration|Finished flyers delivered within 48 hours' },
   },
   faq: {
     h2: 'Questions? We’ve got answers.', sub: 'Can’t find what you need? Our team is happy to help.',

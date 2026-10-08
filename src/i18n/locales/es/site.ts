@@ -97,7 +97,7 @@ const site: Dict['site'] = {
     kicker: 'Precios', h2: 'Precios sencillos para cada iglesia', sub: 'Empieza con una prueba gratis de {days} días. Cambia de plan cuando quieras.', perMonth: '/mes', local: '≈ {amount}/mes en tu moneda', cta: 'Empezar prueba gratis',
     essentials: { blurb: 'Gestión completa de la iglesia', badge: '', f: 'Miembros ilimitados|Registro de asistencia con QR los domingos|7 folletos con IA al mes|Gestión de miembros y equipos|Correo y SMS en 5 idiomas|Control financiero e informes|Eventos y reuniones en línea|Ellen, tu asistente de IA|Soporte prioritario' },
     plus: { blurb: 'Todo, más diseño y ofrendas', badge: 'Más popular', f: 'Todo lo de Essentials|12 folletos con IA al mes|Estudio de diseño: folletos y carteles|Ofrendas y donaciones en línea|ZionDesk Payments o tu propio banco|Códigos QR para registro, ofrendas y eventos|Página de ofrendas con tu marca|Seguimiento automático tras domingos de ausencia' },
-    max: { blurb: 'Todas las funciones + nuestro equipo de diseño', badge: 'Todo incluido', f: 'Todo lo de Ministry Plus|Folletos con IA ilimitados|8 solicitudes de flyer al diseñador al mes (extras 10 €)|Chat directo con tu diseñador|Ellen recoge los detalles y la inspiración|Folletos terminados en 48 horas' },
+    max: { blurb: 'Todas las funciones + nuestro equipo de diseño', badge: 'Todo incluido', f: 'Todo lo de Ministry Plus|Folletos con IA ilimitados|8 solicitudes de flyer al diseñador al mes (extras $10)|Chat directo con tu diseñador|Ellen recoge los detalles y la inspiración|Folletos terminados en 48 horas' },
   },
   faq: {
     h2: '¿Preguntas? Tenemos respuestas.', sub: '¿No encuentras lo que buscas? Nuestro equipo te ayuda encantado.',

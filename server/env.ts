@@ -50,6 +50,9 @@ export const env = {
 
   // Flutterwave (dashboard → Settings → API keys / Webhooks)
   flwSecretKey: v('FLW_SECRET_KEY') || v('FLUTTERWAVE_SECRET_KEY'),
+  // Paystack (plan billing). Live keys start sk_live_ / pk_live_.
+  paystackSecretKey: v('PAYSTACK_SECRET_KEY'),
+  paystackPublicKey: v('PAYSTACK_PUBLIC_KEY'),
   // Optional override, e.g. https://api.flutterwave.com/v3
   flwBaseUrl: (v('FLUTTERWAVE_BASE_URL') || 'https://api.flutterwave.com/v3').replace(/\/+$/, '').replace(/^(https:\/\/[^/]+)$/, '$1/v3'),
   flwWebhookHash: v('FLW_WEBHOOK_HASH') || v('FLUTTERWAVE_WEBHOOK_SECRET_HASH') || v('FLUTTERWAVE_WEBHOOK_HASH'), // the "Secret hash" you set on the webhook
@@ -95,4 +98,5 @@ export const configured = {
   prayers: Boolean(process.env.ANTHROPIC_API_KEY),
   admin: env.adminEmails.length > 0,
   flutterwave: Boolean(env.flwSecretKey),
+  paystack: Boolean(env.paystackSecretKey),
 }

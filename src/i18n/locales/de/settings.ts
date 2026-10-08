@@ -78,7 +78,7 @@ const settings: Dict['settings'] = {
       redeemed: "Aktion eingelöst – dein Tarif ist bis {date} kostenlos. Wir erinnern dich vor dem Ende.",
     },
     billedIn: "Dein Tarif wird in {currency} abgerechnet.",
-    eurFallback: "Für {currency} gibt es noch keinen lokalen Preis, daher wird dein Tarif in Euro (EUR) abgerechnet.",
+    eurFallback: "Dein Tarif wird in US-Dollar (USD) abgerechnet. Preise in {currency} dienen zur Orientierung – deine Bank rechnet die Zahlung um.",
     accessUntil: "Zugang bis {date}",
     autoRenew: "Automatische Verlängerung",
     autoRenewOn: "Dein Tarif verlängert sich automatisch am {date}. Schalte sie aus, um künftige Zahlungen zu stoppen – bis dahin behältst du alles.",
@@ -92,7 +92,7 @@ const settings: Dict['settings'] = {
     billingFailed: 'Die Zahlung ist nicht durchgegangen. Es wurde nichts abgebucht – bitte versuch es erneut.',
     renews: 'verlängert sich am {date}',
     subscribe: 'Abonnieren',
-    noteLive: "Tarife werden monatlich über Flutterwave abgerechnet und verlängern sich automatisch. Du kannst die automatische Verlängerung unten jederzeit ein- oder ausschalten.",
+    noteLive: "Tarife werden monatlich über Paystack abgerechnet und verlängern sich automatisch. Du kannst die automatische Verlängerung unten jederzeit ein- oder ausschalten.",
     status: {
       expired: "Tarif beendet – wähle einen Tarif, um weiterzumachen",
       trial: 'Kostenlose Testphase',

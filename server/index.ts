@@ -88,7 +88,8 @@ app.use((req, res, next) => {
 })
 app.use('/api/auth', authHookRoutes)
 app.use('/api/whatsapp', whatsappRoutes) // raw body for signature checks
-app.use(express.json({ limit: '15mb' })) // AI attachments (images) can be a few MB
+// AI attachments (images) can be a few MB. The raw body is kept for webhook signatures (Paystack).
+app.use(express.json({ limit: '15mb', verify: (req, _res, buf) => ((req as unknown as { rawBody?: Buffer }).rawBody = buf) }))
 
 // Which settings are present (names only — never values), plus the deployed commit.
 app.get('/api/health', async (_req, res) =>

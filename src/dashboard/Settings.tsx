@@ -16,7 +16,7 @@ import { useAi } from '../ai/store'
 import { PROVIDERS } from '../ai/providers'
 import { USAGE_LABEL, type ProviderPref, type UsageFeature } from '../ai/types'
 import { LANGS, useT } from '../i18n'
-import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, PLAN_PRICES, planPrice, priceWithLocal } from '../lib/currency'
+import { billingCurrency, CHURCH_CURRENCIES, chargeCurrency, formatMoney, planPrice, priceWithLocal } from '../lib/currency'
 import { Flag, LangCards } from '../i18n/Flags'
 import { getSignupCode } from '../lib/signupCode'
 import { ONLINE_GIVING } from '../lib/features'
@@ -685,7 +685,11 @@ function Plan() {
                   formatMoney(planPrice(p.id, settings.currency).amount, planPrice(p.id, settings.currency).currency, locale)
                 )}
                 <small>{t('common.perMonth')}</small>
-                {priceWithLocal(p.id, settings.currency).local && <small className="st-eur">{formatMoney(PLAN_PRICES.EUR![p.id], 'EUR', locale)}</small>}
+                {(() => {
+                  // Billed in NGN → show the USD price too; other local currencies are shown for reference (billed in USD).
+                  const { base, local } = priceWithLocal(p.id, settings.currency)
+                  return local ? <small className="st-eur">{local.billed ? formatMoney(base.amount, base.currency, locale) : `≈ ${formatMoney(local.amount, local.currency, locale)}`}</small> : null
+                })()}
               </b>
               {promo?.offers[p.id] && <p className="st-offer">{offerLine(promo.offers[p.id]!)}</p>}
               <ul>

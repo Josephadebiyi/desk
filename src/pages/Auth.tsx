@@ -813,9 +813,14 @@ export function Register() {
                       <span className="auth-plan-price">
                         {(() => {
                           const { base, local } = priceWithLocal(p.id, org.currency)
-                          return local ? (
+                          // Billed in naira: naira first. Other local currencies are a guide; the charge is in USD.
+                          return local?.billed ? (
                             <>
                               {formatMoney(local.amount, local.currency, locale)} <i className="auth-eur">{formatMoney(base.amount, base.currency, locale)}</i>
+                            </>
+                          ) : local ? (
+                            <>
+                              {formatMoney(base.amount, base.currency, locale)} <i className="auth-eur">≈ {formatMoney(local.amount, local.currency, locale)}</i>
                             </>
                           ) : (
                             formatMoney(base.amount, base.currency, locale)

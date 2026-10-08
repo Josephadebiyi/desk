@@ -1235,7 +1235,7 @@ const PLANS = [
 
 function Pricing() {
   const { t, locale } = useT()
-  // Prices are in euros; visitors from other regions also see what they'd pay in their own currency.
+  // Prices are in US dollars; visitors from other regions also see a guide price in their own currency.
   const [visitorCurrency] = useState(guessCurrency)
   const localLine = (id: PlanKey) => {
     const l = priceWithLocal(id, visitorCurrency).local

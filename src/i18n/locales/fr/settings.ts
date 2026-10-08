@@ -78,7 +78,7 @@ const settings: Dict['settings'] = {
       redeemed: "Promo appliquée — votre forfait est gratuit jusqu’au {date}. Nous vous préviendrons avant la fin.",
     },
     billedIn: "Votre forfait est facturé en {currency}.",
-    eurFallback: "Nous n’avons pas encore de prix local en {currency} : votre formule est facturée en euros (EUR).",
+    eurFallback: "Votre formule est facturée en dollars américains (USD). Les prix en {currency} sont indicatifs : votre banque convertit le paiement.",
     accessUntil: "accès jusqu’au {date}",
     autoRenew: "Renouvellement automatique",
     autoRenewOn: "Votre formule se renouvelle automatiquement le {date}. Désactivez-le pour arrêter les prochains paiements — vous gardez tout jusque-là.",
@@ -92,7 +92,7 @@ const settings: Dict['settings'] = {
     billingFailed: 'Le paiement n’a pas abouti. Vous n’avez pas été débité — veuillez réessayer.',
     renews: 'renouvellement le {date}',
     subscribe: 'S’abonner',
-    noteLive: "Les formules sont facturées chaque mois via Flutterwave et se renouvellent automatiquement. Vous pouvez activer ou désactiver le renouvellement ci-dessous à tout moment.",
+    noteLive: "Les formules sont facturées chaque mois via Paystack et se renouvellent automatiquement. Vous pouvez activer ou désactiver le renouvellement ci-dessous à tout moment.",
     status: {
       expired: "Forfait terminé — choisissez un forfait pour continuer",
       trial: 'Essai gratuit',
