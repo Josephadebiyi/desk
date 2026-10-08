@@ -4,9 +4,8 @@
  * - A church picks its currency at sign-up (pre-selected from the visitor's region).
  * - Giving is charged in the church's currency when Flutterwave can collect it, else USD.
  * - ZionDesk's main prices are in USD ($8.99 · $21.99 · $43.99).
- *   African countries Paystack serves pay in their own currency through Paystack (NGN, GHS, KES, ZAR, XOF —
- *   one Paystack business account per country). Everyone else pays through Stripe in EUR, GBP or USD.
- *   Other local prices below are display guides only.
+ *   African churches pay in their own currency through Flutterwave (NGN, GHS, KES, ZAR, UGX, TZS, RWF, XOF,
+ *   XAF, ZMW — one Flutterwave account). Everyone else pays through Stripe in EUR, GBP or USD.
  *   Local prices are set by hand (not live exchange rates) so a church's monthly bill never
  *   moves with the exchange rate. Review them a few times a year.
  */
@@ -27,16 +26,18 @@ export const chargeCurrency = (c: unknown): FlwCurrency => (isFlwCurrency(c) ? c
 /** The currency ZionDesk's prices are set in. */
 export const BASE_CURRENCY = 'USD' as const
 
-/** Currencies churches are billed in: Stripe (USD, EUR, GBP) and Paystack (African currencies). Others → USD. */
-export const BILLING_CURRENCIES = ['USD', 'EUR', 'GBP', 'NGN', 'GHS', 'KES', 'ZAR', 'XOF'] as const
+/** Currencies churches are billed in: Stripe (USD, EUR, GBP) and Flutterwave (African currencies). Others → USD. */
+export const BILLING_CURRENCIES = ['USD', 'EUR', 'GBP', 'NGN', 'GHS', 'KES', 'ZAR', 'UGX', 'TZS', 'RWF', 'XOF', 'XAF', 'ZMW'] as const
 export type BillingCurrency = (typeof BILLING_CURRENCIES)[number]
 /** Charged through Stripe. */
 export const STRIPE_CURRENCIES: BillingCurrency[] = ['USD', 'EUR', 'GBP']
-/** African currencies Paystack can charge — each needs the Paystack business account of that country. */
+/** African currencies charged through Flutterwave (one account covers all of them). */
+export const AFRICAN_CURRENCIES: BillingCurrency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'UGX', 'TZS', 'RWF', 'XOF', 'XAF', 'ZMW']
+/** African currencies Paystack can charge (one Paystack account per country) — kept as an alternative to Flutterwave. */
 export const PAYSTACK_CURRENCIES: BillingCurrency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'XOF']
 
-type PriceCurrency = BillingCurrency | 'UGX' | 'TZS' | 'RWF' | 'XAF' | 'ZMW'
-/** Monthly plan prices (USD is the main price; billed currencies are fixed; UGX…ZMW are display guides). */
+type PriceCurrency = BillingCurrency
+/** Monthly plan prices (USD is the main price; the others are fixed, rounded local prices). */
 export const PLAN_PRICES: Record<PriceCurrency, Record<PlanId, number>> = {
   EUR: { essentials: 8, plus: 19.99, max: 39.99 },
   USD: { essentials: 8.99, plus: 21.99, max: 43.99 },
@@ -67,7 +68,9 @@ export const priceWithLocal = (plan: PlanId, currency: unknown) => {
 }
 
 /** Extra designer flyer request (beyond the monthly allowance), per billing currency (≈ $10). */
-export const EXTRA_DESIGN_PRICE: Record<BillingCurrency, number> = { USD: 10, EUR: 9, GBP: 8, NGN: 14500, GHS: 145, KES: 1300, ZAR: 175, XOF: 5800 }
+export const EXTRA_DESIGN_PRICE: Record<BillingCurrency, number> = {
+  USD: 10, EUR: 9, GBP: 8, NGN: 14500, GHS: 145, KES: 1300, ZAR: 175, UGX: 36000, TZS: 26000, RWF: 14000, XOF: 5800, XAF: 5800, ZMW: 255,
+}
 
 export const planPrice = (plan: PlanId, churchCurrency: unknown) => {
   const currency = billingCurrency(churchCurrency)

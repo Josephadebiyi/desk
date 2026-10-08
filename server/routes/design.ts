@@ -145,7 +145,7 @@ async function extraCheckout(r: { churchId: string; requestId: string; title: st
   const route = providerFor(r.currency)
   if (route.provider === 'stripe')
     return stripeCheckout({ churchId: r.churchId, kind: 'design_request', currency: route.currency, amount: EXTRA_DESIGN_PRICE[route.currency], email: r.email, name: r.name, designRequestId: r.requestId, title: r.title })
-  if (configured.paystack)
+  if (route.provider === 'paystack')
     return paystackCheckout(
       { churchId: r.churchId, kind: 'design_request', amount: EXTRA_DESIGN_PRICE[route.currency], currency: route.currency, email: r.email, name: r.name, designRequestId: r.requestId, metadata: { request: r.requestId } },
       async () => ({ amount: EXTRA_DESIGN_PRICE.NGN }),

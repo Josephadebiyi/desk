@@ -22,7 +22,7 @@ import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
 import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan, listBanks, listSubscriptions, resolveAccount, verifyByReference, verifyTransaction, type VerifiedTx, activateSubscription } from '../flutterwave'
 import { compose, sendEmail } from '../mail'
-import { billingCurrency, chargeCurrency, PAYSTACK_CURRENCIES, PLAN_PRICES, planPrice, type BillingCurrency, type FlwCurrency } from '../../src/lib/currency'
+import { AFRICAN_CURRENCIES, billingCurrency, chargeCurrency, PAYSTACK_CURRENCIES, PLAN_PRICES, planPrice, type BillingCurrency, type FlwCurrency } from '../../src/lib/currency'
 import * as paystack from '../paystack'
 import { customerFor, fromStripeAmount, integrationId, periodEnd, planFromPrice, planPriceId, promoCoupon, stripe, toStripeAmount, type Stripe } from '../stripe'
 import type { PlanKey } from '../../src/lib/plans'
@@ -156,6 +156,7 @@ async function complete(ref: { id?: string; txRef?: string }) {
     for (const s of await listSubscriptions(p.email)) {
       if (s.status === 'active' && String(s.plan) !== newPlanId) await cancelSubscription(s.id).catch((e) => console.error('[cancel old sub]', e))
     }
+    await stopStripeAndPaystack(p.church_id)
   })
 }
 
@@ -243,6 +244,20 @@ paymentRoutes.post(
   }),
 )
 
+/** Moving a church to Flutterwave: end any Stripe or Paystack subscription it had. */
+async function stopStripeAndPaystack(churchId: string) {
+  const { data: c } = await db().from('churches').select('currency, stripe_subscription_id, paystack_customer_code').eq('id', churchId).single()
+  if (c?.stripe_subscription_id && configured.stripe) {
+    await stripe().subscriptions.cancel(c.stripe_subscription_id).catch((e) => console.error('[stripe cancel]', e))
+    await db().from('churches').update({ stripe_subscription_id: null }).eq('id', churchId)
+  }
+  if (c?.paystack_customer_code && configured.paystack) {
+    const pc = psCurrencyOf(c.currency)
+    for (const sub of await paystack.subscriptionsOf(c.paystack_customer_code, pc))
+      if (sub.status === 'active' || sub.status === 'attention') await paystack.disableSubscription(sub.subscription_code, sub.email_token, pc).catch((e) => console.error('[paystack disable]', e))
+  }
+}
+
 /* ───────── Paystack (plans + design extras) ───────── */
 
 /** Paystack monthly plan for a plan in a currency (created on demand, e.g. "ZionDesk Ministry Plus NGN"). */
@@ -250,15 +265,21 @@ const psPlanCode = (plan: PlanKey, currency: paystack.PsCurrency) => paystack.en
 
 /**
  * Who bills this church:
- * - African currencies Paystack serves (NGN, GHS, KES, ZAR, XOF) → Paystack, when that country's account is connected;
+ * - African currencies (NGN, GHS, KES, ZAR, UGX, TZS, RWF, XOF, XAF, ZMW) → Flutterwave, in that currency
+ *   (Paystack is the alternative for its countries if Flutterwave isn't configured);
  * - EUR / GBP / USD (and everyone else, in USD) → Stripe;
- * - without Stripe → the Nigerian Paystack account in USD (naira if USD is refused).
+ * - missing providers fall back to whichever is configured.
  */
-export function providerFor(churchCurrency: unknown): { provider: 'paystack'; currency: paystack.PsCurrency } | { provider: 'stripe'; currency: 'USD' | 'EUR' | 'GBP' } {
+type Route = { provider: 'flutterwave'; currency: BillingCurrency } | { provider: 'paystack'; currency: paystack.PsCurrency } | { provider: 'stripe'; currency: 'USD' | 'EUR' | 'GBP' }
+export function providerFor(churchCurrency: unknown): Route {
   const cur = billingCurrency(churchCurrency)
-  if (PAYSTACK_CURRENCIES.includes(cur) && paystack.canCharge(cur)) return { provider: 'paystack', currency: cur }
   const stripeCur = cur === 'EUR' || cur === 'GBP' ? cur : 'USD'
-  if (configured.stripe) return { provider: 'stripe', currency: stripeCur }
+  if (AFRICAN_CURRENCIES.includes(cur)) {
+    if (configured.flutterwave) return { provider: 'flutterwave', currency: cur }
+    if (PAYSTACK_CURRENCIES.includes(cur) && paystack.canCharge(cur)) return { provider: 'paystack', currency: cur }
+    if (configured.stripe) return { provider: 'stripe', currency: 'USD' }
+  } else if (configured.stripe) return { provider: 'stripe', currency: stripeCur }
+  if (configured.flutterwave) return { provider: 'flutterwave', currency: cur }
   return { provider: 'paystack', currency: cur === 'NGN' ? 'NGN' : 'USD' }
 }
 /** Paystack account (by currency) that a church's Paystack subscription lives on. */
@@ -730,7 +751,7 @@ paymentRoutes.post(
       const link = await stripeCheckout({ churchId: church!.id, kind: 'subscription', currency: cur, email: req.caller!.email, name: prof?.full_name ?? '', plan, amount: PLAN_PRICES[cur][plan], promo, language: prof?.comm_language ?? 'en' })
       return res.json({ link })
     }
-    if (configured.paystack) {
+    if (route.provider === 'paystack') {
       const cur = route.currency
       let psAmount = PLAN_PRICES[cur][plan]
       let planCode = await psPlanCode(plan, cur)

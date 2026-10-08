@@ -92,7 +92,7 @@ const settings: Dict['settings'] = {
     billingFailed: 'Die Zahlung ist nicht durchgegangen. Es wurde nichts abgebucht – bitte versuch es erneut.',
     renews: 'verlängert sich am {date}',
     subscribe: 'Abonnieren',
-    noteLive: "Tarife werden monatlich per Karte abgerechnet (Stripe, in Afrika Paystack) und verlängern sich automatisch. Du kannst die automatische Verlängerung unten jederzeit ein- oder ausschalten.",
+    noteLive: "Tarife werden monatlich per Karte abgerechnet (Stripe, in Afrika Flutterwave) und verlängern sich automatisch. Du kannst die automatische Verlängerung unten jederzeit ein- oder ausschalten.",
     portal: "Zahlungen & Rechnungen verwalten",
     status: {
       expired: "Tarif beendet – wähle einen Tarif, um weiterzumachen",

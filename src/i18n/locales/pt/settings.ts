@@ -92,7 +92,7 @@ const settings: Dict['settings'] = {
     billingFailed: 'O pagamento não foi concluído. Não foi cobrado — tente novamente.',
     renews: 'renova a {date}',
     subscribe: 'Subscrever',
-    noteLive: "Os planos são cobrados mensalmente por cartão (Stripe, ou Paystack em África) e renovam automaticamente. Pode ligar ou desligar a renovação automática abaixo a qualquer momento.",
+    noteLive: "Os planos são cobrados mensalmente por cartão (Stripe, ou Flutterwave em África) e renovam automaticamente. Pode ligar ou desligar a renovação automática abaixo a qualquer momento.",
     portal: "Gerir pagamentos e faturas",
     status: {
       expired: "Plano terminado — escolha um plano para continuar",
