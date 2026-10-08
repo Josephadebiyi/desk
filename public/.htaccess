@@ -14,6 +14,10 @@ DirectoryIndex index.html
   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
+  # Apple Pay verification: Hostinger's zip extraction skips dot-folders, so the file also lives at the
+  # site root and is served at the address Paystack/Apple check.
+  RewriteRule ^\.well-known/apple-developer-merchantid-domain-association$ /apple-developer-merchantid-domain-association [L]
+
   # Single-page app: every route that isn't a real file is served by index.html
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
