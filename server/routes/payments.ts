@@ -365,7 +365,29 @@ paymentRoutes.post(
 )
 
 /** Starts a Paystack checkout for a one-off ZionDesk charge (design extras) or a plan (with planCode). */
-export async function paystackCheckout(i: { churchId: string; kind: 'subscription' | 'design_request'; amount: number; currency: BillingCurrency; email: string; name: string; plan?: PlanKey; planCode?: string; promoCode?: string | null; designRequestId?: string; language?: string; metadata: Record<string, unknown> }) {
+/** Set when Paystack refuses USD (USD not enabled on the account yet): charge naira instead for a while. */
+let usdRefusedAt = 0
+const usdRefused = () => Date.now() - usdRefusedAt < 60 * 60_000
+
+type CheckoutArgs = { churchId: string; kind: 'subscription' | 'design_request'; amount: number; currency: BillingCurrency; email: string; name: string; plan?: PlanKey; planCode?: string; promoCode?: string | null; designRequestId?: string; language?: string; metadata: Record<string, unknown> }
+/**
+ * Paystack checkout. `inNaira` gives the naira amount (and plan) for the same purchase: used when the account
+ * can't take USD yet, so non-Nigerian churches are charged the naira equivalent and their bank converts.
+ */
+export async function paystackCheckout(i: CheckoutArgs, inNaira?: () => Promise<{ amount: number; planCode?: string }>): Promise<string> {
+  if (i.currency === 'USD' && inNaira && usdRefused()) return paystackCheckout({ ...i, currency: 'NGN', ...(await inNaira()) })
+  try {
+    return await startPaystackCheckout(i)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : ''
+    if (i.currency !== 'USD' || !inNaira || !/currency/i.test(msg)) throw e
+    usdRefusedAt = Date.now()
+    console.warn('[paystack] USD refused (' + msg + ') — charging the naira equivalent. Enable USD on the Paystack account to bill in dollars.')
+    return paystackCheckout({ ...i, currency: 'NGN', ...(await inNaira()) })
+  }
+}
+
+async function startPaystackCheckout(i: CheckoutArgs) {
   const reference = `zd-${i.kind === 'subscription' ? 'sub' : 'design'}-${randomUUID()}`
   const { error } = await db().from('online_payments').insert({
     church_id: i.churchId, kind: i.kind, provider: 'paystack', tx_ref: reference, amount: i.amount, currency: i.currency, plan: i.plan ?? null,
@@ -510,10 +532,17 @@ paymentRoutes.post(
         await db().from('promo_redemptions').delete().eq('church_id', church!.id).eq('status', 'pending')
         await db().from('promo_redemptions').insert({ promo_id: promo.id, church_id: church!.id, plan, status: 'pending', percent_off: promo.percent_off, currency: cur, amount: psAmount })
       }
-      const link = await paystackCheckout({
-        churchId: church!.id, kind: 'subscription', amount: psAmount, currency: cur, email: req.caller!.email, name: prof?.full_name ?? '',
-        plan, planCode, promoCode: promo?.code ?? null, language: prof?.comm_language ?? 'en', metadata: { plan },
-      })
+      const link = await paystackCheckout(
+        {
+          churchId: church!.id, kind: 'subscription', amount: psAmount, currency: cur, email: req.caller!.email, name: prof?.full_name ?? '',
+          plan, planCode, promoCode: promo?.code ?? null, language: prof?.comm_language ?? 'en', metadata: { plan },
+        },
+        async () => {
+          const ngn = promo?.kind === 'percent' ? discounted(PLAN_PRICES.NGN![plan], promo.percent_off!, 'NGN') : PLAN_PRICES.NGN![plan]
+          const code = promo?.kind === 'percent' ? await paystack.ensurePlan(`ZionDesk ${PLAN_NAME[plan]} NGN ${promo.percent_off}% off`, ngn, 'NGN') : await psPlanCode(plan, 'NGN')
+          return { amount: ngn, planCode: code }
+        },
+      )
       return res.json({ link })
     }
     if (promo?.kind === 'percent') {

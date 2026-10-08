@@ -143,7 +143,10 @@ export const extraRequestPrice = (churchCurrency: unknown) => {
 async function extraCheckout(r: { churchId: string; requestId: string; title: string; currency: unknown; email: string; name: string; logo?: string }) {
   const price = extraRequestPrice(r.currency)
   if (configured.paystack)
-    return paystackCheckout({ churchId: r.churchId, kind: 'design_request', amount: price.amount, currency: price.currency, email: r.email, name: r.name, designRequestId: r.requestId, metadata: { request: r.requestId } })
+    return paystackCheckout(
+      { churchId: r.churchId, kind: 'design_request', amount: price.amount, currency: price.currency, email: r.email, name: r.name, designRequestId: r.requestId, metadata: { request: r.requestId } },
+      async () => ({ amount: EXTRA_DESIGN_PRICE.NGN }),
+    )
   const txRef = `zd-design-${randomUUID()}`
   await db().from('online_payments').insert({ church_id: r.churchId, kind: 'design_request', design_request_id: r.requestId, tx_ref: txRef, amount: price.amount, currency: price.currency, name: r.name, email: r.email })
   return createCheckout({
