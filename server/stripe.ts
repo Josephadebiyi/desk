@@ -27,11 +27,25 @@ export const toStripeAmount = (amount: number, _currency?: string) => Math.round
 export const fromStripeAmount = (amount: number, _currency?: string) => amount / 100
 const lookupKey = (plan: PlanKey, currency: BillingCurrency) => `zd_${plan}_${currency.toLowerCase()}_monthly_${toStripeAmount(PLAN_PRICES[currency][plan])}`
 
+/**
+ * Stripe tax categories. Required when Managed Payments is on (Stripe is the merchant of record and handles VAT /
+ * sales tax worldwide): plans are business SaaS; extra flyer requests are electronically supplied services.
+ */
+export const TAX_CODE_SAAS = 'txcd_10103001' // Software as a service (SaaS) — business use
+export const TAX_CODE_DIGITAL_SERVICE = 'txcd_10000000' // General — electronically supplied services
+
 /** Product for a plan (one Product per plan — Stripe best practice; prices per currency hang off it). */
+const productCache = new Map<PlanKey, string>()
 async function productFor(plan: PlanKey): Promise<string> {
+  const cached = productCache.get(plan)
+  if (cached) return cached
   const found = await stripe().products.search({ query: `metadata['zd_plan']:'${plan}' AND active:'true'`, limit: 1 }).catch(() => null)
-  if (found?.data[0]) return found.data[0].id
-  return (await stripe().products.create({ name: PLAN_NAME[plan], metadata: { zd_plan: plan } }, { idempotencyKey: `zd-product-${plan}` })).id
+  let product = found?.data[0]
+  if (product && product.tax_code !== TAX_CODE_SAAS && (typeof product.tax_code !== 'object' || product.tax_code?.id !== TAX_CODE_SAAS))
+    product = await stripe().products.update(product.id, { tax_code: TAX_CODE_SAAS }) // products made before tax codes were set
+  product ??= await stripe().products.create({ name: PLAN_NAME[plan], tax_code: TAX_CODE_SAAS, metadata: { zd_plan: plan } }, { idempotencyKey: `zd-product-${plan}-saas` })
+  productCache.set(plan, product.id)
+  return product.id
 }
 
 /** Monthly Price for a plan in EUR / GBP / USD, found by lookup key and created the first time. */
@@ -40,11 +54,12 @@ export async function planPriceId(plan: PlanKey, currency: BillingCurrency): Pro
   const key = lookupKey(plan, currency)
   const cached = priceCache.get(key)
   if (cached) return cached
+  const product = await productFor(plan) // also makes sure the product has its tax code
   const found = await stripe().prices.list({ lookup_keys: [key], active: true, limit: 1 })
   let id = found.data[0]?.id
   if (!id) {
     const price = await stripe().prices.create(
-      { product: await productFor(plan), currency: currency.toLowerCase(), unit_amount: toStripeAmount(PLAN_PRICES[currency][plan]), recurring: { interval: 'month' }, lookup_key: key, metadata: { zd_plan: plan } },
+      { product, currency: currency.toLowerCase(), unit_amount: toStripeAmount(PLAN_PRICES[currency][plan]), recurring: { interval: 'month' }, lookup_key: key, metadata: { zd_plan: plan } },
       { idempotencyKey: `zd-price-${key}` },
     )
     id = price.id

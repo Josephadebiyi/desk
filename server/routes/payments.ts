@@ -24,7 +24,7 @@ import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan
 import { compose, sendEmail } from '../mail'
 import { AFRICAN_CURRENCIES, billingCurrency, chargeCurrency, PAYSTACK_CURRENCIES, PLAN_PRICES, planPrice, type BillingCurrency, type FlwCurrency } from '../../src/lib/currency'
 import * as paystack from '../paystack'
-import { customerFor, fromStripeAmount, integrationId, periodEnd, planFromPrice, planPriceId, promoCoupon, stripe, toStripeAmount, type Stripe } from '../stripe'
+import { customerFor, fromStripeAmount, TAX_CODE_DIGITAL_SERVICE, integrationId, periodEnd, planFromPrice, planPriceId, promoCoupon, stripe, toStripeAmount, type Stripe } from '../stripe'
 import type { PlanKey } from '../../src/lib/plans'
 import { sendBillingEmail } from '../lifecycle'
 import { notifyDesigners } from './design'
@@ -489,9 +489,9 @@ export async function stripeCheckout(i: { churchId: string; kind: 'subscription'
         }
       : {
           mode: 'payment' as const,
-          line_items: [{ quantity: 1, price_data: { currency: i.currency.toLowerCase(), unit_amount: toStripeAmount(i.amount, i.currency), product_data: { name: `Extra flyer request${i.title ? `: ${i.title.slice(0, 80)}` : ''}` } } }],
+          line_items: [{ quantity: 1, price_data: { currency: i.currency.toLowerCase(), unit_amount: toStripeAmount(i.amount, i.currency), product_data: { name: `Extra flyer request${i.title ? `: ${i.title.slice(0, 80)}` : ''}`, tax_code: TAX_CODE_DIGITAL_SERVICE } } }],
           payment_intent_data: { metadata },
-          invoice_creation: { enabled: true }, // a proper invoice/receipt for one-off payments too
+          // No invoice_creation: with Managed Payments Stripe is merchant of record and sends the receipt/invoice itself.
         }),
     // Fulfilment happens in the webhook; these pages only show the result.
     success_url: `${back}${back.includes('?') ? '&' : '?'}${i.kind === 'subscription' ? 'billing=success' : 'paid=1'}`,
