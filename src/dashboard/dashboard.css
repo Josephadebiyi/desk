@@ -900,6 +900,15 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .tm-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 12px; background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; }
 .tm-row:hover { background: var(--d-row); }
 .tm-row svg { color: var(--muted); }
+/* Phones: the popovers span the header width (anchored to .d-top) instead of hanging off the icon and spilling off-screen. */
+@media (max-width: 560px) {
+  .tm { position: static; }
+  /* Fit the top bar on a phone: language lives in the profile menu, and the role picker is shortened. */
+  .d-top-end > .lang-menu { display: none; }
+  .d-top-end > .tm:has(> button.d-icon-btn) { display: none; } /* notifications bell is already hidden on phones */
+  .d-role select { max-width: 92px; }
+  .tm-pop { left: 10px; right: 10px; top: calc(100% - 2px); width: auto; max-height: calc(100dvh - 84px); overflow-y: auto; overscroll-behavior: contain; }
+}
 /* AI flyer */
 .ai-flyer-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ai-flyer-chips .d-pill { cursor: pointer; }
