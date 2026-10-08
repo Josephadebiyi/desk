@@ -52,6 +52,7 @@ export default {
   profile: {
     preview: 'Preview mode — demo data in this browser. Sign-in works once the backend is connected.',
     exitPreview: 'Back to the website',
+    switch: 'Switch account',
   },
   signOut: 'Sign out',
   notifications: 'Notifications',

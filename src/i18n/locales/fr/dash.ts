@@ -24,6 +24,7 @@ const dash: Dict['dash'] = {
   profile: {
     preview: 'Mode aperçu — données de démonstration dans ce navigateur. La connexion fonctionne une fois le serveur relié.',
     exitPreview: 'Retour au site',
+    switch: 'Changer de compte',
   },
   signOut: 'Se déconnecter',
   notifications: 'Notifications',

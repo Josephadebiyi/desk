@@ -24,6 +24,7 @@ const dash: Dict['dash'] = {
   profile: {
     preview: 'Vorschaumodus – Demodaten in diesem Browser. Die Anmeldung funktioniert, sobald der Server verbunden ist.',
     exitPreview: 'Zurück zur Website',
+    switch: 'Konto wechseln',
   },
   signOut: 'Abmelden',
   notifications: 'Benachrichtigungen',

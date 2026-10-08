@@ -1,4 +1,4 @@
-import { Bell, Check, HelpCircle, Languages, LogOut, Settings as SettingsIcon, Sparkles, UserRound, X } from 'lucide-react'
+import { ArrowRightLeft, Bell, Check, HelpCircle, Languages, LogOut, Settings as SettingsIcon, Sparkles, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { buildInbox } from '../ai/inbox'
@@ -199,6 +199,30 @@ export function ProfileMenu() {
             </span>
           </div>
           {!session.remote && <p className="tm-note">{t('dash.profile.preview')}</p>}
+          {/* Several accounts (e.g. HQ as branch leader + the branch's own ZionDesk): switch between them. */}
+          {session.churches.length > 1 && (
+            <div className="tm-switch">
+              <small>{t('dash.profile.switch')}</small>
+              {session.churches
+                .filter((c) => c.id !== session.church?.id)
+                .map((c) => (
+                  <Row
+                    key={c.id}
+                    icon={<ArrowRightLeft size={16} />}
+                    onClick={() => {
+                      close()
+                      session.selectChurch(c.id)
+                      navigate('/dashboard')
+                    }}
+                  >
+                    <span className="tm-switch-name">
+                      {c.name}
+                      <small>{c.role === 'branch' && c.branch ? `${tEnum('role', c.role)} · ${c.branch}` : tEnum('role', c.role)}</small>
+                    </span>
+                  </Row>
+                ))}
+            </div>
+          )}
           <Row to="/dashboard/settings?tab=account" icon={<UserRound size={16} />} onClick={close}>
             {t('settings.account.title')}
           </Row>

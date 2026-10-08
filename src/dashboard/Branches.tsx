@@ -1,16 +1,17 @@
 /**
  * Branch reports. Each branch declares its month (income by fund, expenses, attendance, notes).
  *   HQ (admin / finance): every branch for a month, who hasn't reported, review / send back, remind, settings.
- *   Branch leader: their own branch only — this month's report and past ones.
+ *   Branch leader: their own branch only — this month's report and past ones. They can also start the branch's own
+ *   ZionDesk account (own plan, members, messaging, flyers); it stays linked to HQ and reports keep going to HQ.
  * Reminders and HQ notices are emailed by the server's daily job (server/branches.ts).
  */
-import { AlertCircle, Bell, Building2, CheckCircle2, Download, FileText, Plus, Send, Trash2, Undo2, Wallet } from 'lucide-react'
+import { AlertCircle, ArrowRightLeft, Bell, Building2, CheckCircle2, Download, FileText, Plus, Send, Trash2, Undo2, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { InboxItem } from '../ai/inbox'
 import { tr, useT } from '../i18n'
 import { api } from '../lib/api'
-import { useSession } from '../lib/session'
+import { createChurch, useSession } from '../lib/session'
 import { remote } from '../lib/supabase'
 import { confirmAction } from './confirm'
 import { downloadCsv, fmtDate, Kpi, Modal, money, PageHead, PlanGate, today } from './kit'
@@ -57,6 +58,8 @@ export interface Overview {
   reports: BranchReport[]
   missing: string[]
   leaders: Record<string, string[]>
+  /** Branches running their own ZionDesk account linked to this church. */
+  accounts?: Record<string, { id: string; name: string; plan: string; status: string }>
 }
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e))
@@ -316,6 +319,7 @@ function HqView() {
                     <tr key={b}>
                       <td>
                         <b>{b}</b>
+                        {data.accounts?.[b] && <small className="br-sub">{t('br.ownAccountChip', { plan: PLAN_LABEL[data.accounts[b].plan] ?? data.accounts[b].plan })}</small>}
                       </td>
                       <td>
                         {r ? (
@@ -508,6 +512,8 @@ function BranchView() {
         </div>
       </section>
 
+      <OwnAccount branch={myBranch} hqName={session.church?.name ?? ''} currency={data.currency} account={data.accounts?.[myBranch]} />
+
       <section className="d-panel">
         <div className="d-panel-head">
           <h2>{t('br.history')}</h2>
@@ -552,6 +558,109 @@ function BranchView() {
         />
       )}
     </div>
+  )
+}
+
+const PLAN_LABEL: Record<string, string> = { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' }
+
+/**
+ * Branch leader: start (or open) the branch's own ZionDesk account. It's a separate church account with its own
+ * plan, members, messaging and flyer requests, linked to HQ; this HQ login keeps sending the monthly reports.
+ */
+function OwnAccount({ branch, hqName, currency, account }: { branch: string; hqName: string; currency: string; account?: { id: string; name: string; plan: string } }) {
+  const { t } = useT()
+  const session = useSession()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState(`${hqName} – ${branch}`.slice(0, 120))
+  const [plan, setPlan] = useState<'essentials' | 'plus' | 'max'>('plus')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const mine = account && session.churches.find((c) => c.id === account.id)
+
+  const go = (id: string) => {
+    session.selectChurch(id)
+    navigate('/dashboard')
+  }
+  const create = async () => {
+    if (!name.trim()) return
+    setBusy(true)
+    setError('')
+    try {
+      const id = await createChurch({ name: name.trim(), location: '', phone: '', denomination: '', currency, plan, language: document.documentElement.lang || 'en' })
+      await api('/branches/own-account', { churchId: id })
+      await session.refresh()
+      go(id)
+    } catch (e) {
+      setError(err(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="d-panel br-own">
+      <div className="d-panel-head">
+        <h2>{account ? t('br.ownTitleHas', { branch }) : t('br.ownTitle', { branch })}</h2>
+        {account && <span className="d-chip t-ok">{PLAN_LABEL[account.plan] ?? account.plan}</span>}
+      </div>
+      {account ? (
+        <>
+          <p className="d-muted">{t('br.ownLinked', { name: account.name, church: hqName })}</p>
+          {mine && (
+            <div className="d-form-actions">
+              <button type="button" className="d-btn d-btn-ink" onClick={() => go(account.id)}>
+                <ArrowRightLeft size={15} /> {t('br.ownOpen')}
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="d-muted">{t('br.ownIntro', { church: hqName })}</p>
+          <ul className="br-own-list">
+            <li>{t('br.ownF1')}</li>
+            <li>{t('br.ownF2')}</li>
+            <li>{t('br.ownF3', { church: hqName })}</li>
+          </ul>
+          <div className="d-form-actions">
+            <button type="button" className="d-btn d-btn-ink" onClick={() => setOpen(true)}>
+              <Plus size={15} /> {t('br.ownStart')}
+            </button>
+          </div>
+        </>
+      )}
+      {open && (
+        <Modal title={t('br.ownStart')} onClose={() => !busy && setOpen(false)}>
+          <div className="d-form">
+            <label className="d-field">
+              <span>{t('br.ownName')}</span>
+              <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <label className="d-field">
+              <span>{t('br.ownPlan')}</span>
+              <select value={plan} onChange={(e) => setPlan(e.target.value as typeof plan)}>
+                {(['essentials', 'plus', 'max'] as const).map((p) => (
+                  <option key={p} value={p}>
+                    {PLAN_LABEL[p]}
+                  </option>
+                ))}
+              </select>
+              <small>{t('br.ownTrial')}</small>
+            </label>
+            <p className="d-hint-box">{t('br.ownNote', { church: hqName })}</p>
+            {error && <p className="d-errors">{error}</p>}
+            <div className="d-form-actions">
+              <button type="button" className="d-btn" disabled={busy} onClick={() => setOpen(false)}>
+                {t('common.cancel')}
+              </button>
+              <button type="button" className="d-btn d-btn-ink" disabled={busy || !name.trim()} onClick={create}>
+                {busy ? t('common.loading') : t('br.ownCreate')}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </section>
   )
 }
 

@@ -24,6 +24,7 @@ const dash: Dict['dash'] = {
   profile: {
     preview: 'Modo de pré-visualização — dados de demonstração neste navegador. O início de sessão funciona quando o servidor estiver ligado.',
     exitPreview: 'Voltar ao site',
+    switch: 'Mudar de conta',
   },
   signOut: 'Terminar sessão',
   notifications: 'Notificações',

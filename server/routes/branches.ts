@@ -6,6 +6,7 @@
  *   POST /api/branches/report/:id/review          HQ: mark reviewed, or send back with a note
  *   PUT  /api/branches/settings                   admin: due day, reminders on/off, which branches report
  *   POST /api/branches/remind                     HQ: remind missing branches now
+ *   POST /api/branches/own-account                branch leader: link the branch's own ZionDesk account to HQ
  */
 import { Router } from 'express'
 import { db, HttpError, requireCaller, route } from '../db'
@@ -36,6 +37,23 @@ async function churchOf(id: string) {
 }
 function requirePlan(c: ChurchBranchSettings) {
   if (!branchesAllowed(c)) throw new HttpError(403, 'Branch reports are part of Ministry Plus and Ministry Max.')
+}
+
+/** Branches that run their own ZionDesk account, linked to this church: branch → { name, plan, status }. */
+export interface BranchAccount {
+  id: string
+  name: string
+  plan: string
+  status: string
+}
+async function branchAccounts(hqId: string, branch?: string): Promise<Record<string, BranchAccount>> {
+  let q = db().from('churches').select('id, name, plan, plan_status, parent_branch').eq('parent_church_id', hqId)
+  if (branch) q = q.eq('parent_branch', branch)
+  const { data, error } = await q
+  if (error) return {} // before migration 0015
+  return Object.fromEntries(
+    (data ?? []).filter((r) => r.parent_branch).map((r) => [r.parent_branch as string, { id: r.id as string, name: r.name as string, plan: r.plan as string, status: r.plan_status as string }]),
+  )
 }
 
 const out = (r: Record<string, unknown>) => ({
@@ -81,24 +99,28 @@ branchRoutes.get(
       funds: c.funds,
       currency: c.currency,
     }
-    if (!base.allowed) return res.json({ ...base, reports: [], missing: [], leaders: {} })
+    if (!base.allowed) return res.json({ ...base, reports: [], missing: [], leaders: {}, accounts: {} })
 
     if (caller.role === 'branch') {
       if (!caller.branch) throw new HttpError(403, 'Your account isn’t linked to a branch yet. Ask your church admin.')
-      const { data } = await db().from('branch_reports').select('*').eq('church_id', c.id).eq('branch', caller.branch).order('period', { ascending: false }).limit(24)
-      return res.json({ ...base, reports: (data ?? []).map(out), missing: [], leaders: {} })
+      const [{ data }, accounts] = await Promise.all([
+        db().from('branch_reports').select('*').eq('church_id', c.id).eq('branch', caller.branch).order('period', { ascending: false }).limit(24),
+        branchAccounts(c.id, caller.branch),
+      ])
+      return res.json({ ...base, reports: (data ?? []).map(out), missing: [], leaders: {}, accounts })
     }
 
-    const [{ data }, missing, { data: leaders }] = await Promise.all([
+    const [{ data }, missing, { data: leaders }, accounts] = await Promise.all([
       db().from('branch_reports').select('*').eq('church_id', c.id).eq('period', period),
       missingBranches(c, period),
       db().from('church_users').select('branch, profiles(full_name)').eq('church_id', c.id).eq('role', 'branch'),
+      branchAccounts(c.id),
     ])
     // Branch → names of its leaders (so HQ sees which branches have nobody to remind).
     const byBranch: Record<string, string[]> = {}
     for (const l of (leaders ?? []) as unknown as { branch: string | null; profiles: { full_name: string } | null }[])
       if (l.branch) (byBranch[l.branch] ??= []).push(l.profiles?.full_name || '—')
-    res.json({ ...base, reports: (data ?? []).map(out), missing, leaders: byBranch })
+    res.json({ ...base, reports: (data ?? []).map(out), missing, leaders: byBranch, accounts })
   }),
 )
 
@@ -211,5 +233,31 @@ branchRoutes.post(
     const period = validPeriod(req.body?.period)
     const only = req.body?.branch ? String(req.body.branch) : undefined
     res.json(await remindNow(c, period, only))
+  }),
+)
+
+/**
+ * A branch leader started a separate ZionDesk account for their branch (created in the browser with create_church,
+ * so they're its admin). This records which church and branch it belongs to. The leader keeps their HQ link, so
+ * monthly reports still go to HQ; the new account has its own plan, members, messaging and flyer requests.
+ */
+branchRoutes.post(
+  '/branches/own-account',
+  requireCaller(['branch']),
+  route(async (req, res) => {
+    const caller = req.caller!
+    if (!caller.branch) throw new HttpError(403, 'Your account isn’t linked to a branch yet. Ask your church admin.')
+    const accountId = String(req.body?.churchId ?? '')
+    if (!/^[0-9a-f-]{36}$/i.test(accountId) || accountId === caller.churchId) throw new HttpError(400, 'Choose the new account to link.')
+    const { data: link } = await db().from('church_users').select('role').eq('church_id', accountId).eq('user_id', caller.userId).maybeSingle()
+    if (link?.role !== 'admin') throw new HttpError(403, 'Only the admin of the new account can link it.')
+    const { data: account } = await db().from('churches').select('id, parent_church_id').eq('id', accountId).single()
+    if (!account) throw new HttpError(404, 'Church not found')
+    if (account.parent_church_id && account.parent_church_id !== caller.churchId) throw new HttpError(409, 'This account is already linked to another church.')
+    const existing = await branchAccounts(caller.churchId, caller.branch)
+    if (existing[caller.branch] && existing[caller.branch].id !== accountId) throw new HttpError(409, `${caller.branch} already has its own ZionDesk account (${existing[caller.branch].name}).`)
+    const { error } = await db().from('churches').update({ parent_church_id: caller.churchId, parent_branch: caller.branch }).eq('id', accountId)
+    if (error) throw new HttpError(500, 'Could not link the account. Please try again.')
+    res.json({ ok: true })
   }),
 )
