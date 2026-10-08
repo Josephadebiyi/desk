@@ -21,6 +21,11 @@ DirectoryIndex index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
+# Apple Pay domain verification (Paystack): served as-is with the content type Apple/Paystack expect.
+<Files "apple-developer-merchantid-domain-association">
+  ForceType application/text
+</Files>
+
 <IfModule mod_headers.c>
   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
   Header always set X-Content-Type-Options "nosniff"
