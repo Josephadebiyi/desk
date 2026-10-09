@@ -1,4 +1,4 @@
-import { ArrowUpRight, Cake, CalendarDays, HandHeart, Plus, QrCode, Sparkles, Upload, UserPlus, Users } from 'lucide-react'
+import { ArrowUpRight, Cake, CalendarDays, HandHeart, Plus, QrCode, Send, Sparkles, Upload, UserPlus, Users } from 'lucide-react'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
 import { fmtDate, fmtTime, money, tEnum, today } from './kit'
 import { useT } from '../i18n'
@@ -8,6 +8,9 @@ import { useMemo, useState } from 'react'
 import { api } from '../lib/api'
 import { Link, useNavigate } from 'react-router-dom'
 import { Initials } from './Members'
+import { confirmAction } from './confirm'
+import { tpl } from '../ai/tools'
+import type { Member } from './types'
 import { useMembers } from './store'
 import { can, STAGES } from './types'
 
@@ -29,6 +32,7 @@ export default function Overview() {
       setPrayer({ id, text: '', busy: false, error: e instanceof Error ? e.message : String(e) })
     }
   }
+  const [sending, setSending] = useState<Member | null>(null)
   const session = useSession()
   const navigate = useNavigate()
   const upcoming = events.filter((e) => e.date >= today()).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)).slice(0, 4)
@@ -180,6 +184,12 @@ export default function Overview() {
                     <Sparkles size={15} />
                   </button>
                 )}
+                {live && can.editMembers(role) && (
+                  <button type="button" className="d-icon-btn" title={t('ov.bdaySend')} aria-label={t('ov.bdaySend')} onClick={() => setSending(sending?.id === m.id ? null : m)}>
+                    <Send size={15} />
+                  </button>
+                )}
+                {sending?.id === m.id && <BirthdaySend m={m} prayer={prayer?.id === m.id ? prayer.text : ''} onDone={() => setSending(null)} />}
                 {prayer?.id === m.id && (
                   <div className="ov-prayer">
                     {prayer.busy ? <small>{t('ov.prayerWriting')}</small> : prayer.error ? <small className="d-errors">{prayer.error}</small> : <p>{prayer.text}</p>}
@@ -245,6 +255,47 @@ export default function Overview() {
           </div>
         </section>
       </div>
+    </div>
+  )
+}
+
+/** Send one member a birthday message by Email, WhatsApp or SMS (once per channel per day — the server checks). */
+function BirthdaySend({ m, prayer, onDone }: { m: Member; prayer: string; onDone: () => void }) {
+  const { t } = useT()
+  const channels = (['Email', 'WhatsApp', 'SMS'] as const).filter((c) => (c === 'Email' ? m.email : c === 'WhatsApp' ? m.whatsapp || m.phone : m.phone))
+  const [channel, setChannel] = useState<(typeof channels)[number] | undefined>(channels[0])
+  const [text, setText] = useState(() => prayer || tpl('birthday', {}, m.language))
+  const [state, setState] = useState<{ busy?: boolean; ok?: string; error?: string }>({})
+  if (!channels.length) return <div className="ov-prayer"><small className="d-errors">{t('ov.bdayNoContact')}</small></div>
+  const send = async () => {
+    if (!channel || !text.trim()) return
+    const ok = await confirmAction({ title: t('ov.bdayConfirm', { name: m.fullName, channel }), body: text.trim().slice(0, 200), confirmLabel: t('ov.bdaySend') })
+    if (!ok) return
+    setState({ busy: true })
+    try {
+      await api('/members/' + m.id + '/birthday-send', { channel, text: text.trim() })
+      setState({ ok: t('ov.bdaySent', { name: m.fullName.split(' ')[0], channel }) })
+      setTimeout(onDone, 2500)
+    } catch (e) {
+      setState({ error: e instanceof Error ? e.message : String(e) })
+    }
+  }
+  return (
+    <div className="ov-prayer ov-bday-send">
+      <div className="ov-bday-ch" role="radiogroup" aria-label={t('ov.bdayChannel')}>
+        {channels.map((c) => (
+          <button key={c} type="button" role="radio" aria-checked={channel === c} className={`d-pill ${channel === c ? 'd-pill-lime' : ''}`} onClick={() => setChannel(c)}>
+            {c}
+          </button>
+        ))}
+      </div>
+      <textarea rows={3} maxLength={1200} value={text} onChange={(e) => setText(e.target.value)} />
+      {state.ok ? <small className="st-billing-ok">{state.ok}</small> : state.error ? <small className="d-errors">{state.error}</small> : null}
+      {!state.ok && (
+        <button type="button" className="d-btn d-btn-ink" disabled={state.busy || !text.trim()} onClick={send}>
+          <Send size={14} /> {state.busy ? t('ov.bdaySending') : t('ov.bdaySend')}
+        </button>
+      )}
     </div>
   )
 }

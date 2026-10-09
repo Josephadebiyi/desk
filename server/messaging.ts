@@ -8,7 +8,7 @@ import frTpl from '../src/i18n/locales/fr/tpl'
 import deTpl from '../src/i18n/locales/de/tpl'
 import ptTpl from '../src/i18n/locales/pt/tpl'
 import { asEmailLang, type EmailLang } from '../src/emails/strings'
-import { db } from './db'
+import { db, HttpError } from './db'
 import { configured, env } from './env'
 import { compose, sendEmails } from './mail'
 import { sendWhatsApp } from './whatsapp'
@@ -154,6 +154,22 @@ export const phoneOf = (s: string) => {
   return p.startsWith('00') ? '+' + p.slice(2) : p
 }
 
+/**
+ * Claims one-off deliveries before anything is sent (birthdays, event reminders). Each row carries a dedupe_key;
+ * rows whose key is already taken are skipped. Returns only the rows this call claimed — send to those alone,
+ * then settle each with settleDelivery.
+ */
+export async function claimDeliveries(rows: (Record<string, unknown> & { dedupe_key: string })[]) {
+  if (!rows.length) return [] as { id: string; dedupe_key: string }[]
+  const { data, error } = await db().from('deliveries').upsert(rows.map((r) => ({ status: 'sending', ...r })), { onConflict: 'dedupe_key', ignoreDuplicates: true }).select('id, dedupe_key')
+  if (error) throw new Error(`Could not claim deliveries: ${error.message}`)
+  return (data ?? []) as { id: string; dedupe_key: string }[]
+}
+/** Final state of a claimed delivery. provider_id = the provider's message id, so delivery reports can update it. */
+export async function settleDelivery(id: string, p: { status: 'sent' | 'failed'; providerId?: string | null; error?: string | null; body?: string | null }) {
+  await db().from('deliveries').update({ status: p.status, provider_id: p.providerId ?? null, error: p.error ?? null, ...(p.body !== undefined ? { body: p.body } : {}) }).eq('id', id)
+}
+
 /** Twilio's delivery report: final status for a message we sent. */
 export async function recordDeliveryStatus(sid: string, status: string, errorCode?: string) {
   const final = status === 'delivered' || status === 'read' ? 'delivered' : status === 'failed' || status === 'undelivered' ? 'failed' : null
@@ -181,7 +197,9 @@ export async function sendCampaign(campaignId: string, byName: string) {
   const all = await audienceMembers(c.church_id, c.audience as Audience)
   const recipients = all.filter((m) => (channel === 'Email' ? m.email : channel === 'WhatsApp' ? m.whatsapp || m.phone : m.phone))
 
-  await db().from('campaigns').update({ status: 'Sending' }).eq('id', campaignId)
+  // Claim it: only one send per message, even if the button is pressed twice or the scheduler runs at the same time.
+  const { data: claimed } = await db().from('campaigns').update({ status: 'Sending' }).eq('id', campaignId).in('status', ['Queued', 'Scheduled', 'Failed']).select('id')
+  if (!claimed?.length) throw new HttpError(409, c.status === 'Sent' ? 'This message was already sent.' : 'This message is already being sent.')
 
   const textFor = (m: MemberRow) => {
     const lang = asEmailLang(m.language)

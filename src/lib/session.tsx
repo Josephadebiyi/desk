@@ -80,6 +80,9 @@ export async function createChurch(p: PendingChurch) {
   return id
 }
 
+/** The first-sign-in church creation in progress (shared, so two callers never create two churches). */
+let creatingPending: Promise<string> | null = null
+
 /** Asks the server to send the welcome email right away (it sends once per church; the hourly job is the fallback). */
 async function sendWelcomeEmail(churchId: string, code?: string) {
   try {
@@ -134,10 +137,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const pending = s.user.user_metadata?.pending_church as PendingChurch | undefined
       if (!list.length && pending?.name) {
         try {
-          const id = await createChurch(pending)
-          await supabase.auth.updateUser({ data: { pending_church: null } })
+          // getSession and the SIGNED_IN event both land here on first sign-in: create the church once.
+          creatingPending ??= createChurch(pending).then(async (id) => {
+            await supabase!.auth.updateUser({ data: { pending_church: null } })
+            return id
+          })
+          const id = await creatingPending
           list = [{ id, name: pending.name, slug: slugify(pending.name), role: 'admin' }]
         } catch (e) {
+          creatingPending = null // let a later sign-in try again
           console.error('[create church]', e)
         }
       }

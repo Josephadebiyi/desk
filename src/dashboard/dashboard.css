@@ -943,6 +943,11 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .st-left { justify-content: flex-start; }
 .d-ov-bdays .d-list li { flex-wrap: wrap; }
 .ov-prayer { flex-basis: 100%; display: grid; gap: 8px; justify-items: start; margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--lime) 22%, var(--d-panel)); }
+.ov-bday-send { justify-items: stretch; }
+.ov-bday-ch { display: flex; gap: 6px; flex-wrap: wrap; }
+.ov-bday-ch .d-pill { border: 0; cursor: pointer; font: inherit; font-size: 13px; }
+.ov-bday-send textarea { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--d-border); background: var(--d-panel-solid, var(--surface)); color: var(--text); font: inherit; font-size: 14px; resize: vertical; }
+.ov-bday-send .d-btn { justify-self: start; }
 .ov-prayer p { margin: 0; font-size: 14px; line-height: 1.55; font-style: italic; }
 .st-promo { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
 .st-promo .d-field { margin: 0; min-width: 220px; }

@@ -8,7 +8,7 @@ import { asEmailLang } from '../src/emails/strings'
 import { db } from './db'
 import { configured } from './env'
 import { compose, sendEmails } from './mail'
-import { audienceMembers, sendCampaign, twilio, type Audience } from './messaging'
+import { audienceMembers, claimDeliveries, phoneOf, sendCampaign, settleDelivery, smsSenderOf, twilio, type Audience } from './messaging'
 import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
@@ -41,11 +41,18 @@ export async function runHourly() {
     for (const e of events ?? []) {
       const start = new Date(`${e.date}T${e.start_time}`)
       if (start < from || start >= to) continue
+      // Events reminded before claims existed (one marker per event).
       const { count } = await db().from('deliveries').select('id', { count: 'exact', head: true }).eq('provider_id', `reminder:${e.id}`)
       if (count) continue
       const { data: church } = await db().from('churches').select('name').eq('id', e.church_id).single()
       const people = (await audienceMembers(e.church_id, e.audience as Audience)).filter((m) => m.email)
-      const mails = people.map((m) => {
+      // Claim each person first: a second run (or a retry after a crash) skips everyone already claimed.
+      const claimed = await claimDeliveries(
+        people.map((m) => ({ church_id: e.church_id, member_id: m.id, channel: 'Email', language: asEmailLang(m.language), to_address: m.email, dedupe_key: `reminder:${e.id}:${m.id}` })),
+      )
+      const byKey = new Map(claimed.map((r) => [r.dedupe_key, r.id]))
+      const todo = people.filter((m) => byKey.has(`reminder:${e.id}:${m.id}`))
+      const mails = todo.map((m) => {
         const lang = asEmailLang(m.language)
         const loc = LOCALE[lang]
         const vars = {
@@ -57,9 +64,15 @@ export async function runHourly() {
         }
         return compose(e.google_meet && e.meet_link ? 'meetingInvite' : 'eventReminder', lang, m.email, vars, e.meet_link ?? undefined)
       })
-      if (mails.length) await sendEmails(mails)
-      await db().from('deliveries').insert(people.map((m) => ({ church_id: e.church_id, member_id: m.id, channel: 'Email', language: asEmailLang(m.language), to_address: m.email, status: 'sent', provider_id: `reminder:${e.id}` })))
-      reminders += mails.length
+      let ids: (string | undefined)[] = []
+      let failure = ''
+      try {
+        if (mails.length) ids = await sendEmails(mails)
+      } catch (err) {
+        failure = err instanceof Error ? err.message : 'send failed'
+      }
+      await Promise.all(todo.map((m, i) => settleDelivery(byKey.get(`reminder:${e.id}:${m.id}`)!, failure ? { status: 'failed', error: failure } : { status: 'sent', providerId: ids[i] ?? null })))
+      if (!failure) reminders += mails.length
     }
   }
   const welcomes = await runWelcomeFallback().catch((e) => (console.error('[welcome fallback]', e), 0))
@@ -77,24 +90,32 @@ export async function runDaily() {
 }
 
 /**
- * Birthday greetings, once per person per year, in each member's language. With ANTHROPIC_API_KEY set, Claude writes
+ * Birthday greetings, once per person per day, in each member's language. With ANTHROPIC_API_KEY set, Claude writes
  * every celebrant their own prayer; otherwise the standard greeting.
- * Email when the member has one, otherwise WhatsApp (when configured).
+ * Email when the member has one, otherwise WhatsApp, otherwise SMS (when those channels are on).
+ * Each greeting is claimed before it's sent (deliveries.dedupe_key), so re-runs and retries never send twice, and
+ * anyone already greeted by hand today (Overview → Birthdays) is skipped.
  */
 async function runBirthdays() {
-  if (!configured.email && !configured.whatsapp) return 0
+  if (!configured.email && !configured.whatsapp && !configured.sms) return 0
   const today = new Date()
-  const mmdd = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  const stamp = `birthday:${today.toISOString().slice(0, 10)}`
-  const { data: people } = await db().from('members').select('id, church_id, full_name, email, whatsapp, language, dob, gender, department, stage').not('dob', 'is', null).eq('membership_status', 'Active')
-  const todays = (people ?? []).filter((m) => String(m.dob).slice(5) === mmdd && (m.email || m.whatsapp))
+  const date = today.toISOString().slice(0, 10)
+  const mmdd = date.slice(5)
+  const legacyStamp = `birthday:${date}`
+  const { data: people } = await db().from('members').select('id, church_id, full_name, email, whatsapp, phone, language, dob, gender, department, stage').not('dob', 'is', null).eq('membership_status', 'Active')
+  const todays = (people ?? []).filter((m) => String(m.dob).slice(5) === mmdd && (m.email || m.whatsapp || m.phone))
   if (!todays.length) return 0
-  const { data: sent } = await db().from('deliveries').select('member_id').eq('provider_id', stamp)
-  const already = new Set((sent ?? []).map((s) => s.member_id))
+  // Already greeted today: by an earlier run (old marker) or any claimed greeting (automatic or by hand).
+  const [{ data: legacy }, { data: claimedToday }] = await Promise.all([
+    db().from('deliveries').select('member_id').eq('provider_id', legacyStamp),
+    db().from('deliveries').select('member_id').like('dedupe_key', `birthday:${date}:%`),
+  ])
+  const already = new Set([...(legacy ?? []), ...(claimedToday ?? [])].map((s) => s.member_id))
   const list = todays.filter((m) => !already.has(m.id))
   const churchIds = [...new Set(list.map((m) => m.church_id))]
-  const { data: churches } = churchIds.length ? await db().from('churches').select('id, name').in('id', churchIds) : { data: [] }
-  const name = (id: string) => churches?.find((c) => c.id === id)?.name ?? ''
+  const { data: churches } = churchIds.length ? await db().from('churches').select('id, name, sms_sender').in('id', churchIds) : { data: [] }
+  const churchOf = (id: string) => churches?.find((c) => c.id === id) ?? null
+  const name = (id: string) => churchOf(id)?.name ?? ''
   let count = 0
   for (const churchId of churchIds) {
     const members = list.filter((m) => m.church_id === churchId)
@@ -102,29 +123,31 @@ async function runBirthdays() {
       name(churchId),
       members.map((m) => ({ id: m.id, firstName: m.full_name.split(' ')[0], age: ageOn(String(m.dob), today), gender: m.gender, department: m.department, stage: m.stage, language: asEmailLang(m.language) })),
     )
-    const rows: Record<string, unknown>[] = []
-    const mails = []
     for (const m of members) {
       const lang = asEmailLang(m.language)
       const first = m.full_name.split(' ')[0]
       const prayer = prayers[m.id]
-      if (m.email && configured.email) {
-        mails.push(prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }) : compose('birthday', lang, m.email, { church: name(churchId), name: first }))
-        rows.push({ church_id: churchId, member_id: m.id, channel: 'Email', language: lang, to_address: m.email, status: 'sent', provider_id: stamp, body: prayer ?? null })
-      } else if (m.whatsapp && configured.whatsapp) {
-        const text = withChurchName(`🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]}`, name(churchId))
-        try {
-          if (configured.whatsappCloud) await sendWhatsApp(m.whatsapp, text, lang)
-          else await twilio('WhatsApp', m.whatsapp.replace(/[^\d+]/g, ''), text)
-          rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'sent', provider_id: stamp, body: text })
-        } catch (e) {
-          rows.push({ church_id: churchId, member_id: m.id, channel: 'WhatsApp', language: lang, to_address: m.whatsapp, status: 'failed', provider_id: stamp, error: e instanceof Error ? e.message : 'failed' })
+      const channel = m.email && configured.email ? 'Email' : m.whatsapp && configured.whatsapp ? 'WhatsApp' : m.phone && configured.sms ? 'SMS' : null
+      if (!channel) continue
+      const to = channel === 'Email' ? m.email : phoneOf(channel === 'WhatsApp' ? m.whatsapp : m.phone)
+      const text = channel === 'Email' ? prayer ?? null : withChurchName(`🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]}`, name(churchId))
+      const [claim] = await claimDeliveries([{ church_id: churchId, member_id: m.id, channel, language: lang, to_address: to, dedupe_key: `birthday:${date}:${m.id}:${channel}`, body: text }])
+      if (!claim) continue // claimed by another run a moment ago
+      try {
+        let providerId: string | undefined
+        if (channel === 'Email') {
+          ;[providerId] = await sendEmails([prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }) : compose('birthday', lang, m.email, { church: name(churchId), name: first })])
+        } else if (channel === 'WhatsApp' && configured.whatsappCloud) {
+          providerId = await sendWhatsApp(to, text!, lang)
+        } else {
+          providerId = await twilio(channel, to, text!, { sender: smsSenderOf(churchOf(churchId)), churchId })
         }
+        await settleDelivery(claim.id, { status: 'sent', providerId })
+        count++
+      } catch (e) {
+        await settleDelivery(claim.id, { status: 'failed', error: e instanceof Error ? e.message : 'failed' })
       }
     }
-    if (mails.length) await sendEmails(mails)
-    if (rows.length) await db().from('deliveries').insert(rows)
-    count += rows.length
   }
   return count
 }

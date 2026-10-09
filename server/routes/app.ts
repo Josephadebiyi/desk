@@ -4,13 +4,17 @@
  *   POST /api/team/invite            invite a teammate by email (admin)
  *   POST /api/claims/:id/confirm     confirm a bank transfer → gift + receipt (admin, finance)
  *   POST /api/claims/:id/decline     (admin, finance)
+ *   POST /api/members/:id/birthday-send  send one member a birthday message by Email, WhatsApp or SMS (admin, leader)
  */
 import { Router } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
-import { compose, sendEmail } from '../mail'
-import { sendCampaign } from '../messaging'
+import { compose, sendEmail, sendEmails } from '../mail'
+import { claimDeliveries, personalize, phoneOf, sendCampaign, settleDelivery, smsSenderOf, twilio } from '../messaging'
+import { sendWhatsApp } from '../whatsapp'
+import { logOutbound } from '../inbox'
+import { withChurchName } from '../../src/emails/sender'
 import { ageOn, birthdayPrayers, prayersEnabled } from '../prayers'
 import { smsUsage } from '../smsQuota'
 
@@ -125,5 +129,57 @@ appRoutes.post(
     const out = await birthdayPrayers(church?.name ?? '', [{ id: m.id, firstName: m.full_name.split(' ')[0], age: m.dob ? ageOn(String(m.dob)) : null, gender: m.gender, department: m.department, stage: m.stage, language: asEmailLang(m.language) }])
     if (!out[m.id]) throw new HttpError(502, 'The prayer could not be written right now. Please try again.')
     res.json({ prayer: out[m.id] })
+  }),
+)
+
+/**
+ * Birthday message to one member, sent by hand (Overview → Birthdays). Once per member, channel and day: a double
+ * click or a second teammate gets "already sent", and the automatic greeting skips anyone greeted by hand.
+ * A failed attempt can be retried.
+ */
+appRoutes.post(
+  '/members/:id/birthday-send',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    const caller = req.caller!
+    const channel = String(req.body?.channel ?? '') as 'Email' | 'WhatsApp' | 'SMS'
+    if (!['Email', 'WhatsApp', 'SMS'].includes(channel)) throw new HttpError(400, 'Choose Email, WhatsApp or SMS.')
+    const raw = String(req.body?.text ?? '').trim()
+    if (raw.length < 2 || raw.length > 1200) throw new HttpError(400, 'Write a message (up to 1,200 characters).')
+    const { data: m } = await db().from('members').select('id, church_id, full_name, email, whatsapp, phone, language').eq('id', req.params.id).maybeSingle()
+    if (!m || m.church_id !== caller.churchId) throw new HttpError(404, 'Member not found')
+    const ready = channel === 'Email' ? configured.email : channel === 'WhatsApp' ? configured.whatsapp : configured.sms
+    if (!ready) throw new HttpError(503, `${channel} isn't switched on yet.`)
+    const to = channel === 'Email' ? (m.email ?? '').trim() : phoneOf(channel === 'WhatsApp' ? m.whatsapp || m.phone || '' : m.phone || '')
+    if (!to) throw new HttpError(400, channel === 'Email' ? 'This member has no email address.' : 'This member has no phone number.')
+    const { data: church } = await db().from('churches').select('name, sms_sender').eq('id', m.church_id).single()
+    const lang = asEmailLang(m.language)
+    const first = m.full_name.split(' ')[0]
+    const text = personalize(raw, lang, {}, first, church?.name ?? '')
+    const body = channel === 'Email' ? text : withChurchName(text, church?.name ?? '')
+    const key = `birthday:${new Date().toISOString().slice(0, 10)}:${m.id}:${channel}`
+
+    // Claim; a failed earlier attempt today is taken over so it can be retried.
+    let [claim]: ({ id: string; dedupe_key: string } | undefined)[] = await claimDeliveries([{ church_id: m.church_id, member_id: m.id, channel, language: lang, to_address: to, dedupe_key: key, body }])
+    if (!claim) {
+      const { data: retry } = await db().from('deliveries').update({ status: 'sending', error: null, to_address: to, body }).eq('dedupe_key', key).eq('status', 'failed').select('id, dedupe_key')
+      claim = retry?.[0]
+      if (!claim) throw new HttpError(409, `${first} already got a birthday ${channel === 'Email' ? 'email' : `${channel} message`} today.`)
+    }
+    try {
+      let providerId: string | undefined
+      if (channel === 'Email') [providerId] = await sendEmails([compose('birthdayPrayer', lang, to, { church: church?.name ?? '', name: first, prayer: text })])
+      else if (channel === 'WhatsApp' && configured.whatsappCloud) providerId = await sendWhatsApp(to, body, lang)
+      else providerId = await twilio(channel, to, body, { sender: smsSenderOf(church), churchId: m.church_id })
+      await settleDelivery(claim.id, { status: 'sent', providerId })
+      const byName = caller.name || 'ZionDesk'
+      await db().from('communications').insert({ church_id: m.church_id, member_id: m.id, date: new Date().toISOString().slice(0, 10), channel, summary: text.slice(0, 90), by_name: byName })
+      if (channel !== 'Email') await logOutbound({ churchId: m.church_id, memberId: m.id, name: m.full_name, to, channel, body, providerId, byName }).catch(() => undefined)
+      res.json({ ok: true, channel })
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : 'Sending failed'
+      await settleDelivery(claim.id, { status: 'failed', error: reason })
+      throw new HttpError(502, reason)
+    }
   }),
 )
