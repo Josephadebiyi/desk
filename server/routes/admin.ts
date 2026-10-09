@@ -27,6 +27,7 @@ import { SAMPLE_VARS } from '../../src/emails/samples'
 import { asEmailLang } from '../../src/emails/strings'
 import { composeNewsletter, newsletterRecipients, unsubscribeUrl, type NewsletterAudience } from '../lifecycle'
 import { deleteChurch } from './account'
+import { flyerRef, ticketRef } from '../../src/lib/refs'
 
 export const adminRoutes = Router()
 
@@ -49,6 +50,39 @@ ${link ? `<p><a href="${esc(link.url)}" style="display:inline-block;padding:10px
 
 /* ───────── support (church users) ───────── */
 
+/** Everyone who must hear about a new ticket: the support inbox and every ZionDesk staff admin. */
+const supportRecipients = () => [...new Set([env.supportEmail, ...env.adminEmails].map((e) => e.trim().toLowerCase()).filter(Boolean))]
+
+/**
+ * New ticket: staff get the full message with the ticket ID; the person who opened it gets a confirmation
+ * (in their language) with the same ID. Failures are logged loudly but never lose the ticket itself.
+ */
+async function notifySupport(id: string, ref: string, subject: string, body: string, priority: string, churchId: string | null, by: { userId: string; email: string; name: string }) {
+  const { data: church } = churchId ? await db().from('churches').select('name, plan, plan_status').eq('id', churchId).maybeSingle() : { data: null }
+  const m = plainMail(
+    `New support ticket ${ref}: ${subject}`,
+    [
+      `Ticket: ${ref}${priority === 'high' ? ' · HIGH PRIORITY' : ''}`,
+      `From: ${by.name || '—'} <${by.email}>`,
+      `Church: ${church ? `${church.name} (${church.plan}, ${church.plan_status})` : '—'}`,
+      body,
+      `Ticket ID: ${id}`,
+    ],
+    { url: `${env.adminUrl || env.siteUrl}/admin/support?t=${id}`, label: 'Open in admin' },
+  )
+  const staffMails = supportRecipients().map((to) => ({ to, subject: `[Support ${ref}]${priority === 'high' ? ' [HIGH]' : ''} ${subject}`, ...m, replyTo: by.email }))
+  try {
+    await sendEmails(staffMails)
+    console.log(`[support] ${ref} emailed to ${staffMails.length} staff address(es)`)
+  } catch (e) {
+    console.error(`[support] ${ref} staff email FAILED`, e)
+  }
+  const { data: prof } = await db().from('profiles').select('comm_language').eq('id', by.userId).maybeSingle()
+  await sendEmail(compose('supportReceived', prof?.comm_language, by.email, { name: (by.name || by.email).split(' ')[0], reference: ref, subject }, `${env.siteUrl}/dashboard/help`)).catch((e) =>
+    console.error(`[support] ${ref} confirmation to user FAILED`, e),
+  )
+}
+
 adminRoutes.get(
   '/support',
   requireUser(),
@@ -65,18 +99,18 @@ adminRoutes.post(
     const subject = str(req.body?.subject, 160)
     const body = str(req.body?.body, 5000)
     if (!subject || !body) throw new HttpError(400, 'Add a subject and a message.')
+    const priority = req.body?.priority === 'high' ? 'high' : 'normal'
     const churchId = /^[0-9a-f-]{36}$/i.test(String(req.headers['x-church-id'] ?? '')) ? String(req.headers['x-church-id']) : null
     const { data: t, error } = await db()
       .from('support_tickets')
-      .insert({ church_id: churchId, user_id: req.caller!.userId, email: req.caller!.email, name: req.caller!.name, subject, priority: req.body?.priority === 'high' ? 'high' : 'normal' })
+      .insert({ church_id: churchId, user_id: req.caller!.userId, email: req.caller!.email, name: req.caller!.name, subject, priority })
       .select('id')
       .single()
     if (error) throw new HttpError(500, error.message)
     await db().from('support_messages').insert({ ticket_id: t.id, author: 'user', author_name: req.caller!.name, body })
-    if (configured.email) {
-      const m = plainMail(`New support ticket: ${subject}`, [`From: ${req.caller!.name} <${req.caller!.email}>`, body], { url: `${env.adminUrl || env.siteUrl}/admin/support?t=${t.id}`, label: 'Open in admin' })
-      await sendEmail({ to: env.supportEmail, subject: `[Support] ${subject}`, ...m, replyTo: req.caller!.email }).catch((e) => console.error('[support mail]', e))
-    }
+    const ref = ticketRef(t.id)
+    if (configured.email) await notifySupport(t.id, ref, subject, body, priority, churchId, req.caller!)
+    res.json({ id: t.id, ref })
     res.json({ id: t.id })
   }),
 )
@@ -91,6 +125,11 @@ adminRoutes.post(
     if (!body) throw new HttpError(400, 'Write a message.')
     await db().from('support_messages').insert({ ticket_id: t.id, author: 'user', author_name: req.caller!.name, body })
     await db().from('support_tickets').update({ status: 'open', updated_at: new Date().toISOString() }).eq('id', t.id)
+    if (configured.email) {
+      const ref = ticketRef(t.id)
+      const m = plainMail(`New reply on ${ref}: ${t.subject}`, [`From: ${req.caller!.name || '—'} <${req.caller!.email}>`, body], { url: `${env.adminUrl || env.siteUrl}/admin/support?t=${t.id}`, label: 'Open in admin' })
+      await sendEmails(supportRecipients().map((to) => ({ to, subject: `[Support ${ref}] Re: ${t.subject}`, ...m, replyTo: req.caller!.email }))).catch((e) => console.error(`[support] ${ref} reply email FAILED`, e))
+    }
     res.json({ ok: true })
   }),
 )
@@ -346,8 +385,9 @@ adminRoutes.post(
     await db().from('support_messages').insert({ ticket_id: t.id, author: 'staff', author_name: 'ZionDesk Support', body })
     await db().from('support_tickets').update({ status: req.body?.close ? 'closed' : 'pending', updated_at: new Date().toISOString() }).eq('id', t.id)
     if (configured.email) {
-      const m = plainMail(`Re: ${t.subject}`, [`Hi ${t.name.split(' ')[0] || 'there'},`, body], { url: `${env.siteUrl}/dashboard/help`, label: 'View your conversation' })
-      await sendEmail({ to: t.email, subject: `Re: ${t.subject}`, ...m }).catch((e) => console.error('[support reply]', e))
+      const ref = ticketRef(t.id)
+      const m = plainMail(`Re: ${t.subject}`, [`Hi ${t.name.split(' ')[0] || 'there'},`, body, `Ticket: ${ref}`], { url: `${env.siteUrl}/dashboard/help`, label: 'View your conversation' })
+      await sendEmail({ to: t.email, subject: `[${ref}] Re: ${t.subject}`, ...m }).catch((e) => console.error(`[support] ${ref} reply to user FAILED`, e))
     }
     res.json({ ok: true })
   }),
@@ -656,9 +696,10 @@ async function tellChurchTeam(churchId: string, subject: string, paragraphs: str
   if (!configured.email) return
   const { data: team } = await db().from('church_users').select('user_id').eq('church_id', churchId).in('role', ['admin', 'leader'])
   const { data: people } = await db().from('profiles').select('email').in('id', (team ?? []).map((t) => t.user_id))
-  const m = plainMail(subject, paragraphs, { url: `${env.siteUrl}/dashboard/design?tab=team&request=${requestId}`, label: 'Open the request' })
+  const ref = flyerRef(requestId)
+  const m = plainMail(subject, [...paragraphs, `Order number: ${ref}`], { url: `${env.siteUrl}/dashboard/design?tab=team&request=${requestId}`, label: 'Open the request' })
   const to = (people ?? []).map((p) => p.email).filter(Boolean)
-  if (to.length) await sendEmails(to.map((e) => ({ to: e, subject, html: m.html, text: m.text }))).catch((e) => console.error('[design email]', e))
+  if (to.length) await sendEmails(to.map((e) => ({ to: e, subject: `[${ref}] ${subject}`, html: m.html, text: m.text }))).catch((e) => console.error(`[design] ${ref} church email FAILED`, e))
 }
 
 adminRoutes.get(

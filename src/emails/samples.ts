@@ -27,6 +27,7 @@ export const EMAIL_GROUPS: { title: string; kinds: string[] }[] = [
   { title: 'Finish sign-up reminders (weekly)', kinds: ['finishSignup1', 'finishSignup2', 'finishSignup3', 'finishSignup4'] },
   { title: 'Billing', kinds: ['subscriptionConfirmed', 'paymentReceipt', 'trialEnding', 'paymentFailed', 'planExpired', 'promoEnded'] },
   { title: 'Newsletter', kinds: ['newsletter'] },
+  { title: 'Support & flyer requests', kinds: ['supportReceived', 'flyerReceived'] },
   { title: 'Branch reports', kinds: ['branchReminder', 'branchOverdue', 'branchMissing', 'branchSubmitted', 'branchReturned'] },
   { title: 'Sent by churches to members', kinds: ['registered', 'message', 'giftReceipt', 'claimReceived', 'claimAlert', 'birthday', 'birthdayPrayer', 'eventReminder', 'meetingInvite'] },
 ]

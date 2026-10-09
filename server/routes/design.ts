@@ -12,7 +12,8 @@ import { FLYER_SIZE, flyerLimit, type FlyerFormat } from '../../src/lib/plans'
 import { admin, db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
 import { randomUUID } from 'node:crypto'
-import { sendEmails } from '../mail'
+import { compose, sendEmail, sendEmails } from '../mail'
+import { flyerRef } from '../../src/lib/refs'
 import { createCheckout } from '../flutterwave'
 import { EXTRA_DESIGN_PRICE } from '../../src/lib/currency'
 import { paystackCheckout, providerFor, stripeCheckout } from './payments'
@@ -187,18 +188,33 @@ export async function notifyDesigners(requestId: string, message = '', from = { 
   const brief = Object.entries((r.brief ?? {}) as Record<string, string>)
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#666">${esc(k)}</td><td>${esc(v)}</td></tr>`)
     .join('')
+  const ref = flyerRef(r.id)
   const subject = message
-    ? `New message on "${r.title}" — ${church?.name}`
-    : `New flyer request${r.extra ? ' (paid extra €10)' : ''}: "${r.title}" — ${church?.name} (due ${new Date(r.due_at).toUTCString()})`
+    ? `[${ref}] New message on "${r.title}" — ${church?.name}`
+    : `[${ref}] New flyer request${r.extra ? ' (paid extra)' : ''}: "${r.title}" — ${church?.name} (due ${new Date(r.due_at).toUTCString()})`
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#111">
 <h2 style="margin:0 0 8px">${esc(subject)}</h2>
 <p><b>Church:</b> ${esc(church?.name)} · ${esc(church?.email)} · ${esc(church?.phone)}<br/><b>From:</b> ${esc(from.name)} &lt;${esc(from.email)}&gt;</p>
 ${message ? `<p style="padding:12px;background:#f4f4f4;border-radius:8px">${esc(message).replace(/\n/g, '<br/>')}</p>` : `<table>${brief}<tr><td style="padding:4px 12px 4px 0;color:#666">Formats</td><td>${esc((r.formats ?? []).join(', '))}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#666">Inspiration</td><td>${(r.inspiration ?? []).length} image(s)</td></tr></table>`}
 <p><a href="${esc(env.adminUrl || env.siteUrl)}/admin/design/${esc(r.id)}" style="display:inline-block;padding:10px 18px;background:#6c34ff;color:#fff;border-radius:999px;text-decoration:none">Open in the staff console</a></p>
-<p style="color:#666">Reply in the staff console so the church sees it in ZionDesk. Request ID: ${esc(r.id)}</p></div>`
+<p style="color:#666">Reply in the staff console so the church sees it in ZionDesk. Order ${esc(ref)} · Request ID: ${esc(r.id)}</p></div>`
   const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
   const to = [...new Set([env.designTeamEmail, ...env.adminEmails].map((e) => e.toLowerCase()).filter(Boolean))]
-  await sendEmails(to.map((e) => ({ to: e, subject, html, text, replyTo: from.email || undefined }))).catch((e) => console.error('[design notify]', e))
+  try {
+    await sendEmails(to.map((e) => ({ to: e, subject, html, text, replyTo: from.email || undefined })))
+    console.log(`[design] ${ref} emailed to ${to.length} staff address(es)`)
+  } catch (e) {
+    console.error(`[design] ${ref} staff email FAILED`, e)
+  }
+  // New request: the person who asked gets a confirmation with the order number, in their language.
+  if (!message && from.email) {
+    const { data: prof } = await db().from('profiles').select('comm_language').ilike('email', from.email.replace(/[\\%_]/g, '\\$&')).maybeSingle()
+    const lang = prof?.comm_language ?? 'en'
+    const due = new Date(r.due_at).toLocaleDateString(({ en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' } as Record<string, string>)[lang] ?? 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+    await sendEmail(compose('flyerReceived', lang, from.email, { name: (from.name || from.email).split(' ')[0], church: church?.name ?? '', reference: ref, subject: r.title, date: due }, `${env.siteUrl}/dashboard/design`)).catch((e) =>
+      console.error(`[design] ${ref} confirmation to user FAILED`, e),
+    )
+  }
 }
 
 designRoutes.get(

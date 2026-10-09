@@ -13,6 +13,7 @@ import { formatMoney } from '../lib/currency'
 import { useWorkspace, type DesignRequest } from './workspace'
 import { api } from '../lib/api'
 import { remote } from '../lib/supabase'
+import { flyerRef } from '../lib/refs'
 
 /* ───────────────────────── Create ───────────────────────── */
 
@@ -452,7 +453,9 @@ function RequestView({ req, onBack }: { req: DesignRequest; onBack: () => void }
     <div className="req-grid">
       <section className="d-panel">
         <div className="d-panel-head">
-          <h2>{req.title}</h2>
+          <h2>
+            {req.title} <small className="d-muted">{flyerRef(req.id)}</small>
+          </h2>
           <button type="button" className="d-btn" onClick={onBack}>
             <ArrowLeft size={15} /> {t('design.allRequests')}
           </button>
@@ -555,7 +558,9 @@ function RequestCard({ r, onOpen }: { r: DesignRequest; onOpen: () => void }) {
     <button type="button" className="req-card" onClick={onOpen}>
       <span className="d-chip t-purple">{tr(`enums.request.${r.status}`)}</span>
       <b>{r.title}</b>
-      <small>{r.formats.map(fmtLabel).join(' · ')}</small>
+      <small>
+        {flyerRef(r.id)} · {r.formats.map(fmtLabel).join(' · ')}
+      </small>
       <span className="req-card-due">
         <Clock size={13} /> {left}
       </span>

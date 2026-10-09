@@ -6,6 +6,7 @@ import { useSession } from '../lib/session'
 import { Link } from 'react-router-dom'
 import { PageHead } from './kit'
 import { useT } from '../i18n'
+import { ticketRef } from '../lib/refs'
 
 const FAQ = [1, 2, 3, 4, 5, 6, 7, 8]
 
@@ -142,6 +143,7 @@ function Support() {
             <div key={tk.id} className="hp-ticket">
               <button type="button" onClick={() => setOpenId(openId === tk.id ? null : tk.id)}>
                 <b>{tk.subject}</b>
+                <small className="hp-ref">{ticketRef(tk.id)}</small>
                 <span className={`d-pill ${tk.status === 'pending' ? 'd-pill-lime' : ''}`}>{t(`help.support.status.${tk.status}`)}</span>
                 <small>{new Date(tk.created_at).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}</small>
               </button>

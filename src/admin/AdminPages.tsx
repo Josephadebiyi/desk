@@ -5,6 +5,7 @@ import { downloadCsv } from './AdminDetail'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
 import { Card, fmtDay, Head } from './Admin'
+import { ticketRef } from '../lib/refs'
 
 const PLAN_LABEL: Record<string, string> = { essentials: 'Essentials', plus: 'Ministry Plus', max: 'Ministry Max' }
 const STATUSES = ['trial', 'active', 'past_due', 'cancelled', 'expired'] as const
@@ -542,7 +543,7 @@ export function Support() {
               <button key={r.id} type="button" className={selected === r.id ? 'is-on' : ''} onClick={() => setParams({ t: r.id })}>
                 <b>{r.subject}</b>
                 <small>
-                  {r.name || r.email} · {r.churches?.name ?? 'no church'} · {fmtDay(r.updated_at)}
+                  {ticketRef(r.id)} · {r.name || r.email} · {r.churches?.name ?? 'no church'} · {fmtDay(r.updated_at)}
                 </small>
                 <span>
                   <span className={`adm-pill ${r.status}`}>{r.status}</span> {r.priority === 'high' && <span className="adm-pill high">high</span>} <small style={{ display: 'inline' }}>{r.messages} messages</small>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { Card, fmtDay, Head } from './Admin'
+import { flyerRef } from '../lib/refs'
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const STATUSES = ['Awaiting payment', 'Submitted', 'In design', 'Review', 'Delivered']
@@ -83,7 +84,7 @@ export function DesignRequests() {
                     <td>
                       <b>{r.title}</b>
                       <small>
-                        {r.formats.join(', ') || '—'}
+                        {flyerRef(r.id)} · {r.formats.join(', ') || '—'}
                         {r.extra ? ' · paid extra' : ''}
                       </small>
                     </td>
@@ -159,7 +160,7 @@ export function DesignRequestDetail() {
       <Link to="/admin/design" className="adm-back">
         <ArrowLeft size={15} /> All requests
       </Link>
-      <Head title={r.title} sub={`${r.churches?.name ?? ''} · ${r.churches?.email ?? ''} · requested ${fmtDay(r.created_at)}${r.extra ? ' · paid extra (€10)' : ''}`}>
+      <Head title={r.title} sub={`${r.churches?.name ?? ''} · ${r.churches?.email ?? ''} · requested ${fmtDay(r.created_at)}${r.extra ? ' · paid extra' : ''} · ${flyerRef(r.id)}`}>
         <select className="adm-select" value={r.status} disabled={busy} onChange={(e) => act(() => api(`/admin/design-requests/${id}`, { status: e.target.value }, 'PATCH'), `Status: ${e.target.value} — the church has been emailed`)}>
           {STATUSES.map((s) => (
             <option key={s}>{s}</option>
