@@ -491,7 +491,8 @@ interface TicketFull extends Omit<TicketRow, 'messages' | 'churches'> {
 
 export function Support() {
   const [params, setParams] = useSearchParams()
-  const [filter, setFilter] = useState<'open' | 'pending' | 'closed' | ''>('open')
+  // Active = open + pending (answered, waiting on the user): nothing unresolved is hidden by default.
+  const [filter, setFilter] = useState<'active' | 'open' | 'pending' | 'closed' | ''>('active')
   const [rows, setRows] = useState<TicketRow[]>([])
   const [t, setT] = useState<TicketFull | null>(null)
   const [reply, setReply] = useState('')
@@ -528,7 +529,7 @@ export function Support() {
     <>
       <Head title="Support" sub="Tickets from Help → Contact support. Replies are emailed to the church user.">
         <div className="adm-toolbar">
-          {(['open', 'pending', 'closed', ''] as const).map((s) => (
+          {(['active', 'open', 'pending', 'closed', ''] as const).map((s) => (
             <button key={s || 'all'} type="button" className={`adm-chip ${filter === s ? 'is-on' : ''}`} onClick={() => setFilter(s)}>
               {s || 'all'}
             </button>

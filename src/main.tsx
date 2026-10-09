@@ -2,36 +2,41 @@ import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './index.css'
-import App from './App.tsx'
 import { ThemeProvider } from './theme.tsx'
 import { I18nProvider } from './i18n'
-import { ForgotPassword, Login, Register, ResetPassword } from './pages/Auth.tsx'
 import { SessionProvider } from './lib/session.tsx'
-import EmailPreview from './pages/EmailPreview.tsx'
-import Legal from './pages/Legal.tsx'
-import DashboardLayout from './dashboard/DashboardLayout.tsx'
-import Overview from './dashboard/Overview.tsx'
-import Members from './dashboard/Members.tsx'
-import Placeholder from './dashboard/Placeholder.tsx'
-import Giving from './dashboard/Giving.tsx'
-import Messaging from './dashboard/Messaging.tsx'
-import Events from './dashboard/Events.tsx'
-import DesignStudio from './dashboard/DesignStudio.tsx'
-import ChurchAI from './dashboard/ChurchAI.tsx'
-import Reports from './dashboard/Reports.tsx'
-import Settings from './dashboard/Settings.tsx'
-import Help from './dashboard/Help.tsx'
-import Links from './dashboard/Links.tsx'
-import Attendance from './dashboard/Attendance.tsx'
-import Branches from './dashboard/Branches.tsx'
-import { CheckinPage, GivePage, JoinPage } from './pages/Public.tsx'
 import { isAdminHost } from './lib/site'
 import { captureSignupCode } from './lib/signupCode'
 
 captureSignupCode()
 
-// Staff console: separate chunk, only downloaded by staff.
+// Every page is its own download: the website, the church dashboard and the staff console only load what they show.
+const App = lazy(() => import('./App.tsx'))
 const Admin = lazy(() => import('./admin/Admin.tsx'))
+const Login = lazy(() => import('./pages/Auth.tsx').then((m) => ({ default: m.Login })))
+const Register = lazy(() => import('./pages/Auth.tsx').then((m) => ({ default: m.Register })))
+const ForgotPassword = lazy(() => import('./pages/Auth.tsx').then((m) => ({ default: m.ForgotPassword })))
+const ResetPassword = lazy(() => import('./pages/Auth.tsx').then((m) => ({ default: m.ResetPassword })))
+const EmailPreview = lazy(() => import('./pages/EmailPreview.tsx'))
+const Legal = lazy(() => import('./pages/Legal.tsx'))
+const JoinPage = lazy(() => import('./pages/Public.tsx').then((m) => ({ default: m.JoinPage })))
+const GivePage = lazy(() => import('./pages/Public.tsx').then((m) => ({ default: m.GivePage })))
+const CheckinPage = lazy(() => import('./pages/Public.tsx').then((m) => ({ default: m.CheckinPage })))
+const DashboardLayout = lazy(() => import('./dashboard/DashboardLayout.tsx'))
+const Overview = lazy(() => import('./dashboard/Overview.tsx'))
+const Members = lazy(() => import('./dashboard/Members.tsx'))
+const Placeholder = lazy(() => import('./dashboard/Placeholder.tsx'))
+const Giving = lazy(() => import('./dashboard/Giving.tsx'))
+const Messaging = lazy(() => import('./dashboard/Messaging.tsx'))
+const Events = lazy(() => import('./dashboard/Events.tsx'))
+const DesignStudio = lazy(() => import('./dashboard/DesignStudio.tsx'))
+const ChurchAI = lazy(() => import('./dashboard/ChurchAI.tsx'))
+const Reports = lazy(() => import('./dashboard/Reports.tsx'))
+const Settings = lazy(() => import('./dashboard/Settings.tsx'))
+const Help = lazy(() => import('./dashboard/Help.tsx'))
+const Links = lazy(() => import('./dashboard/Links.tsx'))
+const Attendance = lazy(() => import('./dashboard/Attendance.tsx'))
+const Branches = lazy(() => import('./dashboard/Branches.tsx'))
 
 /**
  * Staff console on its own domain (e.g. admin.ziondesk.com → same Render service).
@@ -46,16 +51,7 @@ if (ADMIN_HOST) {
   meta.content = 'noindex, nofollow'
   document.head.appendChild(meta)
 }
-const adminRoute = (
-  <Route
-    path="/admin/*"
-    element={
-      <Suspense fallback={null}>
-        <Admin />
-      </Suspense>
-    }
-  />
-)
+const adminRoute = <Route path="/admin/*" element={<Admin />} />
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -63,6 +59,7 @@ createRoot(document.getElementById('root')!).render(
     <SessionProvider>
     <ThemeProvider>
     <BrowserRouter>
+      <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
       {ADMIN_HOST ? (
         <Routes>
           {adminRoute}
@@ -90,14 +87,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/join/:slug" element={<JoinPage />} />
         <Route path="/give/:slug" element={<GivePage />} />
         <Route path="/checkin/:slug" element={<CheckinPage />} />
-        <Route
-          path="/admin/*"
-          element={
-            <Suspense fallback={null}>
-              <Admin />
-            </Suspense>
-          }
-        />
+        {adminRoute}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Overview />} />
           <Route path="members" element={<Members />} />
@@ -118,6 +108,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="*" element={<App />} />
       </Routes>
       )}
+      </Suspense>
     </BrowserRouter>
     </ThemeProvider>
     </SessionProvider>

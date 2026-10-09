@@ -152,14 +152,17 @@ adminRoutes.get(
   '/admin/overview',
   ...staff,
   route(async (_req, res) => {
-    const { data: churches } = await db().from('churches').select('id, name, plan, plan_status, currency, created_at, trial_ends_at')
+    // All at once (they don't depend on each other).
+    const [{ data: churches }, { data: pays }, { count: members }, { count: openTickets }, { count: users }, { count: flyers }, { data: promoUse }] = await Promise.all([
+      db().from('churches').select('id, name, plan, plan_status, currency, created_at, trial_ends_at'),
+      db().from('online_payments').select('kind, amount, currency, status, completed_at').eq('status', 'successful').gte('completed_at', monthsAgo(5).toISOString()),
+      db().from('members').select('id', { count: 'exact', head: true }),
+      db().from('support_tickets').select('id', { count: 'exact', head: true }).neq('status', 'closed'),
+      db().from('profiles').select('id', { count: 'exact', head: true }),
+      db().from('ai_usage').select('id', { count: 'exact', head: true }).eq('feature', 'designs').gte('at', monthsAgo(0).toISOString()),
+      db().from('promo_redemptions').select('status'),
+    ])
     const list = churches ?? []
-    const { data: pays } = await db().from('online_payments').select('kind, amount, currency, status, completed_at').eq('status', 'successful').gte('completed_at', monthsAgo(5).toISOString())
-    const { count: members } = await db().from('members').select('id', { count: 'exact', head: true })
-    const { count: openTickets } = await db().from('support_tickets').select('id', { count: 'exact', head: true }).neq('status', 'closed')
-    const { count: users } = await db().from('profiles').select('id', { count: 'exact', head: true })
-    const { count: flyers } = await db().from('ai_usage').select('id', { count: 'exact', head: true }).eq('feature', 'designs').gte('at', monthsAgo(0).toISOString())
-    const { data: promoUse } = await db().from('promo_redemptions').select('status')
 
     // Monthly recurring revenue per currency (active paid plans at list price).
     const mrr: Record<string, number> = {}
@@ -358,6 +361,7 @@ adminRoutes.get(
   route(async (req, res) => {
     let q = db().from('support_tickets').select('*, churches(name), support_messages(id)').order('updated_at', { ascending: false }).limit(200)
     if (['open', 'pending', 'closed'].includes(String(req.query.status))) q = q.eq('status', String(req.query.status))
+    else if (req.query.status === 'active') q = q.neq('status', 'closed')
     const { data } = await q
     res.json({ tickets: (data ?? []).map((t) => ({ ...t, messages: (t.support_messages ?? []).length, support_messages: undefined })) })
   }),

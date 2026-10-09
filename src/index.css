@@ -708,3 +708,8 @@ img { max-width: 100%; display: block; }
 @media (hover: none) and (pointer: coarse) {
   input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea { font-size: max(16px, 1em) !important; }
 }
+
+/* Shown for a moment while a page's code downloads (routes load on demand). */
+.page-loading { min-height: 40vh; display: grid; place-items: center; }
+.page-loading::after { content: ''; width: 28px; height: 28px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--purple, #6c34ff) 25%, transparent); border-top-color: var(--purple, #6c34ff); animation: page-spin .8s linear infinite; }
+@keyframes page-spin { to { transform: rotate(360deg); } }
