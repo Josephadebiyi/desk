@@ -84,6 +84,12 @@ const design: Dict['design'] = {
   savedDesigns: 'Designs enregistrés',
   inProgress: 'Demandes en cours',
   gen: {
+    inspo: "Inspiration",
+    inspoAuto: "Laisser Ellen choisir",
+    inspoHint: "Des créations ZionDesk qu’Ellen peut suivre. Elle garde le style et utilise vos propres mots.",
+    useLogo: "Mettre le logo de l’église sur le flyer",
+    noLogo: "Votre logo sur les flyers ?",
+    addLogo: "Ajoutez-le dans Paramètres",
     title: 'Créer un flyer avec l’IA',
     usage: '{used} sur {limit} flyers IA ce mois-ci',
     unlimited: 'Flyers IA illimités',

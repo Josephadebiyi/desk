@@ -84,6 +84,12 @@ const design: Dict['design'] = {
   savedDesigns: 'Gespeicherte Designs',
   inProgress: 'Laufende Anfragen',
   gen: {
+    inspo: "Inspiration",
+    inspoAuto: "Ellen wählen lassen",
+    inspoHint: "ZionDesk-Designs, an denen sich Ellen orientiert. Sie übernimmt den Look und nutzt deine eigenen Worte.",
+    useLogo: "Gemeindelogo auf den Flyer setzen",
+    noLogo: "Dein Logo auf Flyern?",
+    addLogo: "In den Einstellungen hinzufügen",
     title: 'Flyer mit KI erstellen',
     usage: '{used} von {limit} KI-Flyern diesen Monat',
     unlimited: 'Unbegrenzt KI-Flyer',

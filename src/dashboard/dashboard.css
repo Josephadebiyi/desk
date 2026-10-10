@@ -917,6 +917,11 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 /* AI flyer */
 .ai-flyer-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ai-flyer-chips .d-pill { cursor: pointer; }
+.ai-styles { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
+.ai-style { flex: 0 0 auto; width: 92px; aspect-ratio: 4 / 5; padding: 0; border: 2px solid transparent; border-radius: 14px; overflow: hidden; background: var(--d-row); cursor: pointer; scroll-snap-align: start; outline-offset: 2px; }
+.ai-style img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ai-style.is-on { border-color: var(--purple); box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 22%, transparent); }
+.ai-style.is-auto { display: grid; place-content: center; justify-items: center; gap: 6px; color: var(--purple); font-size: 12px; font-weight: 700; text-align: center; padding: 8px; }
 .ai-flyer-chips .d-pill.is-on { background: var(--ink); color: #fff; border-color: transparent; }
 [data-theme='dark'] .ai-flyer-chips .d-pill.is-on { background: var(--lime); color: var(--lime-ink); }
 .ai-flyer-art { width: min(420px, 100%); margin: 0 auto; border-radius: 22px; overflow: hidden; background: var(--d-row); border: 1px solid var(--d-border); display: grid; place-items: center; box-shadow: 0 30px 60px -30px rgba(40,20,90,0.45); }
@@ -1112,3 +1117,19 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
   .br-actions { margin-left: 0; }
   .br-line { grid-template-columns: minmax(0, 1fr) 96px 30px; }
 }
+
+/* Logo check (Settings → Church profile) */
+.lc { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+.lc-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lc-tile { margin: 0; aspect-ratio: 1; border-radius: 16px; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); padding: 18px; overflow: hidden; }
+.lc-tile img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.lc-light { background: #fff conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0) 0 0 / 22px 22px; border: 1px solid var(--d-border); }
+.lc-dark { background: #17141f; }
+.lc-side { display: grid; gap: 14px; align-content: start; }
+.lc-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+.lc-checks li { display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; }
+.lc-checks svg { flex: none; margin-top: 2px; }
+.lc-good { color: #2f9e44; } .lc-warn { color: #e8a317; } .lc-bad { color: #e03131; }
+.lc-tools { display: grid; gap: 10px; padding: 12px; border-radius: 14px; background: var(--d-row); }
+.lc-tools input[type=range] { width: 100%; accent-color: var(--purple); }
+@media (max-width: 720px) { .lc { grid-template-columns: 1fr; } }

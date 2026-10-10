@@ -83,6 +83,12 @@ export default {
   savedDesigns: 'Saved designs',
   inProgress: 'Requests in progress',
   gen: {
+    inspo: "Inspiration",
+    inspoAuto: "Let Ellen pick",
+    inspoHint: "ZionDesk designs Ellen can follow. She keeps the look and uses your own words.",
+    useLogo: "Put our church logo on the flyer",
+    noLogo: "Want your logo on flyers?",
+    addLogo: "Add it in Settings",
     title: 'Create a flyer with AI',
     usage: '{used} of {limit} AI flyers this month',
     unlimited: 'Unlimited AI flyers',

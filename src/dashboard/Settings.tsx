@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, apiChurch, apiUrl } from '../lib/api'
 import { updatePassword, uploadLogo } from '../lib/auth'
+import { LogoCheck } from './LogoCheck'
 import { useSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
@@ -269,6 +270,19 @@ function Profile() {
   const [ok, setOk] = useState(false)
   const [logoBusy, setLogoBusy] = useState(false)
   const [logoError, setLogoError] = useState('')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const saveLogo = async (file: File) => {
+    setLogoFile(null)
+    setLogoBusy(true)
+    try {
+      const url = await uploadLogo(session.church!.id, file)
+      updateSettings({ logoUrl: url })
+    } catch (e) {
+      setLogoError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLogoBusy(false)
+    }
+  }
   const [senderError, setSenderError] = useState('')
   const field = (k: keyof S, label: string, type = 'text') => (
     <label className="d-field">
@@ -301,24 +315,17 @@ function Profile() {
           fallback={settings.churchName.slice(0, 1).toUpperCase()}
           label={t('settings.profile.logo')}
           busy={logoBusy}
-          onPick={async (file) => {
+          onPick={(file) => {
             setLogoError('')
-            if (!/^image\//.test(file.type) || file.size > 3 * 1024 * 1024) return setLogoError(t('settings.account.imageSize'))
-            if (!(await confirmAction({ title: t('cf.logoTitle'), body: file.name, confirmLabel: t('cf.save') }))) return
-            setLogoBusy(true)
-            try {
-              const url = await uploadLogo(session.church!.id, file)
-              updateSettings({ logoUrl: url })
-            } catch (e) {
-              setLogoError(e instanceof Error ? e.message : String(e))
-            } finally {
-              setLogoBusy(false)
-            }
+            // Up to 10 MB in: the check window trims, cleans and shrinks it to a ≤1024 px PNG before upload.
+            if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type) || file.size > 10 * 1024 * 1024) return setLogoError(t('settings.logoCheck.fileError'))
+            setLogoFile(file)
           }}
           onRemove={withConfirm({ title: t('cf.logoRemoveTitle'), danger: true, confirmLabel: t('cf.remove') }, () => updateSettings({ logoUrl: null }))}
         />
       )}
       {logoError && <p className="d-errors">{logoError}</p>}
+      {logoFile && <LogoCheck file={logoFile} onCancel={() => setLogoFile(null)} onUse={saveLogo} />}
       <div className="d-grid">
         {field('churchName', t('settings.profile.churchName'))}
         {field('location', t('settings.profile.location'))}

@@ -84,6 +84,12 @@ const design: Dict['design'] = {
   savedDesigns: 'Designs guardados',
   inProgress: 'Pedidos em curso',
   gen: {
+    inspo: "Inspiração",
+    inspoAuto: "Deixar a Ellen escolher",
+    inspoHint: "Designs da ZionDesk que a Ellen pode seguir. Mantém o estilo e usa as suas próprias palavras.",
+    useLogo: "Colocar o logótipo da igreja no folheto",
+    noLogo: "Quer o seu logótipo nos folhetos?",
+    addLogo: "Adicione-o em Definições",
     title: 'Crie um folheto com IA',
     usage: '{used} de {limit} folhetos com IA este mês',
     unlimited: 'Folhetos com IA ilimitados',

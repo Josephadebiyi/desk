@@ -16,6 +16,7 @@ import { compose, sendEmail, sendEmails } from '../mail'
 import { flyerRef } from '../../src/lib/refs'
 import { createCheckout } from '../flutterwave'
 import { EXTRA_DESIGN_PRICE } from '../../src/lib/currency'
+import { tagsFor } from '../../src/lib/designStyles'
 import { paystackCheckout, providerFor, stripeCheckout } from './payments'
 
 export const designRoutes = Router()
@@ -65,7 +66,63 @@ Rules:
 - All text must fit inside the canvas — no overflow or overlapping. Break long titles over 2–3 lines with <tspan>. Keep text sizes ≥ 28px.
 - Write all wording in {LANG}. Use the event details exactly as given (names, dates, times, places). Don't invent phone numbers, prices or URLs.
 - Strong contrast for readability. Tasteful, reverent, joyful — suitable for a church.
-- Leave a 220×220 empty, lightly tinted rounded square near a bottom corner only if a QR code is requested.`
+- Leave a 220×220 empty, lightly tinted rounded square near a bottom corner only if a QR code is requested.
+- If a logo slot is requested: add exactly one <rect id="zd-logo" x=".." y=".." width="S" height="S" fill="none"/> (S between 150 and 210),
+  on a calm, plain area near the top centre or a top corner, with no text or busy shapes behind it. The church's real logo is placed there afterwards.
+- If reference designs are attached: they are ZionDesk's own house styles. Recreate their visual language — colour palette, layout
+  structure, typography mood, decorative elements, lighting and texture — as a NEW flyer for this event. Never copy their wording,
+  names, dates, logos or photos; every word on the flyer comes from the event details.`
+
+/** House styles Ellen can design from (staff-curated). */
+designRoutes.get(
+  '/design/styles',
+  ...caller,
+  route(async (_req, res) => {
+    const { data } = await db().from('design_styles').select('id, title, tags, image_url, width, height').eq('active', true).order('uses', { ascending: false }).limit(60)
+    res.json({ styles: data ?? [] })
+  }),
+)
+
+type StyleRow = { id: string; image_url: string; tags: string[]; uses: number }
+/** The chosen style, or up to two that match the event (by tag), else one general style. */
+async function referenceStyles(styleId: string, text: string): Promise<StyleRow[]> {
+  const { data } = await db().from('design_styles').select('id, image_url, tags, uses').eq('active', true).limit(300)
+  const all = (data ?? []) as StyleRow[]
+  if (!all.length) return []
+  if (/^[0-9a-f-]{36}$/i.test(styleId)) return all.filter((x) => x.id === styleId).slice(0, 1)
+  const want = tagsFor(text)
+  const score = (x: StyleRow) => x.tags.filter((t) => want.includes(t)).length
+  const matched = all.filter((x) => score(x) > 0).sort((a, b) => score(b) - score(a) || Math.random() - 0.5)
+  if (matched.length) return matched.slice(0, 2)
+  const general = all.filter((x) => x.tags.includes('general'))
+  const pool = general.length ? general : all
+  return [pool[Math.floor(Math.random() * pool.length)]]
+}
+
+/** Church logo as a data URI (≤ 1.5 MB), for placing into the finished SVG. */
+async function logoDataUri(url: string | null | undefined): Promise<string | null> {
+  if (!url) return null
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) })
+    const type = r.headers.get('content-type') ?? ''
+    if (!r.ok || !/^image\/(png|jpeg|webp|gif|svg\+xml)/.test(type)) return null
+    const buf = Buffer.from(await r.arrayBuffer())
+    if (buf.length > 1.5 * 1024 * 1024) return null
+    return `data:${type.split(';')[0]};base64,${buf.toString('base64')}`
+  } catch {
+    return null
+  }
+}
+
+/** Replaces the model's <rect id="zd-logo" …/> with the real logo, keeping its box. */
+function placeLogo(svg: string, dataUri: string): string {
+  const m = svg.match(/<rect\b[^>]*\bid=["']zd-logo["'][^>]*\/?>(?:\s*<\/rect>)?/i)
+  if (!m) return svg
+  const num = (k: string) => Number(new RegExp(`\\b${k}=["']?(-?[\\d.]+)`).exec(m[0])?.[1] ?? NaN)
+  const [x, y, w, h] = [num('x'), num('y'), num('width'), num('height')]
+  if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return svg.replace(m[0], '')
+  return svg.replace(m[0], `<image href="${dataUri}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"/>`)
+}
 
 designRoutes.post(
   '/design/generate',
@@ -87,6 +144,11 @@ designRoutes.post(
       if (u.limit !== null && u.used >= u.limit) throw new HttpError(429, `LIMIT:${u.used}:${u.limit}`)
     }
 
+    // House-style references and the church logo (signed-in churches only).
+    const refs = req.caller ? await referenceStyles(str(b.styleId, 40), `${title} ${brief} ${str(b.style)}`).catch(() => []) : []
+    const { data: churchRow } = req.caller && b.logo !== false ? await db().from('churches').select('logo_url').eq('id', req.caller.churchId).single() : { data: null }
+    const logo = await logoDataUri(churchRow?.logo_url)
+
     const details = [
       title && `Title: ${title}`,
       str(b.when) && `Date & time: ${str(b.when)}`,
@@ -95,6 +157,8 @@ designRoutes.post(
       str(b.speaker) && `Speaker / ministering: ${str(b.speaker)}`,
       str(b.style) && `Style: ${str(b.style)}`,
       b.qr ? 'Leave space for a QR code.' : '',
+      logo ? 'Add the logo slot (<rect id="zd-logo">) for the church logo.' : '',
+      refs.length ? `Reference designs attached: ${refs.length}. Follow their style closely.` : '',
       brief && `Brief: ${brief}`,
     ]
       .filter(Boolean)
@@ -110,13 +174,25 @@ designRoutes.post(
         thinking: { type: 'adaptive' },
         output_config: { effort: 'medium' },
         system: SYSTEM.replaceAll('{W}', String(w)).replaceAll('{H}', String(h)).replace('{LANG}', lang),
-        messages: [{ role: 'user', content: `Design a ${w}×${h} flyer.\n${details}` }],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              ...refs.map((r) => ({ type: 'image', source: { type: 'url', url: r.image_url } })),
+              { type: 'text', text: `Design a ${w}×${h} flyer.\n${details}` },
+            ],
+          },
+        ],
       } as never)
       .finalMessage()
     if (msg.stop_reason === 'refusal') throw new HttpError(422, 'This flyer request can’t be designed. Please change the description.')
     if (msg.stop_reason === 'max_tokens') throw new HttpError(502, 'The design was too large. Please try again with a shorter brief.')
     const text = msg.content.map((c) => (c.type === 'text' ? c.text : '')).join('')
-    const svg = sanitizeSvg(text)
+    let svg = sanitizeSvg(text)
+    if (logo) svg = placeLogo(svg, logo)
+    else svg = svg.replace(/<rect\b[^>]*\bid=["']zd-logo["'][^>]*\/?>/i, '')
+    // Count how often each house style is used (helps rank the gallery).
+    for (const r of refs) void db().from('design_styles').update({ uses: r.uses + 1 }).eq('id', r.id).then(() => undefined, () => undefined)
 
     let used: number | null = null
     let limit: number | null = null

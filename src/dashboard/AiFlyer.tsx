@@ -52,6 +52,16 @@ export function AiFlyer() {
   const [language, setLanguage] = useState<Lang>(lang)
   const [withQr, setWithQr] = useState(false)
   const [qrLink, setQrLink] = useState(`${publicOrigin()}/give/${settings.givingSlug}`)
+  // ZionDesk house styles (staff-curated designs Ellen recreates); 'auto' lets Ellen match one to the event.
+  const [styles, setStyles] = useState<{ id: string; title: string; image_url: string }[]>([])
+  const [styleId, setStyleId] = useState('auto')
+  const [withLogo, setWithLogo] = useState(true)
+  useEffect(() => {
+    if (!live) return
+    api<{ styles: { id: string; title: string; image_url: string }[] }>('/design/styles')
+      .then((r) => setStyles(r.styles))
+      .catch(() => {})
+  }, [live])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{ svg: string; png: string; w: number; h: number } | null>(null)
@@ -90,6 +100,8 @@ export function AiFlyer() {
         format,
         language,
         qr: withQr,
+        styleId,
+        logo: Boolean(settings.logoUrl) && withLogo,
       })
       const png = await toPng(r.svg, r.width, r.height, withQr ? qrLink : null)
       setResult({ svg: r.svg, png, w: r.width, h: r.height })
@@ -158,6 +170,32 @@ export function AiFlyer() {
             </button>
           ))}
         </div>
+        {styles.length > 0 && (
+          <>
+            <span className="d-field-label">{t('design.gen.inspo')}</span>
+            <div className="ai-styles" role="radiogroup" aria-label={t('design.gen.inspo')}>
+              <button type="button" role="radio" aria-checked={styleId === 'auto'} className={`ai-style is-auto ${styleId === 'auto' ? 'is-on' : ''}`} onClick={() => setStyleId('auto')}>
+                <Sparkles size={18} />
+                <span>{t('design.gen.inspoAuto')}</span>
+              </button>
+              {styles.map((st) => (
+                <button key={st.id} type="button" role="radio" aria-checked={styleId === st.id} title={st.title} className={`ai-style ${styleId === st.id ? 'is-on' : ''}`} onClick={() => setStyleId(st.id)}>
+                  <img src={st.image_url} alt={st.title} loading="lazy" />
+                </button>
+              ))}
+            </div>
+            <small className="d-muted">{t('design.gen.inspoHint')}</small>
+          </>
+        )}
+        {settings.logoUrl ? (
+          <label className="d-inline-check">
+            <input type="checkbox" checked={withLogo} onChange={(e) => setWithLogo(e.target.checked)} /> {t('design.gen.useLogo')}
+          </label>
+        ) : (
+          <small className="d-muted">
+            {t('design.gen.noLogo')} <Link to="/dashboard/settings?tab=profile">{t('design.gen.addLogo')}</Link>
+          </small>
+        )}
         <div className="d-grid">
           <label className="d-field">
             <span>{t('design.gen.format')}</span>

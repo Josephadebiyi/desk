@@ -28,6 +28,8 @@ import { asEmailLang } from '../../src/emails/strings'
 import { composeNewsletter, newsletterRecipients, unsubscribeUrl, type NewsletterAudience } from '../lifecycle'
 import { deleteChurch } from './account'
 import { flyerRef, ticketRef } from '../../src/lib/refs'
+import { STYLE_TAG_KEYS } from '../../src/lib/designStyles'
+import { randomUUID } from 'node:crypto'
 
 export const adminRoutes = Router()
 
@@ -769,6 +771,66 @@ adminRoutes.post(
 )
 
 /** Upload a finished design (PNG / JPG / PDF, up to 12 MB) — marks the request Delivered and emails the church. */
+/* ───────── flyer style library (Ellen's references) ───────── */
+
+adminRoutes.get(
+  '/admin/design-styles',
+  ...staff,
+  route(async (_req, res) => {
+    const { data, error } = await db().from('design_styles').select('*').order('created_at', { ascending: false }).limit(500)
+    if (error) throw new HttpError(500, error.message)
+    res.json({ styles: data ?? [] })
+  }),
+)
+
+/** Upload one design (PNG / JPG / WEBP, up to 8 MB) to the style library. */
+adminRoutes.post(
+  '/admin/design-styles',
+  ...staff,
+  route(async (req, res) => {
+    const type = str(req.body?.contentType, 40)
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(type)) throw new HttpError(400, 'Upload a PNG, JPG or WEBP image.')
+    const buf = Buffer.from(str(req.body?.data, 12_000_000), 'base64')
+    if (!buf.length || buf.length > 8 * 1024 * 1024) throw new HttpError(400, 'Each image must be under 8 MB.')
+    const tags = (Array.isArray(req.body?.tags) ? req.body.tags : []).map((t: unknown) => String(t)).filter((t: string) => STYLE_TAG_KEYS.includes(t)).slice(0, 6)
+    const path = `${Date.now()}-${randomUUID().slice(0, 8)}.${type.split('/')[1].replace('jpeg', 'jpg')}`
+    const { error } = await db().storage.from('design-styles').upload(path, buf, { contentType: type, upsert: false })
+    if (error) throw new HttpError(500, error.message)
+    const image_url = db().storage.from('design-styles').getPublicUrl(path).data.publicUrl
+    const { data, error: e2 } = await db()
+      .from('design_styles')
+      .insert({ title: str(req.body?.title, 80), tags: tags.length ? tags : ['general'], image_url, image_path: path, width: Number(req.body?.width) || null, height: Number(req.body?.height) || null })
+      .select('*')
+      .single()
+    if (e2) throw new HttpError(500, e2.message)
+    res.json({ style: data })
+  }),
+)
+
+adminRoutes.patch(
+  '/admin/design-styles/:id',
+  ...staff,
+  route(async (req, res) => {
+    const patch: Record<string, unknown> = {}
+    if (typeof req.body?.title === 'string') patch.title = str(req.body.title, 80)
+    if (Array.isArray(req.body?.tags)) patch.tags = req.body.tags.map((t: unknown) => String(t)).filter((t: string) => STYLE_TAG_KEYS.includes(t)).slice(0, 6)
+    if (typeof req.body?.active === 'boolean') patch.active = req.body.active
+    const { data, error } = await db().from('design_styles').update(patch).eq('id', String(req.params.id)).select('*').single()
+    if (error) throw new HttpError(400, error.message)
+    res.json({ style: data })
+  }),
+)
+
+adminRoutes.delete(
+  '/admin/design-styles/:id',
+  ...staff,
+  route(async (req, res) => {
+    const { data } = await db().from('design_styles').delete().eq('id', String(req.params.id)).select('image_path').maybeSingle()
+    if (data?.image_path) await db().storage.from('design-styles').remove([data.image_path]).catch(() => undefined)
+    res.json({ ok: true })
+  }),
+)
+
 adminRoutes.post(
   '/admin/design-requests/:id/deliver',
   ...staff,
