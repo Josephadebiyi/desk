@@ -1,0 +1,211 @@
+{
+ "voice": {
+  "name": "Jeff - Smooth, Calming, and Natural",
+  "id": "Mfk8L0DQ8Aj3aRtDY3oo",
+  "model": "eleven_multilingual_v2"
+ },
+ "beats": [
+  {
+   "id": "b01",
+   "chapter": "Why ZionDesk",
+   "text": "Sunday service is over. The chairs are stacked, the lights are off... but the work of the church? That never really stops."
+  },
+  {
+   "id": "b02",
+   "text": "Members' details live in a notebook. Announcements get lost across five different WhatsApp groups. The offering count sits in a spreadsheet only one person understands. And that first-time guest who filled a card last month... nobody ever called them back."
+  },
+  {
+   "id": "b03",
+   "text": "That's exactly why ZionDesk exists. One simple place to run your church. Your people, your giving, your messages and your events, all together."
+  },
+  {
+   "id": "b04",
+   "text": "Every member and every first-timer, in one list. Follow-ups that don't fall through the cracks. Tithes and offerings recorded properly, in your own currency."
+  },
+  {
+   "id": "b05",
+   "text": "Send an announcement by SMS, WhatsApp or email. To the whole church, just the workers, one department, or a branch, and each person gets it in their own language."
+  },
+  {
+   "id": "b06",
+   "text": "And you get Ellen, your AI assistant. She can draft your messages, pull together a report, and even design your Sunday flyer, in seconds."
+  },
+  {
+   "id": "d01",
+   "chapter": "Built for every team",
+   "text": "And this isn't just for the pastor or the church office. Every team in your church gets something out of it."
+  },
+  {
+   "id": "d02",
+   "text": "Your ushers and welcome team check in first-timers with a QR code, so every new face is captured on their very first Sunday."
+  },
+  {
+   "id": "d03",
+   "text": "Your follow-up team sees exactly who visited, who's a new convert, and who hasn't been around lately, with their numbers ready to call or message."
+  },
+  {
+   "id": "d04",
+   "text": "Your finance team records tithes, offerings and expenses in one place. And only finance and the admins can see who gave what."
+  },
+  {
+   "id": "d05",
+   "text": "Your media and publicity team creates flyers in minutes, and sends announcements to the whole church in one go."
+  },
+  {
+   "id": "d06",
+   "text": "The choir, the youth, the children's ministry, the prayer team... each department leader can message just their own people, and plan rehearsals and meetings on the calendar."
+  },
+  {
+   "id": "d07",
+   "text": "And if you have branches, each branch pastor sends a simple monthly report, while HQ sees the whole picture."
+  },
+  {
+   "id": "b07",
+   "text": "It works on your phone and your computer. Your data stays private and secure. And plans start from just eight ninety-nine a month, shown in your own local currency."
+  },
+  {
+   "id": "b08",
+   "text": "So, less paperwork, and more time for people. Let me show you exactly how it all works, step by step. Grab a coffee... and let's go."
+  },
+  {
+   "id": "b09",
+   "chapter": "Getting around",
+   "text": "When you sign in, you land on your Overview. Think of it as your church, at a glance."
+  },
+  {
+   "id": "b10",
+   "text": "Here you'll see newcomers who need a follow-up, how people are growing through your discipleship stages, upcoming birthdays, and what's coming up this week."
+  },
+  {
+   "id": "b11",
+   "text": "Everything else lives in this menu at the top. People holds your members and attendance. Finance holds giving and branch reports. And Outreach is where you'll find messaging, events, flyers and your links."
+  },
+  {
+   "id": "b12",
+   "text": "Top right, you've got your profile. That's your account, your language, settings and help. On a phone, the same menu sits behind this little grid button."
+  },
+  {
+   "id": "b13",
+   "chapter": "Members",
+   "text": "Let's start with people. In Members, everyone is grouped by stage. First-time guests, new believers, church family, and the workers who serve."
+  },
+  {
+   "id": "b14",
+   "text": "To add someone, click Add member. Put in their name, phone, WhatsApp and email. Always use the country code, like plus two three four. Then add their birthday, branch and department."
+  },
+  {
+   "id": "b15",
+   "text": "Open anyone to see their full story. When they joined, their giving, and every call or message you've had with them."
+  },
+  {
+   "id": "b16",
+   "text": "Already have your members in Excel? Use Import, and bring everyone in at once. And you can export your list any time."
+  },
+  {
+   "id": "b17",
+   "chapter": "Attendance & check-in",
+   "text": "In Attendance, you'll find your Sunday check-in QR code. Print it, or put it on the screen. People scan it with their phone and check themselves in. No paper register."
+  },
+  {
+   "id": "b18",
+   "text": "Switch on automatic check-ups, and ZionDesk will gently reach out when someone has missed church a few weeks in a row. So nobody quietly disappears."
+  },
+  {
+   "id": "b19",
+   "chapter": "Giving",
+   "text": "Under Finance, Giving shows your tithes and offerings, by month, and by fund."
+  },
+  {
+   "id": "b20",
+   "text": "Click Record gift to log an offering. Choose the member, the fund, the amount, and how it was given."
+  },
+  {
+   "id": "b21",
+   "text": "You can track expenses here too. So you always know what came in, and what went out."
+  },
+  {
+   "id": "b22",
+   "chapter": "Messaging",
+   "text": "Messaging is where ZionDesk really saves you time. First, choose how to send. SMS, WhatsApp, or email."
+  },
+  {
+   "id": "b23",
+   "text": "Then choose who it's for. Everyone, one stage, a department like the choir or the ushers, or a specific branch."
+  },
+  {
+   "id": "b24",
+   "text": "Pick a ready-made template, like a welcome, a service reminder or a thank-you, or write your own. Each person gets it in their own language, with their name already filled in."
+  },
+  {
+   "id": "b25",
+   "text": "Press send, confirm, and it's on its way. When members reply on WhatsApp or SMS, their answers land right here, in your Inbox. And birthdays? ZionDesk sends the birthday wishes for you."
+  },
+  {
+   "id": "b26",
+   "chapter": "Events",
+   "text": "Events gives you a simple calendar. Click New event, add the date, the time and the place. If it's online, ZionDesk can create a Google Meet link for you."
+  },
+  {
+   "id": "b27",
+   "text": "Everyone invited gets an email reminder the day before. You never have to send the 'don't forget' message again."
+  },
+  {
+   "id": "b28",
+   "chapter": "Ellen, your AI assistant",
+   "text": "Now, meet Ellen. She's your AI assistant, and she knows your church."
+  },
+  {
+   "id": "b29",
+   "text": "Ask her who needs a follow-up, for a quick finance summary, or to write this Sunday's announcement. She works from your real church data, so the answers actually make sense."
+  },
+  {
+   "id": "b30",
+   "chapter": "Flyers & Design Studio",
+   "text": "Need a flyer for Sunday? Open Design Studio. Type the event title, the date and the place, pick a style, modern, elegant or bold, and click Create flyer."
+  },
+  {
+   "id": "b31",
+   "text": "In a few seconds, your flyer is ready to download and share. Everything you make is saved under My designs."
+  },
+  {
+   "id": "b32",
+   "text": "On Ministry Max, you can also ask our human design team. Fill in a short brief, add some inspiration, and chat with your designer. Your flyer arrives within forty-eight hours, and you get an order number by email, so you can follow it."
+  },
+  {
+   "id": "b33",
+   "chapter": "Links & QR codes",
+   "text": "Links and QR codes gives you ready-made links for registration, first-timers and new converts. Put the QR code on a screen or a flyer. When people fill it in, they go straight into your members list."
+  },
+  {
+   "id": "b34",
+   "chapter": "Reports & branches",
+   "text": "Reports turns all of this into clear charts. New people each month, discipleship stages, attendance and giving. Download any of them as a spreadsheet."
+  },
+  {
+   "id": "b35",
+   "text": "Got more than one branch? Each branch leader signs in and sends their monthly report: income, expenses and attendance. You see who's reported and who hasn't, and ZionDesk sends the reminders for you."
+  },
+  {
+   "id": "b36",
+   "chapter": "Settings, team & plans",
+   "text": "In Settings, set up your church profile, your currency, and the name that shows on your text messages."
+  },
+  {
+   "id": "b37",
+   "text": "Under Team and roles, invite your pastors, your finance team and your ministry leaders. Each role only sees what they need. For example, only admins and finance can see giving."
+  },
+  {
+   "id": "b38",
+   "text": "And here's your plan. Essentials covers members, messaging, finance, events and Ellen. Ministry Plus adds Design Studio, giving links and QR codes. And Ministry Max adds flyers made by our design team. Upgrade, or cancel, any time."
+  },
+  {
+   "id": "b39",
+   "chapter": "Help & support",
+   "text": "Stuck on something? Open Help. You'll find answers to the common questions. And if you still need us, send a message to support. You'll get a ticket number by email, and we'll reply right inside ZionDesk."
+  },
+  {
+   "id": "b40",
+   "text": "And that's ZionDesk. Start with your members, send your first message this week, and see how much lighter church admin can feel. We're really glad you're here."
+  }
+ ]
+}
