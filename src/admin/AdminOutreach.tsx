@@ -54,7 +54,7 @@ interface Data {
 }
 
 /** A website that landed in the name column — the server repairs it when Ellen personalises. */
-const siteLike = (v: string) => !!v && !v.includes('@') && !/\s/.test(v) && /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(v)
+const siteLike = (v: string) => !!v && !v.includes('@') && (/^(https?:|www[.\w])/i.test(v.trim()) || v.includes('/') || (!/\s/.test(v) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v.trim())))
 const hasSite = (c: { website: string; church_name: string }) => !!c.website || siteLike(c.church_name)
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : '—')
@@ -77,7 +77,7 @@ function parseRows(text: string) {
     const email = (map.email >= 0 ? r[map.email] : r.find((c) => c.includes('@'))) ?? r.find((c) => c.includes('@')) ?? ''
     const pick = (i: number) => (i >= 0 ? r[i] ?? '' : '')
     // A cell that looks like a web address is the website, never the church name (lists with just email + site).
-    const isSite = (v: string) => !v.includes('@') && !/\s/.test(v) && /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(v)
+    const isSite = (v: string) => !!v && !v.includes('@') && (/^(https?:|www[.\w])/i.test(v.trim()) || v.includes('/') || (!/\s/.test(v) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v.trim())))
     const website = pick(map.website) || r.find((c) => isSite(c)) || ''
     const church = pick(map.church)
     return { email, church_name: isSite(church) ? '' : church, contact_name: isSite(pick(map.contact)) ? '' : pick(map.contact), country: isSite(pick(map.country)) ? '' : pick(map.country), website }
@@ -144,6 +144,7 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
   const [busy, setBusy] = useState('')
   const [open, setOpen] = useState<string | null>(null)
   const [note, setNote] = useState('')
+  const [edit, setEdit] = useState<{ id: string; church_name: string; website: string } | null>(null)
   const file = useRef<HTMLInputElement>(null)
   const rows = data.contacts.filter((c) => !filter || c.status === filter)
 
@@ -221,9 +222,23 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
                 {rows.map((c) => (
                   <tr key={c.id}>
                     <td>
-                      <b>{c.church_name && !siteLike(c.church_name) ? c.church_name : <span style={{ color: 'var(--a-muted)' }}>Name not known yet — Ellen will find it</span>}</b>
-                      <small>{c.email}{c.country ? ` · ${c.country}` : ''}</small>
-                      {c.website && <small><a href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a></small>}
+                      {edit?.id === c.id ? (
+                        <div className="adm-form" style={{ gridTemplateColumns: '1fr', minWidth: 240 }}>
+                          <label>Church name<input value={edit.church_name} onChange={(e) => setEdit({ ...edit, church_name: e.target.value })} placeholder="e.g. Grace Chapel" /></label>
+                          <label>Website<input value={edit.website} onChange={(e) => setEdit({ ...edit, website: e.target.value })} placeholder="e.g. www.gracechapel.org" /></label>
+                          <div className="adm-row-actions">
+                            <button type="button" className="adm-btn" onClick={() => act('edit', () => api(`/admin/outreach/contacts/${c.id}`, { church_name: edit.church_name, website: edit.website }, 'PATCH')).then(() => setEdit(null))}>Save</button>
+                            <button type="button" className="adm-btn ghost" onClick={() => setEdit(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <b>{c.church_name && !siteLike(c.church_name) ? c.church_name : <span style={{ color: 'var(--a-muted)' }}>Name not known yet</span>}</b>
+                          <small>{c.email}{c.country ? ` · ${c.country}` : ''}</small>
+                          {c.website && <small><a href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a></small>}
+                          <button type="button" className="adm-chip" style={{ marginTop: 6, padding: '3px 10px' }} onClick={() => setEdit({ id: c.id, church_name: siteLike(c.church_name) ? '' : c.church_name, website: c.website })}>Edit</button>
+                        </>
+                      )}
                     </td>
                     <td>
                       <span className={`adm-pill ${STATUS_TONE[c.status] ?? ''}`}>{STATUS_LABEL[c.status] ?? c.status}</span>

@@ -60,7 +60,8 @@ I made a short walkthrough so you can see exactly how it works:`,
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 /** A web address that ended up in the name column (lists with just email + website). */
-const looksLikeSite = (v: string) => !!v && !v.includes('@') && !/\s/.test(v) && /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(v)
+const looksLikeSite = (v: string) => !!v && !v.includes('@') && (/^(https?:|www[.\w])/i.test(v.trim()) || v.includes('/') || (!/\s/.test(v) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v.trim())))
+const usableSite = (v: string) => /\.[a-z]{2,}/i.test(v)
 const fill = (s: string, church: string) => s.replaceAll('{{church_name}}', church || 'your church')
 
 interface Campaign {
@@ -151,6 +152,13 @@ outreachRoutes.get(
     if (missingTables(error)) throw needTables()
     if (error) throw new HttpError(500, error.message)
     // Signed up = an account now exists with this email (checked live, then remembered).
+    // Repair imports where a web address landed in the name column: move it to Website, clear the name.
+    for (const c of (contacts ?? []).filter((c) => looksLikeSite(c.church_name))) {
+      const patch: Record<string, string> = { church_name: '' }
+      if (!c.website && usableSite(c.church_name)) patch.website = c.church_name
+      await db().from('outreach_contacts').update(patch).eq('id', c.id)
+      Object.assign(c, patch)
+    }
     const joined = await signedUpEmails((contacts ?? []).map((c) => c.email))
     const promote = (contacts ?? []).filter((c) => joined.has(c.email.toLowerCase()) && c.status !== 'signed_up' && c.status !== 'unsubscribed')
     if (promote.length) await db().from('outreach_contacts').update({ status: 'signed_up' }).in('id', promote.map((c) => c.id))
@@ -235,7 +243,7 @@ async function personalise(id: string) {
   if (!c) throw new HttpError(404, 'Contact not found')
   // Repair imports where the website landed in the name column.
   const misplaced = looksLikeSite(c.church_name)
-  const website = c.website || (misplaced ? c.church_name : '')
+  const website = c.website || (misplaced && usableSite(c.church_name) ? c.church_name : '')
   if (!website) throw new HttpError(400, 'Add the church’s website first.')
   const r = await personalNote(misplaced ? '' : c.church_name, website)
   // The list may have had only an email + website: Ellen also fills in the church's name from the site.
