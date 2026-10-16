@@ -177,9 +177,12 @@ outreachRoutes.get(
     })
     const since = Date.now() - 864e5
     const sentToday = (sends ?? []).filter((x) => x.status !== 'failed' && new Date(x.sent_at).getTime() > since).length
+    // When the next slots free up: the window is a rolling 24 hours from each send.
+    const inWindow = (sends ?? []).filter((x) => x.status !== 'failed' && new Date(x.sent_at).getTime() > since).map((x) => new Date(x.sent_at).getTime()).sort((p, q) => p - q)
+    const nextSlotAt = inWindow.length >= DAILY_CAP ? new Date(inWindow[inWindow.length - DAILY_CAP] + 864e5).toISOString() : null
     const pending = list.filter((c) => !c.researched_at && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status)).length
     if (pending) void enrichPending()
-    res.json({ contacts: list, campaigns: campaigns ?? [], stats, dailyCap: DAILY_CAP, sentToday, templates: TEMPLATES, emailReady: configured.email, pending, aiReady: Boolean(process.env.ANTHROPIC_API_KEY) })
+    res.json({ contacts: list, campaigns: campaigns ?? [], stats, dailyCap: DAILY_CAP, sentToday, nextSlotAt, templates: TEMPLATES, emailReady: configured.email, pending, aiReady: Boolean(process.env.ANTHROPIC_API_KEY) })
   }),
 )
 
@@ -419,7 +422,7 @@ outreachRoutes.post(
     const want = Math.max(1, Math.min(100, Number(req.body?.limit) || 50))
     const { data: recent } = await db().from('outreach_sends').select('id').neq('status', 'failed').gte('sent_at', new Date(Date.now() - 864e5).toISOString())
     const left = Math.max(0, DAILY_CAP - (recent ?? []).length)
-    if (!left) throw new HttpError(429, `Daily limit reached (${DAILY_CAP} in 24 hours). This protects your email reputation — continue tomorrow.`)
+    if (!left) throw new HttpError(429, `Daily limit reached (${DAILY_CAP} emails in 24 hours) — this protects ziondesk.com from spam filters. You can send again in a few hours.`)
 
     const [{ data: contacts }, { data: already }] = await Promise.all([
       db().from('outreach_contacts').select('id, email, church_name, contact_name, status, personal_note').not('status', 'in', '(unsubscribed,bounced,signed_up)').order('created_at').limit(5000),

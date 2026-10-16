@@ -50,6 +50,8 @@ interface Data {
   stats: Stat[]
   dailyCap: number
   sentToday: number
+  /** When sending reopens after the daily limit (rolling 24 h). */
+  nextSlotAt: string | null
   templates: Record<'intro' | 'followup', { name: string; subject: string; preview: string; body: string }>
   emailReady: boolean
   /** Contacts Ellen hasn't checked yet (she works through them in the background). */
@@ -413,7 +415,7 @@ function Campaigns({ data, reload, setMsg, setOk }: Ctx) {
             </button>
           </div>
           <p className="adm-empty" style={{ textAlign: 'left', padding: '8px 0 0' }}>
-            {left ? `${left} of ${data.dailyCap} sends left in the next 24 hours — small daily batches keep you out of spam folders.` : 'Daily limit reached — continue tomorrow.'} A church never gets the same campaign twice; opted-out and signed-up churches are skipped.
+            {left ? `${left} of ${data.dailyCap} sends left in the next 24 hours — small daily batches keep you out of spam folders.` : `Daily limit reached (${data.dailyCap} per 24 hours, to keep ziondesk.com out of spam folders). Sending reopens ${data.nextSlotAt ? new Date(data.nextSlotAt).toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' }) : 'soon'}.`} A church never gets the same campaign twice; opted-out and signed-up churches are skipped.
           </p>
           <div className="adm-row-actions" style={{ margin: '10px 0 14px' }}>
             <button type="button" className="adm-btn ghost" disabled={!!busy} onClick={() => run('test', async () => `Test sent to ${(await api<{ to: string }>(`/admin/outreach/campaigns/${sel.id}/test`, {})).to}.`)}>
