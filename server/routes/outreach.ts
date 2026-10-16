@@ -57,6 +57,8 @@ I made a short walkthrough so you can see exactly how it works:`,
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+/** A web address that ended up in the name column (lists with just email + website). */
+const looksLikeSite = (v: string) => !!v && !v.includes('@') && !/\s/.test(v) && /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(v)
 const fill = (s: string, church: string) => s.replaceAll('{{church_name}}', church || 'your church')
 
 interface Campaign {
@@ -80,6 +82,7 @@ interface Contact {
 
 /** The branded email for one church. `sendId` adds tracking (pixel, click links, unsubscribe); without it, plain links. */
 export function outreachEmail(c: Campaign, church: string, sendId?: string, note = ''): Pick<Outgoing, 'subject' | 'html' | 'text' | 'headers'> {
+  if (looksLikeSite(church)) church = ''
   const ref = c.ref_code || 'CHURCHMAIL'
   const direct = { video: VIDEO_URL, site: `${SITE}/?ref=${ref}`, signup: `${SITE}/register?ref=${ref}` }
   const link = (k: keyof typeof direct) => (sendId ? `${API}/api/r/${sendId}/${k}` : direct[k])
@@ -87,7 +90,8 @@ export function outreachEmail(c: Campaign, church: string, sendId?: string, note
   // Ellen's personal opening (from the church website) leads, then the campaign message.
   const opening = c.kind === 'followup' ? note.trim() : `Grace and peace to you.${note.trim() ? ` ${note.trim()}` : ''}`
   const paras = [opening, ...fill(c.body, church).split(/\n\s*\n/).map((p) => p.trim())].filter(Boolean)
-  const greet = c.kind === 'followup' ? `Dear ${church || 'friend'} team,` : `Dear ${church || 'friend'} team,`
+  // No church name (e.g. the list had only emails): a warm, general greeting instead of a blank.
+  const greet = church ? `Dear ${church} team,` : 'Dear Pastor and church family,'
   const bullet = (b: string, rest: string) => `<tr><td style="padding:6px 20px;font-size:15px;line-height:1.5;"><b style="color:#6c34ff;">&#10003;</b>&nbsp; <b>${b}</b> ${rest}</td></tr>`
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background:#f4f1ea;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(fill(c.preview, church))}</div>
@@ -227,9 +231,16 @@ outreachRoutes.delete(
 async function personalise(id: string) {
   const { data: c } = await db().from('outreach_contacts').select('id, church_name, website').eq('id', id).maybeSingle()
   if (!c) throw new HttpError(404, 'Contact not found')
-  if (!c.website) throw new HttpError(400, 'Add the church’s website first.')
-  const r = await personalNote(c.church_name, c.website)
-  const { data } = await db().from('outreach_contacts').update({ personal_note: r.note, research_summary: r.summary, researched_at: new Date().toISOString() }).eq('id', id).select('*').single()
+  // Repair imports where the website landed in the name column.
+  const misplaced = looksLikeSite(c.church_name)
+  const website = c.website || (misplaced ? c.church_name : '')
+  if (!website) throw new HttpError(400, 'Add the church’s website first.')
+  const r = await personalNote(misplaced ? '' : c.church_name, website)
+  // The list may have had only an email + website: Ellen also fills in the church's name from the site.
+  const patch: Record<string, string> = { personal_note: r.note, research_summary: r.summary, researched_at: new Date().toISOString() }
+  if (misplaced) Object.assign(patch, { website, church_name: '' })
+  if ((!c.church_name || misplaced) && r.name) patch.church_name = r.name
+  const { data } = await db().from('outreach_contacts').update(patch).eq('id', id).select('*').single()
   return data
 }
 
@@ -247,7 +258,7 @@ outreachRoutes.post(
   ...staff,
   route(async (req, res) => {
     const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).slice(0, 8)
-    let q = db().from('outreach_contacts').select('id').neq('website', '').eq('personal_note', '').not('status', 'in', '(unsubscribed,bounced,signed_up)').limit(8)
+    let q = db().from('outreach_contacts').select('id').or('website.neq.,church_name.like.%.%').eq('personal_note', '').not('status', 'in', '(unsubscribed,bounced,signed_up)').limit(8)
     if (ids.length) q = db().from('outreach_contacts').select('id').in('id', ids)
     const { data, error } = await q
     if (missingTables(error)) throw needTables()

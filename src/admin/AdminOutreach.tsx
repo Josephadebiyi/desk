@@ -53,6 +53,9 @@ interface Data {
   emailReady: boolean
 }
 
+/** A website that landed in the name column — the server repairs it when Ellen personalises. */
+const siteLike = (v: string) => !!v && !v.includes('@') && !/\s/.test(v) && /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(v)
+const hasSite = (c: { website: string; church_name: string }) => !!c.website || siteLike(c.church_name)
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : '—')
 const STATUS_LABEL: Record<string, string> = { new: 'New', sent: 'Sent', opened: 'Opened', clicked: 'Clicked', replied: 'Replied', signed_up: 'Signed up', unsubscribed: 'Opted out', bounced: 'Bounced' }
@@ -73,7 +76,11 @@ function parseRows(text: string) {
   return (hasHeader ? rows.slice(1) : rows).map((r) => {
     const email = (map.email >= 0 ? r[map.email] : r.find((c) => c.includes('@'))) ?? r.find((c) => c.includes('@')) ?? ''
     const pick = (i: number) => (i >= 0 ? r[i] ?? '' : '')
-    return { email, church_name: pick(map.church), contact_name: pick(map.contact), country: pick(map.country), website: pick(map.website) }
+    // A cell that looks like a web address is the website, never the church name (lists with just email + site).
+    const isSite = (v: string) => !v.includes('@') && !/\s/.test(v) && /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(v)
+    const website = pick(map.website) || r.find((c) => isSite(c)) || ''
+    const church = pick(map.church)
+    return { email, church_name: isSite(church) ? '' : church, contact_name: isSite(pick(map.contact)) ? '' : pick(map.contact), country: isSite(pick(map.country)) ? '' : pick(map.country), website }
   })
 }
 
@@ -167,7 +174,7 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
     }
     setBusy('')
   }
-  const withSite = data.contacts.filter((c) => c.website && !c.personal_note && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status)).length
+  const withSite = data.contacts.filter((c) => hasSite(c) && !c.personal_note && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status)).length
 
   return (
     <>
@@ -214,7 +221,7 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
                 {rows.map((c) => (
                   <tr key={c.id}>
                     <td>
-                      <b>{c.church_name || '—'}</b>
+                      <b>{c.church_name && !siteLike(c.church_name) ? c.church_name : <span style={{ color: 'var(--a-muted)' }}>Name not known yet — Ellen will find it</span>}</b>
                       <small>{c.email}{c.country ? ` · ${c.country}` : ''}</small>
                       {c.website && <small><a href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">{c.website}</a></small>}
                     </td>
@@ -236,7 +243,7 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
                           “{c.personal_note}”{c.research_summary && <small>{c.research_summary}</small>}
                         </button>
                       ) : (
-                        <small>{c.website ? 'Not personalised yet' : 'Add a website so Ellen can personalise'}</small>
+                        <small>{hasSite(c) ? 'Not personalised yet — click Ellen' : 'No website — the email starts “Dear Pastor and church family,”'}</small>
                       )}
                     </td>
                     <td>
@@ -245,7 +252,7 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
                       {c.clicked_at && <small>Clicked {fmtDay(c.clicked_at)}</small>}
                     </td>
                     <td className="adm-row-actions">
-                      {c.website && !['unsubscribed', 'signed_up'].includes(c.status) && (
+                      {hasSite(c) && !['unsubscribed', 'signed_up'].includes(c.status) && (
                         <button type="button" className="adm-btn ghost" disabled={!!busy} title="Ellen reads the church website and writes a personal opening" onClick={() => act(c.id, () => api(`/admin/outreach/contacts/${c.id}/personalise`, {}), `Ellen personalised ${c.church_name || c.email}.`)}>
                           <Sparkles size={14} /> {busy === c.id ? '…' : 'Ellen'}
                         </button>
