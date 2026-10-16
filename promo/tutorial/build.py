@@ -9,7 +9,11 @@ import subprocess
 from pathlib import Path
 
 D = Path(__file__).parent
-OUT = D / "out"
+import os
+LANG = os.environ.get("LANG_VIDEO", "en")
+OUT = D / ("out" if LANG == "en" else f"out-{LANG}")
+VO = D / ("vo" if LANG == "en" else f"vo-{LANG}")
+SUFFIX = "" if LANG == "en" else f"-{LANG.upper()}"
 TEMPO = 0.92
 VO_DELAY = 0.15
 tl = json.loads((OUT / "timeline.json").read_text())
@@ -20,7 +24,7 @@ run = lambda *a: subprocess.run(["ffmpeg", "-y", "-v", "error", *a], check=True)
 # 1. Voice: each line slowed to 92%, levelled, placed where its scene starts.
 inputs, chains = [], []
 for i, b in enumerate(beats):
-    inputs += ["-i", str(D / "vo" / f"{b['id']}.mp3")]
+    inputs += ["-i", str(VO / f"{b['id']}.mp3")]
     ms = int((b["start"] + VO_DELAY) * 1000)
     chains.append(f"[{i}]aresample=48000,atempo={TEMPO},loudnorm=I=-16:TP=-1.5:LRA=7,adelay={ms}|{ms},aformat=channel_layouts=stereo[v{i}]")
 mix = "".join(f"[v{i}]" for i in range(len(beats)))
@@ -43,19 +47,19 @@ run("-stream_loop", "0", "-i", str(intro), "-stream_loop", "-1", "-i", str(bed),
     "-filter_complex", music, "-map", "[out]", "-ar", "48000", "-t", str(TOTAL), str(OUT / "mix.wav"))
 
 # 3. Clean video and captioned video.
-clean = OUT / "ZionDesk-Tutorial-1920x1080.mp4"
+clean = OUT / f"ZionDesk-Tutorial{SUFFIX}-1920x1080.mp4"
 run("-i", str(OUT / "screen.mp4"), "-i", str(OUT / "mix.wav"), "-map", "0:v", "-map", "1:a", "-c:v", "copy",
     "-c:a", "aac", "-b:a", "256k", "-shortest", "-movflags", "+faststart", str(clean))
 run("-i", str(OUT / "screen.mp4"), "-f", "concat", "-safe", "0", "-i", str(OUT / "captions.txt"), "-i", str(OUT / "mix.wav"),
     "-filter_complex", "[1]format=rgba,fps=30[c];[0][c]overlay=0:0:shortest=1:format=auto[v]",
     "-map", "[v]", "-map", "2:a", "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", "-b:a", "256k", "-shortest", "-movflags", "+faststart", str(OUT / "ZionDesk-Tutorial-Captions-1920x1080.mp4"))
+    "-c:a", "aac", "-b:a", "256k", "-shortest", "-movflags", "+faststart", str(OUT / f"ZionDesk-Tutorial{SUFFIX}-Captions-1920x1080.mp4"))
 
 # 4. YouTube chapters (chapter cards appear 2.6 s before their first line).
 def stamp(s):
     s = int(s)
     return f"{s // 60}:{s % 60:02d}"
-lines = ["0:00 Why ZionDesk"]
+lines = [f"0:00 {beats[0].get('chapter') or 'Why ZionDesk'}"]
 for b in beats:
     if b.get("chapter") and b["id"] != "b01":
         t = b["start"] - (2.6 if b["id"] not in ("d01", "b13") else 0)

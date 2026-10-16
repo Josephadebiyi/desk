@@ -11,10 +11,11 @@ import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer-core'
 
 const dir = dirname(fileURLToPath(import.meta.url))
-const out = join(dir, 'out')
+const LANG = process.env.LANG_VIDEO || 'en'
+const out = join(dir, LANG === 'en' ? 'out' : `out-${LANG}`)
 const VO_DELAY = 0.15 // voice starts this long after its beat (build.py uses the same)
 const tl = JSON.parse(readFileSync(join(out, 'timeline.json'), 'utf8'))
-const script = Object.fromEntries(JSON.parse(readFileSync(join(dir, 'script.json'), 'utf8')).beats.map((b) => [b.id, b.text]))
+const script = Object.fromEntries(JSON.parse(readFileSync(join(dir, LANG === 'en' ? 'script.json' : `script.${LANG}.json`), 'utf8')).beats.map((b) => [b.id, b.text]))
 
 /** Phrases of at most ~8 words, broken at punctuation where possible. */
 function phrases(text) {
@@ -49,7 +50,7 @@ const srtTime = (s) => {
   const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), sec = Math.floor((ms % 60000) / 1000)
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')},${String(ms % 1000).padStart(3, '0')}`
 }
-writeFileSync(join(out, 'ZionDesk-Tutorial.srt'), cues.map((c, i) => `${i + 1}\n${srtTime(c.start)} --> ${srtTime(c.end)}\n${c.text}\n`).join('\n'))
+writeFileSync(join(out, LANG === 'en' ? 'ZionDesk-Tutorial.srt' : `ZionDesk-Tutorial-${LANG.toUpperCase()}.srt`), cues.map((c, i) => `${i + 1}\n${srtTime(c.start)} --> ${srtTime(c.end)}\n${c.text}\n`).join('\n'))
 
 // Render each caption as a transparent frame.
 const capDir = join(out, 'captions')

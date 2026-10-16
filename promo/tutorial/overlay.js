@@ -66,12 +66,19 @@
   else mount()
 
   const $ = (s) => document.querySelector('#tut ' + s)
+  /** Overlay wording in the video's language (record.mjs injects window.__X). */
+  const X = (s) => (s && window.__X && window.__X[s]) || s
+  const Xhtml = (h) => {
+    if (!window.__X) return h
+    for (const k of Object.keys(window.__X).sort((a, b) => b.length - a.length)) h = h.split(k).join(window.__X[k])
+    return h
+  }
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   let pos = { x: 960, y: 620 }
   const visible = (el) => {
     const r = el.getBoundingClientRect()
     const s = getComputedStyle(el)
-    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && r.bottom > 0 && r.top < innerHeight
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' // off-screen is fine: move() scrolls it into view
   }
   /** Find a visible element by its text (exact first, then starts-with, then contains). */
   const q = (text, sel = 'button,a,[role=tab],[role=radio],label,h1,h2,h3,summary,option,li,td,b,span,small,p,div', root = document) => {
@@ -79,11 +86,16 @@
     if (text.startsWith('css:')) return [...root.querySelectorAll(text.slice(4))].find(visible) ?? root.querySelector(text.slice(4))
     const all = [...root.querySelectorAll(sel)].filter((e) => !e.closest('#tut'))
     const norm = (s) => s.replace(/\s+/g, ' ').trim().toLowerCase()
-    const want = norm(text)
+    // Other languages: the app's own translation(s) of this English label come first.
+    const cands = [...((window.__L || {})[text] || []), text].map(norm)
+    const want = cands[0]
     const own = (e) => norm(e.innerText ?? '')
     const act = (e) => (e.matches('button,a,[role=tab],[role=radio],summary,input,select,textarea') ? 0 : e.matches('label,h1,h2,h3') ? 1 : 2)
     const pick = (f) => all.filter((e) => f(own(e)) && visible(e)).sort((a, b) => own(a).length - own(b).length || act(a) - act(b))[0]
-    return pick((s) => s === want) ?? pick((s) => s.startsWith(want)) ?? pick((s) => s.includes(want)) ?? null
+    for (const w of cands) { const e = pick((s) => s === w); if (e) return e }
+    for (const w of cands) { const e = pick((s) => s.startsWith(w)); if (e) return e }
+    for (const w of cands) { const e = pick((s) => s.includes(w)); if (e) return e }
+    return null
   }
   const center = (el) => {
     const r = el.getBoundingClientRect()
@@ -128,6 +140,7 @@
     },
     /** Types into an input/textarea like a person (React-safe). */
     async type(target, text, cps = 16) {
+      text = X(text)
       const el = typeof target === 'string' ? q(target, 'input,textarea') ?? q(target) : target
       const input = el && (el.matches('input,textarea') ? el : el.querySelector('input,textarea') ?? el.closest('label')?.querySelector('input,textarea'))
       if (!input) return console.warn('[tut] type: not found', target)
@@ -152,7 +165,8 @@
       const sel = (lab && lab.querySelector('select')) || (typeof target === 'string' && target.startsWith('css:') ? q(target) : null)
       if (!sel) return console.warn('[tut] select: not found', target)
       await T.click(sel, 600)
-      const opt = [...sel.options].find((o) => o.text.trim().toLowerCase().startsWith(label.toLowerCase()))
+      const labels = [...((window.__L || {})[label] || []), label].map((l) => l.toLowerCase())
+      const opt = labels.map((l) => [...sel.options].find((o) => o.text.trim().toLowerCase().startsWith(l))).find(Boolean)
       if (!opt) return console.warn('[tut] option not found', label)
       Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(sel, opt.value)
       sel.dispatchEvent(new Event('change', { bubbles: true }))
@@ -194,15 +208,15 @@
       const c = $('.zt-chap')
       if (!title) return c.classList.remove('on')
       c.querySelector('b').textContent = n
-      c.querySelector('span').textContent = title
+      c.querySelector('span').textContent = X(title)
       c.classList.add('on')
     },
     lower(tag, title, text) {
       const l = $('.zt-lower')
       if (!title) return l.classList.remove('on')
-      l.querySelector('small').textContent = tag
-      l.querySelector('h4').textContent = title
-      l.querySelector('p').textContent = text ?? ''
+      l.querySelector('small').textContent = X(tag)
+      l.querySelector('h4').textContent = X(title)
+      l.querySelector('p').textContent = X(text ?? '')
       l.classList.add('on')
     },
     /** Full-screen card. `steps` children with .zt-in reveal one by one via T.reveal(). */
@@ -210,7 +224,7 @@
       const c = $('.zt-card')
       if (!html) return c.classList.remove('on')
       c.className = 'zt-card ' + cls
-      c.innerHTML = html
+      c.innerHTML = Xhtml(html)
       void c.offsetWidth
       c.classList.add('on')
     },

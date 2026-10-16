@@ -5,13 +5,15 @@
  * out/timeline.json so build.py can lay the voice exactly where each beat began.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer-core'
 
 const dir = dirname(fileURLToPath(import.meta.url))
-const out = join(dir, 'out')
+// LANG=fr|es records the same film in that language (app UI, voice, cards); default English.
+const LANG = process.env.LANG_VIDEO || 'en'
+const out = join(dir, LANG === 'en' ? 'out' : `out-${LANG}`)
 mkdirSync(out, { recursive: true })
 const base = process.env.APP_URL || 'http://localhost:5175'
 const arg = (k) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : null }
@@ -21,10 +23,17 @@ const TEMPO = 0.92 // voice is slowed to 92% in build.py → beats last 1/0.92 a
 const GAP = 0.75 // breath after each line
 const CHAPTER_CARD = 2.6
 
-const script = JSON.parse(readFileSync(join(dir, 'script.json'), 'utf8'))
+const script = JSON.parse(readFileSync(join(dir, LANG === 'en' ? 'script.json' : `script.${LANG}.json`), 'utf8'))
+const voDir = join(dir, LANG === 'en' ? 'vo' : `vo-${LANG}`)
+// A missing line (e.g. while testing) falls back to the English take's length.
+const voFile = (id) => (existsSync(join(voDir, `${id}.mp3`)) ? join(voDir, `${id}.mp3`) : (console.log(`    no ${LANG} voice for ${id}, using English timing`), join(dir, 'vo', `${id}.mp3`)))
 const dur = (f) => Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).toString())
-const beats = script.beats.map((b) => ({ ...b, voice: dur(join(dir, 'vo', `${b.id}.mp3`)) / TEMPO }))
-const flyerSvg = readFileSync(join(dir, 'flyer.svg'), 'utf8')
+const beats = script.beats.map((b) => ({ ...b, voice: dur(voFile(b.id)) / TEMPO }))
+const FLYER_TEXT = {
+  fr: [['GRACE CHAPEL PRESENTS', 'GRACE CHAPEL PRÉSENTE'], ['>Worship<', '>Soirée de<'], ['>NIGHT<', '>LOUANGE<'], ['An evening of praise, prayer &amp; presence', 'Une soirée de louange, de prière et de présence'], ['FRIDAY · OCT 16 · 7:00 PM', 'VENDREDI 16 OCT. · 19 H'], ['Main Auditorium · Lagos', 'Auditorium principal · Lagos'], ['EVERYONE IS WELCOME · BRING A FRIEND', 'TOUS SONT LES BIENVENUS · VENEZ AVEC UN AMI']],
+  es: [['GRACE CHAPEL PRESENTS', 'GRACE CHAPEL PRESENTA'], ['>Worship<', '>Noche de<'], ['>NIGHT<', '>ALABANZA<'], ['An evening of praise, prayer &amp; presence', 'Una noche de alabanza, oración y presencia'], ['FRIDAY · OCT 16 · 7:00 PM', 'VIERNES 16 OCT · 7:00 PM'], ['Main Auditorium · Lagos', 'Auditorio principal · Lagos'], ['EVERYONE IS WELCOME · BRING A FRIEND', 'TODOS SON BIENVENIDOS · TRAE A UN AMIGO']],
+}
+const flyerSvg = (FLYER_TEXT[LANG] ?? []).reduce((svg, [a, b]) => svg.split(a).join(b), readFileSync(join(dir, 'flyer.svg'), 'utf8'))
 const overlay = readFileSync(join(dir, 'overlay.js'), 'utf8')
 
 const browser = await puppeteer.launch({
@@ -54,13 +63,24 @@ page.on('request', (r) => {
 
 // Clean demo state: English, light theme, admin, Ministry Max, messages already sent.
 await page.goto(base + '/', { waitUntil: 'networkidle0' })
-await page.evaluate(() => {
+await page.evaluate((lang) => {
   localStorage.clear()
   localStorage.setItem('ziondesk-theme', 'light')
-  localStorage.setItem('ziondesk-language-v1', JSON.stringify({ ui: 'en', comm: 'en', chosen: true }))
+  localStorage.setItem('ziondesk-language-v1', JSON.stringify({ ui: lang, comm: lang, chosen: true }))
   localStorage.setItem('ziondesk-role', 'admin')
   localStorage.setItem('ziondesk-settings-v1', JSON.stringify({ plan: 'max', planStatus: 'active' }))
-})
+}, LANG)
+// Other languages: English label → the app's own translations (from the locale files), and overlay wording.
+if (LANG !== 'en') {
+  const ui = JSON.parse(readFileSync(join(dir, 'i18n', 'ui.json'), 'utf8'))
+  const L = {}
+  for (const [k, v] of Object.entries(ui.en)) {
+    const t = ui[LANG][k]
+    if (typeof v === 'string' && t && t !== v) (L[v.trim()] ??= []).includes(t.trim()) || L[v.trim()].push(t.trim())
+  }
+  const Xd = JSON.parse(readFileSync(join(dir, 'i18n', 'overlay.json'), 'utf8'))[LANG]
+  await page.evaluateOnNewDocument((l, x) => ((window.__L = l), (window.__X = x)), L, Xd)
+}
 await page.evaluateOnNewDocument(overlay)
 await page.goto(base + '/dashboard', { waitUntil: 'networkidle0' })
 await page.evaluate(() => {
@@ -279,7 +299,7 @@ const S = {
   },
   b23: async () => {
     await T.ring('Send to'); await T.select('Send to', 'Everyone')
-    await atw('one stage'); await T.select('Send to', 'A stage')
+    await atw('one stage'); await T.select('Send to', 'A stage (Newcomers, Workers…)')
     await atw('department'); await T.select('Send to', 'A department')
     await atw('branch'); await T.select('Send to', 'A branch')
   },
@@ -419,7 +439,7 @@ for (const b of list) {
   }
   beatStart = Date.now()
   beatDur = b.voice + GAP
-  beatText = b.text
+  beatText = b.en ?? b.text
   timeline.push({ id: b.id, start: (beatStart - t0) / 1000, voice: b.voice, chapter: b.chapter ?? null })
   process.stdout.write(`${b.id} @${((beatStart - t0) / 1000).toFixed(1)}s (${beatDur.toFixed(1)}s)\n`)
   if (b.id === 'b13') {

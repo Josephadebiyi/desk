@@ -10,6 +10,8 @@ import { HttpError } from './db'
 
 export interface Outgoing {
   to: string
+  /** Optional sender display name (address stays EMAIL_FROM's). */
+  fromName?: string
   replyTo?: string
   subject: string
   html: string
@@ -36,8 +38,9 @@ async function resend(path: string, body: unknown) {
   return data
 }
 
+const fromWithName = (name: string) => `${name.replace(/[<>"]/g, '').trim()} <${env.emailFrom.match(/<([^>]+)>/)?.[1] ?? env.emailFrom}>`
 const payload = (m: Outgoing) => ({
-  from: env.emailFrom,
+  from: m.fromName ? fromWithName(m.fromName) : env.emailFrom,
   to: [m.to],
   subject: m.subject,
   html: m.html,

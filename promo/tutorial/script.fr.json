@@ -1,0 +1,259 @@
+{
+ "voice": {
+  "name": "Jeff - Smooth, Calming, and Natural",
+  "id": "Mfk8L0DQ8Aj3aRtDY3oo",
+  "model": "eleven_multilingual_v2"
+ },
+ "lang": "fr",
+ "beats": [
+  {
+   "id": "b01",
+   "text": "Le culte du dimanche est terminé. Les chaises sont rangées, les lumières éteintes... mais le travail de l'église ? Lui, ne s'arrête jamais vraiment.",
+   "en": "Sunday service is over. The chairs are stacked, the lights are off... but the work of the church? That never really stops.",
+   "chapter": "Pourquoi ZionDesk"
+  },
+  {
+   "id": "b02",
+   "text": "Les coordonnées des membres sont dans un cahier. Les annonces se perdent dans cinq groupes WhatsApp différents. Les offrandes sont dans un tableur qu'une seule personne comprend. Et ce visiteur qui a rempli une fiche le mois dernier... personne ne l'a jamais rappelé.",
+   "en": "Members' details live in a notebook. Announcements get lost across five different WhatsApp groups. The offering count sits in a spreadsheet only one person understands. And that first-time guest who filled a card last month... nobody ever called them back."
+  },
+  {
+   "id": "b03",
+   "text": "C'est exactement pour cela que ZionDesk existe. Un seul endroit, simple, pour gérer votre église. Vos membres, vos dons, vos messages et vos événements, tout au même endroit.",
+   "en": "That's exactly why ZionDesk exists. One simple place to run your church. Your people, your giving, your messages and your events, all together."
+  },
+  {
+   "id": "b04",
+   "text": "Chaque membre et chaque nouveau venu, dans une seule liste. Des suivis qui ne passent plus entre les mailles du filet. Les dîmes et offrandes enregistrées correctement, dans votre propre monnaie.",
+   "en": "Every member and every first-timer, in one list. Follow-ups that don't fall through the cracks. Tithes and offerings recorded properly, in your own currency."
+  },
+  {
+   "id": "b05",
+   "text": "Envoyez une annonce par SMS, WhatsApp ou e-mail. À toute l'église, aux serviteurs seulement, à un département ou à une antenne, et chacun la reçoit dans sa propre langue.",
+   "en": "Send an announcement by SMS, WhatsApp or email. To the whole church, just the workers, one department, or a branch, and each person gets it in their own language."
+  },
+  {
+   "id": "b06",
+   "text": "Et vous avez Ellen, votre assistante IA. Elle rédige vos messages, prépare un rapport, et crée même le flyer de dimanche, en quelques secondes.",
+   "en": "And you get Ellen, your AI assistant. She can draft your messages, pull together a report, and even design your Sunday flyer, in seconds."
+  },
+  {
+   "id": "d01",
+   "text": "Et ce n'est pas seulement pour le pasteur ou le secrétariat. Chaque équipe de votre église y trouve son compte.",
+   "en": "And this isn't just for the pastor or the church office. Every team in your church gets something out of it.",
+   "chapter": "Pour chaque équipe"
+  },
+  {
+   "id": "d02",
+   "text": "Votre équipe d'accueil enregistre les nouveaux venus avec un QR code, pour que chaque nouveau visage soit noté dès son tout premier dimanche.",
+   "en": "Your ushers and welcome team check in first-timers with a QR code, so every new face is captured on their very first Sunday."
+  },
+  {
+   "id": "d03",
+   "text": "Votre équipe de suivi voit exactement qui est venu, qui vient de se convertir, et qui ne vient plus, avec leurs numéros prêts pour un appel ou un message.",
+   "en": "Your follow-up team sees exactly who visited, who's a new convert, and who hasn't been around lately, with their numbers ready to call or message."
+  },
+  {
+   "id": "d04",
+   "text": "Votre équipe des finances enregistre dîmes, offrandes et dépenses au même endroit. Et seuls les finances et les administrateurs voient qui a donné quoi.",
+   "en": "Your finance team records tithes, offerings and expenses in one place. And only finance and the admins can see who gave what."
+  },
+  {
+   "id": "d05",
+   "text": "Votre équipe média crée des flyers en quelques minutes, et envoie les annonces à toute l'église en une seule fois.",
+   "en": "Your media and publicity team creates flyers in minutes, and sends announcements to the whole church in one go."
+  },
+  {
+   "id": "d06",
+   "text": "La chorale, la jeunesse, l'école du dimanche, l'équipe de prière... chaque responsable de département peut écrire uniquement à ses membres, et planifier répétitions et réunions dans le calendrier.",
+   "en": "The choir, the youth, the children's ministry, the prayer team... each department leader can message just their own people, and plan rehearsals and meetings on the calendar."
+  },
+  {
+   "id": "d07",
+   "text": "Et si vous avez des antennes, chaque pasteur envoie un rapport mensuel simple, pendant que le siège voit l'ensemble.",
+   "en": "And if you have branches, each branch pastor sends a simple monthly report, while HQ sees the whole picture."
+  },
+  {
+   "id": "b07",
+   "text": "ZionDesk fonctionne sur votre téléphone et sur votre ordinateur. Vos données restent privées et sécurisées. Et les forfaits commencent à huit dollars quatre-vingt-dix-neuf par mois, affichés dans votre monnaie locale.",
+   "en": "It works on your phone and your computer. Your data stays private and secure. And plans start from just eight ninety-nine a month, shown in your own local currency."
+  },
+  {
+   "id": "b08",
+   "text": "Alors, moins de paperasse, et plus de temps pour les gens. Je vais vous montrer exactement comment tout fonctionne, étape par étape. Prenez un café... et c'est parti.",
+   "en": "So, less paperwork, and more time for people. Let me show you exactly how it all works, step by step. Grab a coffee... and let's go."
+  },
+  {
+   "id": "b09",
+   "text": "Quand vous vous connectez, vous arrivez sur l'Aperçu. Voyez-le comme votre église, en un coup d'œil.",
+   "en": "When you sign in, you land on your Overview. Think of it as your church, at a glance.",
+   "chapter": "Prise en main"
+  },
+  {
+   "id": "b10",
+   "text": "Vous y voyez les nouveaux venus à suivre, la progression de chacun dans le parcours de discipulat, les anniversaires à venir, et ce qui arrive cette semaine.",
+   "en": "Here you'll see newcomers who need a follow-up, how people are growing through your discipleship stages, upcoming birthdays, and what's coming up this week."
+  },
+  {
+   "id": "b11",
+   "text": "Tout le reste se trouve dans ce menu en haut. Personnes regroupe vos membres et les présences. Finances regroupe les dons et les rapports des antennes. Et dans Communication, vous trouverez les messages, les événements, les flyers et vos liens.",
+   "en": "Everything else lives in this menu at the top. People holds your members and attendance. Finance holds giving and branch reports. And Outreach is where you'll find messaging, events, flyers and your links."
+  },
+  {
+   "id": "b12",
+   "text": "En haut à droite, il y a votre profil. Votre compte, votre langue, les paramètres et l'aide. Sur téléphone, le même menu se trouve derrière ce petit bouton en grille.",
+   "en": "Top right, you've got your profile. That's your account, your language, settings and help. On a phone, the same menu sits behind this little grid button."
+  },
+  {
+   "id": "b13",
+   "text": "Commençons par les personnes. Dans Membres, tout le monde est classé par étape. Les visiteurs, les nouveaux croyants, la famille de l'église, et les serviteurs.",
+   "en": "Let's start with people. In Members, everyone is grouped by stage. First-time guests, new believers, church family, and the workers who serve.",
+   "chapter": "Membres"
+  },
+  {
+   "id": "b14",
+   "text": "Pour ajouter quelqu'un, cliquez sur Ajouter un membre. Saisissez son nom, son téléphone, son WhatsApp et son e-mail. Toujours avec l'indicatif du pays. Puis sa date de naissance, son site et son département.",
+   "en": "To add someone, click Add member. Put in their name, phone, WhatsApp and email. Always use the country code, like plus two three four. Then add their birthday, branch and department."
+  },
+  {
+   "id": "b15",
+   "text": "Ouvrez n'importe quelle fiche pour voir toute son histoire. Sa date d'arrivée, ses dons, et chaque appel ou message échangé.",
+   "en": "Open anyone to see their full story. When they joined, their giving, and every call or message you've had with them."
+  },
+  {
+   "id": "b16",
+   "text": "Vos membres sont déjà dans Excel ? Utilisez Importer, et faites-les entrer tous d'un coup. Et vous pouvez exporter votre liste à tout moment.",
+   "en": "Already have your members in Excel? Use Import, and bring everyone in at once. And you can export your list any time."
+  },
+  {
+   "id": "b17",
+   "text": "Dans Présences, vous trouvez le QR code de pointage du dimanche. Imprimez-le, ou affichez-le à l'écran. Chacun le scanne avec son téléphone et se pointe lui-même. Plus de registre papier.",
+   "en": "In Attendance, you'll find your Sunday check-in QR code. Print it, or put it on the screen. People scan it with their phone and check themselves in. No paper register.",
+   "chapter": "Présences et pointage"
+  },
+  {
+   "id": "b18",
+   "text": "Activez les messages de suivi automatiques, et ZionDesk prendra doucement des nouvelles de ceux qui manquent l'église plusieurs semaines de suite. Pour que personne ne disparaisse en silence.",
+   "en": "Switch on automatic check-ups, and ZionDesk will gently reach out when someone has missed church a few weeks in a row. So nobody quietly disappears."
+  },
+  {
+   "id": "b19",
+   "text": "Dans Finances, la page Dons affiche vos dîmes et offrandes, par mois, et par fonds.",
+   "en": "Under Finance, Giving shows your tithes and offerings, by month, and by fund.",
+   "chapter": "Dons"
+  },
+  {
+   "id": "b20",
+   "text": "Cliquez sur Enregistrer un don pour noter une offrande. Choisissez le membre, le fonds, le montant, et le mode de paiement.",
+   "en": "Click Record gift to log an offering. Choose the member, the fund, the amount, and how it was given."
+  },
+  {
+   "id": "b21",
+   "text": "Vous pouvez aussi suivre les dépenses ici. Pour toujours savoir ce qui est entré, et ce qui est sorti.",
+   "en": "You can track expenses here too. So you always know what came in, and what went out."
+  },
+  {
+   "id": "b22",
+   "text": "C'est dans Messages que ZionDesk vous fait vraiment gagner du temps. D'abord, choisissez le canal. SMS, WhatsApp, ou e-mail.",
+   "en": "Messaging is where ZionDesk really saves you time. First, choose how to send. SMS, WhatsApp, or email.",
+   "chapter": "Messages"
+  },
+  {
+   "id": "b23",
+   "text": "Puis choisissez les destinataires. Tout le monde, une étape, un département comme la chorale ou les huissiers, ou une antenne précise.",
+   "en": "Then choose who it's for. Everyone, one stage, a department like the choir or the ushers, or a specific branch."
+  },
+  {
+   "id": "b24",
+   "text": "Choisissez un modèle prêt à l'emploi, comme un message de bienvenue, un rappel de culte ou un remerciement, ou écrivez le vôtre. Chacun le reçoit dans sa langue, avec son prénom déjà rempli.",
+   "en": "Pick a ready-made template, like a welcome, a service reminder or a thank-you, or write your own. Each person gets it in their own language, with their name already filled in."
+  },
+  {
+   "id": "b25",
+   "text": "Appuyez sur envoyer, confirmez, et c'est parti. Quand les membres répondent sur WhatsApp ou par SMS, leurs réponses arrivent ici, dans votre boîte de réception. Et les anniversaires ? ZionDesk envoie les vœux pour vous.",
+   "en": "Press send, confirm, and it's on its way. When members reply on WhatsApp or SMS, their answers land right here, in your Inbox. And birthdays? ZionDesk sends the birthday wishes for you."
+  },
+  {
+   "id": "b26",
+   "text": "Événements vous donne un calendrier simple. Cliquez sur Nouvel événement, ajoutez la date, l'heure et le lieu. Si c'est en ligne, ZionDesk peut créer un lien Google Meet pour vous.",
+   "en": "Events gives you a simple calendar. Click New event, add the date, the time and the place. If it's online, ZionDesk can create a Google Meet link for you.",
+   "chapter": "Événements"
+  },
+  {
+   "id": "b27",
+   "text": "Chaque invité reçoit un rappel par e-mail la veille. Plus besoin d'envoyer le message « n'oubliez pas ».",
+   "en": "Everyone invited gets an email reminder the day before. You never have to send the 'don't forget' message again."
+  },
+  {
+   "id": "b28",
+   "text": "Et maintenant, voici Ellen. C'est votre assistante IA, et elle connaît votre église.",
+   "en": "Now, meet Ellen. She's your AI assistant, and she knows your church.",
+   "chapter": "Ellen, votre assistante IA"
+  },
+  {
+   "id": "b29",
+   "text": "Demandez-lui qui doit être suivi, une synthèse financière rapide, ou d'écrire l'annonce de dimanche. Elle travaille à partir des vraies données de votre église, donc ses réponses ont du sens.",
+   "en": "Ask her who needs a follow-up, for a quick finance summary, or to write this Sunday's announcement. She works from your real church data, so the answers actually make sense."
+  },
+  {
+   "id": "b30",
+   "text": "Besoin d'un flyer pour dimanche ? Ouvrez le Studio design. Tapez le titre de l'événement, la date et le lieu, choisissez un style, moderne, élégant ou audacieux, et cliquez sur Créer le flyer.",
+   "en": "Need a flyer for Sunday? Open Design Studio. Type the event title, the date and the place, pick a style, modern, elegant or bold, and click Create flyer.",
+   "chapter": "Flyers et Studio design"
+  },
+  {
+   "id": "b31",
+   "text": "En quelques secondes, votre flyer est prêt à télécharger et à partager. Tout ce que vous créez est enregistré dans Mes designs.",
+   "en": "In a few seconds, your flyer is ready to download and share. Everything you make is saved under My designs."
+  },
+  {
+   "id": "b32",
+   "text": "Avec Ministry Max, vous pouvez aussi faire appel à notre équipe de designers. Remplissez un court brief, ajoutez de l'inspiration, et discutez avec votre designer. Votre flyer arrive en quarante-huit heures, avec un numéro de commande par e-mail pour le suivre.",
+   "en": "On Ministry Max, you can also ask our human design team. Fill in a short brief, add some inspiration, and chat with your designer. Your flyer arrives within forty-eight hours, and you get an order number by email, so you can follow it."
+  },
+  {
+   "id": "b33",
+   "text": "Liens et codes QR vous donne des liens prêts à l'emploi pour l'inscription, les nouveaux venus et les nouveaux convertis. Mettez le QR code sur un écran ou un flyer. Quand les gens le remplissent, ils arrivent directement dans votre liste de membres.",
+   "en": "Links and QR codes gives you ready-made links for registration, first-timers and new converts. Put the QR code on a screen or a flyer. When people fill it in, they go straight into your members list.",
+   "chapter": "Liens et codes QR"
+  },
+  {
+   "id": "b34",
+   "text": "Rapports transforme tout cela en graphiques clairs. Les nouvelles personnes chaque mois, les étapes du discipulat, les présences et les dons. Téléchargez chacun en tableur.",
+   "en": "Reports turns all of this into clear charts. New people each month, discipleship stages, attendance and giving. Download any of them as a spreadsheet.",
+   "chapter": "Rapports et antennes"
+  },
+  {
+   "id": "b35",
+   "text": "Vous avez plusieurs antennes ? Chaque responsable se connecte et envoie son rapport mensuel : recettes, dépenses et présences. Vous voyez qui l'a envoyé et qui ne l'a pas fait, et ZionDesk envoie les rappels pour vous.",
+   "en": "Got more than one branch? Each branch leader signs in and sends their monthly report: income, expenses and attendance. You see who's reported and who hasn't, and ZionDesk sends the reminders for you."
+  },
+  {
+   "id": "b36",
+   "text": "Dans Paramètres, configurez le profil de votre église, votre devise, et le nom qui apparaît sur vos SMS.",
+   "en": "In Settings, set up your church profile, your currency, and the name that shows on your text messages.",
+   "chapter": "Paramètres, équipe et forfaits"
+  },
+  {
+   "id": "b37",
+   "text": "Dans Équipe et rôles, invitez vos pasteurs, votre équipe des finances et vos responsables de ministère. Chaque rôle ne voit que ce dont il a besoin. Par exemple, seuls les administrateurs et les finances voient les dons.",
+   "en": "Under Team and roles, invite your pastors, your finance team and your ministry leaders. Each role only sees what they need. For example, only admins and finance can see giving."
+  },
+  {
+   "id": "b38",
+   "text": "Et voici votre forfait. Essentials couvre les membres, les messages, les finances, les événements et Ellen. Ministry Plus ajoute le Studio design, les liens de dons et les QR codes. Et Ministry Max ajoute les flyers créés par notre équipe de designers. Changez de forfait, ou résiliez, à tout moment.",
+   "en": "And here's your plan. Essentials covers members, messaging, finance, events and Ellen. Ministry Plus adds Design Studio, giving links and QR codes. And Ministry Max adds flyers made by our design team. Upgrade, or cancel, any time."
+  },
+  {
+   "id": "b39",
+   "text": "Un souci ? Ouvrez l'Aide. Vous y trouverez les réponses aux questions courantes. Et si vous avez encore besoin de nous, écrivez au support. Vous recevrez un numéro de ticket par e-mail, et nous répondons directement dans ZionDesk.",
+   "en": "Stuck on something? Open Help. You'll find answers to the common questions. And if you still need us, send a message to support. You'll get a ticket number by email, and we'll reply right inside ZionDesk.",
+   "chapter": "Aide et support"
+  },
+  {
+   "id": "b40",
+   "text": "Et voilà ZionDesk. Commencez par vos membres, envoyez votre premier message cette semaine, et voyez à quel point la gestion de l'église peut devenir plus légère. Nous sommes vraiment heureux de vous compter parmi nous.",
+   "en": "And that's ZionDesk. Start with your members, send your first message this week, and see how much lighter church admin can feel. We're really glad you're here."
+  }
+ ]
+}

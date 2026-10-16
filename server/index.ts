@@ -25,6 +25,7 @@ import { publicRoutes } from './routes/public'
 import { validUnsubscribe } from './lifecycle'
 import { engageRoutes } from './routes/engage'
 import { branchRoutes } from './routes/branches'
+import { outreachRoutes } from './routes/outreach'
 import { whatsappTemplateCheck } from './messaging'
 
 const app = express()
@@ -158,6 +159,7 @@ app.use('/api', googleRoutes)
 app.use('/api', adminRoutes)
 app.use('/api', engageRoutes)
 app.use('/api', branchRoutes)
+app.use('/api', outreachRoutes)
 
 /* Render Cron Jobs call these with Authorization: Bearer $CRON_SECRET */
 const cron = (fn: () => Promise<unknown>) =>

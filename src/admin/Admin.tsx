@@ -2,7 +2,7 @@
  * ZionDesk staff console (/admin). Only emails listed in ADMIN_EMAILS on the server get data;
  * everyone else sees "Staff only". Internal tool, English only.
  */
-import { BadgePercent, Building2, CreditCard, Gauge, Images, LayoutGrid, LifeBuoy, LogOut, Mail, Palette, Maximize2, Settings as SettingsIcon, ShieldCheck, Sparkles, TicketPercent, TriangleAlert, UserRound, Users } from 'lucide-react'
+import { BadgePercent, Building2, CreditCard, Gauge, Images, Megaphone, LayoutGrid, LifeBuoy, LogOut, Mail, Palette, Maximize2, Settings as SettingsIcon, ShieldCheck, Sparkles, TicketPercent, TriangleAlert, UserRound, Users } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
@@ -12,6 +12,7 @@ import { Churches, Payments, Promos, Support, System, UsersPage } from './AdminP
 import { AdminEmails } from './AdminEmails'
 import { DesignRequestDetail, DesignRequests } from './AdminDesign'
 import { AdminStyles } from './AdminStyles'
+import { AdminOutreach } from './AdminOutreach'
 import { AdminProfile, AdminSettings, AlertsMenu, AvatarMenu, ChurchDetail, SearchBox, UserDetail } from './AdminDetail'
 import './admin.css'
 import { isAdminHost } from '../lib/site'
@@ -39,6 +40,7 @@ const NAV = [
   { to: '/admin/design', label: 'Design', icon: Palette },
   { to: '/admin/styles', label: 'Flyer styles', icon: Images },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { to: '/admin/outreach', label: 'Outreach', icon: Megaphone },
   { to: '/admin/emails', label: 'Emails', icon: Mail },
   { to: '/admin/system', label: 'System', icon: Gauge },
   { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
@@ -445,6 +447,7 @@ function Shell(_props: { name: string }) {
             <Route path="design" element={<DesignRequests />} />
             <Route path="design/:id" element={<DesignRequestDetail />} />
             <Route path="styles" element={<AdminStyles />} />
+            <Route path="outreach" element={<AdminOutreach />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
