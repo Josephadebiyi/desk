@@ -16,7 +16,7 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { db, HttpError, requireUser, route } from '../db'
 import { configured, env } from '../env'
 import { sendEmail, sendEmails, type Outgoing } from '../mail'
-import { personalNote } from '../outreachResearch'
+import { nameFromEmail, personalNote, siteFromEmail } from '../outreachResearch'
 
 export const outreachRoutes = Router()
 
@@ -170,7 +170,9 @@ outreachRoutes.get(
     })
     const since = Date.now() - 864e5
     const sentToday = (sends ?? []).filter((x) => x.status !== 'failed' && new Date(x.sent_at).getTime() > since).length
-    res.json({ contacts: list, campaigns: campaigns ?? [], stats, dailyCap: DAILY_CAP, sentToday, templates: TEMPLATES, emailReady: configured.email })
+    const pending = list.filter((c) => !c.researched_at && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status)).length
+    if (pending) void enrichPending()
+    res.json({ contacts: list, campaigns: campaigns ?? [], stats, dailyCap: DAILY_CAP, sentToday, templates: TEMPLATES, emailReady: configured.email, pending, aiReady: Boolean(process.env.ANTHROPIC_API_KEY) })
   }),
 )
 
@@ -207,6 +209,7 @@ outreachRoutes.post(
         updated++
       }
     }
+    void enrichPending() // Ellen fixes names / websites and writes the openings in the background
     res.json({ added: fresh.length, updated, invalid, duplicates: rows.length - clean.length - invalid })
   }),
 )
@@ -238,27 +241,67 @@ outreachRoutes.delete(
 )
 
 /** Ellen reads one church's website and writes its personal opening (saved for review). */
-async function personalise(id: string) {
-  const { data: c } = await db().from('outreach_contacts').select('id, church_name, website').eq('id', id).maybeSingle()
+/**
+ * Ellen checks one contact end to end: finds a usable website (the website column, a web address left in the name
+ * column, or the church's own email domain), reads it for the official name + a personal opening, and falls back to
+ * a careful name guess from the email address. Always records the outcome (researched_at; a reason when it failed).
+ */
+async function personalise(id: string, opts: { throwOnFail?: boolean } = {}) {
+  const { data: c } = await db().from('outreach_contacts').select('id, email, church_name, website').eq('id', id).maybeSingle()
   if (!c) throw new HttpError(404, 'Contact not found')
-  // Repair imports where the website landed in the name column.
   const misplaced = looksLikeSite(c.church_name)
-  const website = c.website || (misplaced && usableSite(c.church_name) ? c.church_name : '')
-  if (!website) throw new HttpError(400, 'Add the church’s website first.')
-  const r = await personalNote(misplaced ? '' : c.church_name, website)
-  // The list may have had only an email + website: Ellen also fills in the church's name from the site.
-  const patch: Record<string, string> = { personal_note: r.note, research_summary: r.summary, researched_at: new Date().toISOString() }
-  if (misplaced) Object.assign(patch, { website, church_name: '' })
-  if ((!c.church_name || misplaced) && r.name) patch.church_name = r.name
+  const known = misplaced ? '' : c.church_name
+  const candidates = [...new Set([usableSite(c.website) ? c.website : '', misplaced && usableSite(c.church_name) ? c.church_name : '', siteFromEmail(c.email)].filter(Boolean))]
+  const patch: Record<string, string> = { researched_at: new Date().toISOString() }
+  if (misplaced) patch.church_name = ''
+  let reason = candidates.length ? '' : 'No website, and the email is a personal address.'
+  for (const site of candidates) {
+    try {
+      const r = await personalNote(known, site)
+      Object.assign(patch, { website: site, personal_note: r.note, research_summary: r.summary })
+      if (!known && r.name) patch.church_name = r.name
+      reason = ''
+      break
+    } catch (e) {
+      reason = `Couldn’t use ${site}: ${e instanceof Error ? e.message : 'failed'}`
+    }
+  }
+  if (reason) {
+    // No website to read: a careful guess at the name from the email address (left empty when unclear).
+    if (!known) {
+      const guess = await nameFromEmail(c.email).catch(() => '')
+      if (guess) patch.church_name = guess
+    }
+    patch.research_summary = `⚠ ${reason}${patch.church_name ? ' Name guessed from the email — please check.' : ' The email will open with “Dear Pastor and church family,”.'}`.slice(0, 600)
+    patch.personal_note = ''
+  }
   const { data } = await db().from('outreach_contacts').update(patch).eq('id', id).select('*').single()
+  if (reason && opts.throwOnFail) throw new HttpError(422, reason)
   return data
+}
+
+/** Background clean-up of every contact Ellen hasn't checked yet (runs after an import and resumes on page load). */
+let enriching = false
+async function enrichPending() {
+  if (enriching || !process.env.ANTHROPIC_API_KEY) return
+  enriching = true
+  try {
+    for (;;) {
+      const { data } = await db().from('outreach_contacts').select('id').is('researched_at', null).not('status', 'in', '(unsubscribed,bounced,signed_up)').order('created_at').limit(6)
+      if (!data?.length) break
+      // Three at a time: quick, without hammering the websites or the AI.
+      for (let i = 0; i < data.length; i += 3) await Promise.all(data.slice(i, i + 3).map((r) => personalise(r.id).catch((e) => console.error('[outreach] enrich', r.id, e))))
+    }
+  } finally {
+    enriching = false
+  }
 }
 
 outreachRoutes.post(
   '/admin/outreach/contacts/:id/personalise',
   ...staff,
   route(async (req, res) => {
-    res.json({ contact: await personalise(String(req.params.id)) })
+    res.json({ contact: await personalise(String(req.params.id), { throwOnFail: true }) })
   }),
 )
 

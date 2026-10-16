@@ -17,6 +17,7 @@ interface Contact {
   website: string
   personal_note: string
   research_summary: string
+  researched_at: string | null
   status: string
   last_sent_at: string | null
   opened_at: string | null
@@ -51,11 +52,13 @@ interface Data {
   sentToday: number
   templates: Record<'intro' | 'followup', { name: string; subject: string; preview: string; body: string }>
   emailReady: boolean
+  /** Contacts Ellen hasn't checked yet (she works through them in the background). */
+  pending: number
+  aiReady: boolean
 }
 
 /** A website that landed in the name column — the server repairs it when Ellen personalises. */
 const siteLike = (v: string) => !!v && !v.includes('@') && (/^(https?:|www[.\w])/i.test(v.trim()) || v.includes('/') || (!/\s/.test(v) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(v.trim())))
-const hasSite = (c: { website: string; church_name: string }) => !!c.website || siteLike(c.church_name)
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : '—')
 const STATUS_LABEL: Record<string, string> = { new: 'New', sent: 'Sent', opened: 'Opened', clicked: 'Clicked', replied: 'Replied', signed_up: 'Signed up', unsubscribed: 'Opted out', bounced: 'Bounced' }
@@ -96,6 +99,12 @@ export function AdminOutreach() {
   useEffect(() => {
     void load()
   }, [])
+  // While Ellen is checking contacts, refresh every few seconds so names and openings appear as she goes.
+  useEffect(() => {
+    if (!data?.pending) return
+    const t = setInterval(() => void load(), 6000)
+    return () => clearInterval(t)
+  }, [data?.pending])
 
   const totals = useMemo(() => {
     const c = data?.contacts ?? []
@@ -120,6 +129,12 @@ export function AdminOutreach() {
             <div className="adm-kpi"><small>Opted out</small><b>{totals.out}</b></div>
             <div className="adm-kpi"><small>Sent last 24 h</small><b>{data.sentToday}/{data.dailyCap}</b></div>
           </div>
+          {data.pending > 0 && (
+            <p className="adm-ok" style={{ marginTop: 12 }}>
+              <Sparkles size={14} /> Ellen is checking {data.pending} {data.pending === 1 ? 'church' : 'churches'} — finding websites and names and writing a personal opening for each. This page updates by itself.
+            </p>
+          )}
+          {!data.aiReady && <p className="adm-err">AI isn’t configured on the server (ANTHROPIC_API_KEY), so Ellen can’t check contacts.</p>}
           {!data.emailReady && <p className="adm-err">Email isn’t configured on the server (RESEND_API_KEY), so nothing can be sent yet.</p>}
           <div className="adm-toolbar" style={{ margin: '16px 0' }}>
             <button type="button" className={`adm-chip ${tab === 'contacts' ? 'is-on' : ''}`} onClick={() => setTab('contacts')}>Contacts</button>
@@ -155,7 +170,7 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
     setMsg('')
     try {
       const out = await api<{ added: number; updated: number; invalid: number; duplicates: number }>('/admin/outreach/contacts', { rows: r })
-      setOk(`Imported: ${out.added} new, ${out.updated} updated${out.invalid ? `, ${out.invalid} invalid emails skipped` : ''}${out.duplicates ? `, ${out.duplicates} duplicates` : ''}.`)
+      setOk(`Imported ${out.added} new and updated ${out.updated}${out.invalid ? ` (${out.invalid} invalid emails skipped)` : ''}${out.duplicates ? ` (${out.duplicates} duplicates ignored)` : ''}. Ellen is now checking each church — website, name and a personal opening.`)
       setPaste('')
       await reload()
     } catch (e) {
@@ -175,7 +190,6 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
     }
     setBusy('')
   }
-  const withSite = data.contacts.filter((c) => hasSite(c) && !c.personal_note && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status)).length
 
   return (
     <>
@@ -191,11 +205,6 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
             <Upload size={15} /> Upload CSV
           </button>
           <input ref={file} type="file" accept=".csv,text/csv,text/plain" hidden onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) await importRows(await f.text()) }} />
-          {withSite > 0 && (
-            <button type="button" className="adm-btn ghost" disabled={!!busy} onClick={() => act('ai', () => api('/admin/outreach/personalise', {}), 'Ellen personalised the next churches — review their notes below.')}>
-              <Sparkles size={15} /> {busy === 'ai' ? 'Ellen is reading websites…' : `Personalise ${Math.min(8, withSite)} with Ellen`}
-            </button>
-          )}
         </div>
       </Card>
 
@@ -257,8 +266,12 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
                         <button type="button" className="adm-link" title="Edit" onClick={() => (setOpen(c.id), setNote(c.personal_note))} style={{ textAlign: 'left', background: 'none', border: 0, padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }}>
                           “{c.personal_note}”{c.research_summary && <small>{c.research_summary}</small>}
                         </button>
+                      ) : !c.researched_at && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status) ? (
+                        <small><Sparkles size={12} /> Ellen is checking…</small>
+                      ) : c.research_summary.startsWith('⚠') ? (
+                        <small style={{ color: '#b45309' }}>{c.research_summary.slice(1).trim()}</small>
                       ) : (
-                        <small>{hasSite(c) ? 'Not personalised yet — click Ellen' : 'No website — the email starts “Dear Pastor and church family,”'}</small>
+                        <small>No personal opening</small>
                       )}
                     </td>
                     <td>
@@ -267,9 +280,9 @@ function Contacts({ data, reload, setMsg, setOk }: Ctx) {
                       {c.clicked_at && <small>Clicked {fmtDay(c.clicked_at)}</small>}
                     </td>
                     <td className="adm-row-actions">
-                      {hasSite(c) && !['unsubscribed', 'signed_up'].includes(c.status) && (
+                      {!['unsubscribed', 'signed_up'].includes(c.status) && c.researched_at && (
                         <button type="button" className="adm-btn ghost" disabled={!!busy} title="Ellen reads the church website and writes a personal opening" onClick={() => act(c.id, () => api(`/admin/outreach/contacts/${c.id}/personalise`, {}), `Ellen personalised ${c.church_name || c.email}.`)}>
-                          <Sparkles size={14} /> {busy === c.id ? '…' : 'Ellen'}
+                          <Sparkles size={14} /> {busy === c.id ? '…' : 'Ask Ellen again'}
                         </button>
                       )}
                       {['sent', 'opened', 'clicked'].includes(c.status) && (

@@ -97,3 +97,33 @@ export async function personalNote(church: string, website: string) {
   const name = nameLine.trim().replace(/^["“]|["”.]$/g, '').slice(0, 160)
   return { note: note.trim().replace(/^["“]|["”]$/g, '').slice(0, 600), summary: summary.trim().slice(0, 600), name: /^unknown$/i.test(name) ? '' : name, url: page.url }
 }
+
+/* ───────── automatic clean-up after an import ───────── */
+
+/** Free / personal mail providers: their domain is not the church's website. */
+const FREE_MAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.fr', 'ymail.com', 'hotmail.com', 'hotmail.co.uk', 'hotmail.fr', 'outlook.com', 'outlook.fr', 'live.com', 'live.co.uk', 'msn.com', 'icloud.com', 'me.com', 'mac.com', 'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'gmx.de', 'mail.com', 'zoho.com', 'yandex.com', 'web.de', 'orange.fr', 'free.fr', 'laposte.net', 'btinternet.com', 'sky.com', 'eircom.net', 'rocketmail.com'])
+
+/** The church's own domain from its email (info@grace.org → grace.org), unless it's a free mail provider. */
+export function siteFromEmail(email: string): string {
+  const domain = email.split('@')[1]?.toLowerCase().trim() ?? ''
+  if (!domain || !domain.includes('.') || FREE_MAIL.has(domain)) return ''
+  return domain
+}
+
+/**
+ * A careful guess at the church's name from its email address only (no website to read), e.g.
+ * stmarysparish@gmail.com → "St Mary's Parish". Returns '' when the address doesn't clearly name a church.
+ */
+export async function nameFromEmail(email: string): Promise<string> {
+  if (!process.env.ANTHROPIC_API_KEY) return ''
+  const client = new Anthropic()
+  const msg = await client.messages.create({
+    model: process.env.ANTHROPIC_MODEL || 'claude-opus-5-5',
+    max_tokens: 60,
+    system:
+      'From an email address, give the church or ministry name it clearly refers to, in normal title case (e.g. "stmarysparish@gmail.com" → St Mary\'s Parish; "info@rccgvictory.org" → RCCG Victory). If it is a person\'s name or unclear, reply exactly: unknown. Reply with the name only.',
+    messages: [{ role: 'user', content: email }],
+  })
+  const out = msg.content.map((c) => (c.type === 'text' ? c.text : '')).join('').trim().replace(/^["“]|["”.]$/g, '')
+  return !out || /^unknown$/i.test(out) || out.length > 80 ? '' : out
+}
