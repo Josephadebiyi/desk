@@ -17,6 +17,7 @@ import { db, HttpError, requireUser, route } from '../db'
 import { configured, env } from '../env'
 import { sendEmail, sendEmails, type Outgoing } from '../mail'
 import { nameFromEmail, personalNote, siteFromEmail } from '../outreachResearch'
+import { repairWebsite } from '../siteRepair'
 
 export const outreachRoutes = Router()
 
@@ -152,6 +153,12 @@ outreachRoutes.get(
     if (missingTables(error)) throw needTables()
     if (error) throw new HttpError(500, error.message)
     // Signed up = an account now exists with this email (checked live, then remembered).
+    // Repair websites that lost their dots (hillsongcom/… → hillsong.com/…) from each contact's email domain.
+    for (const c of (contacts ?? []).filter((c) => c.website && !/^(https?:\/\/)?[^/]*\./i.test(c.website))) {
+      const fixed = repairWebsite(c.website, [c.email])
+      await db().from('outreach_contacts').update({ website: fixed }).eq('id', c.id)
+      c.website = fixed
+    }
     // Repair imports where a web address landed in the name column: move it to Website, clear the name.
     for (const c of (contacts ?? []).filter((c) => looksLikeSite(c.church_name))) {
       const patch: Record<string, string> = { church_name: '' }
@@ -190,7 +197,9 @@ outreachRoutes.post(
       if (!EMAIL.test(email)) { invalid++; continue }
       if (seen.has(email)) continue
       seen.add(email)
-      clean.push({ email, church_name: str(r?.church_name, 160), contact_name: str(r?.contact_name, 120), country: str(r?.country, 60), website: str(r?.website, 300) })
+      // Websites that lost their dots are rebuilt from the email domain; hopeless ones are left blank (Ellen uses the email domain).
+      const site = str(r?.website, 300)
+      clean.push({ email, church_name: str(r?.church_name, 160), contact_name: str(r?.contact_name, 120), country: str(r?.country, 60), website: site ? repairWebsite(site, [email]) : '' })
     }
     if (!clean.length) throw new HttpError(400, invalid ? 'No valid email addresses found.' : 'Add at least one contact.')
     const { data: existing, error } = await db().from('outreach_contacts').select('id, email').in('email', clean.map((c) => c.email))
