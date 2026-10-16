@@ -29,8 +29,10 @@ const EMAIL = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/
 /** Safe daily volume for cold outreach from the main domain (configurable). */
 const DAILY_CAP = Number(process.env.OUTREACH_DAILY_CAP || 60)
 const VIDEO_URL = process.env.OUTREACH_VIDEO_URL || 'https://youtu.be/4TxzwhzIyQ8'
-const THUMB_URL = process.env.OUTREACH_THUMB_URL || 'https://img.youtube.com/vi/4TxzwhzIyQ8/maxresdefault.jpg'
+
 const SITE = (env.siteUrl.includes('localhost') ? 'https://www.ziondesk.com' : env.siteUrl).replace(/\/$/, '')
+// Video picture with a play button baked in (public/brand/email-video.jpg on the website).
+const THUMB_URL = process.env.OUTREACH_THUMB_URL || `${SITE}/brand/email-video.jpg`
 const API = env.apiUrl.replace(/\/$/, '')
 const missingTables = (e: { code?: string } | null) => e && (e.code === '42P01' || e.code === 'PGRST205')
 const needTables = () => new HttpError(503, 'Outreach needs its database tables — run the 0018_outreach SQL in Supabase (SQL editor) first.')
@@ -100,7 +102,7 @@ export function outreachEmail(c: Campaign, church: string, sendId?: string, note
 <tr><td style="padding:28px 32px 8px;"><a href="${link('site')}"><img src="${SITE}/brand/logo-color.png" width="132" alt="ZionDesk" style="display:block;border:0;width:132px;height:auto;"></a></td></tr>
 <tr><td style="padding:12px 32px 0;font-size:16px;line-height:1.6;"><p style="margin:0 0 14px;">${esc(greet)}</p>${paras.map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}</td></tr>
 <tr><td style="padding:4px 32px 0;"><a href="${link('video')}" style="display:block;text-decoration:none;"><img src="${THUMB_URL}" width="536" alt="Watch the ZionDesk walkthrough" style="display:block;width:100%;height:auto;border:0;border-radius:16px;"></a>
-<p style="margin:10px 0 0;font-size:14px;text-align:center;"><a href="${link('video')}" style="color:#6c34ff;font-weight:bold;text-decoration:none;">&#9654; Watch the walkthrough</a></p></td></tr>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:14px auto 0;"><tr><td style="background:#111015;border-radius:999px;"><a href="${link('video')}" style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">&#9654;&nbsp; Watch the 8-minute walkthrough</a></td></tr></table></td></tr>
 ${c.kind === 'followup' ? '' : `<tr><td style="padding:24px 32px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f3ff;border-radius:16px;">
 <tr><td style="height:12px"></td></tr>${bullet('Members &amp; first-timers', '— follow-ups so no visitor slips away')}${bullet('Sunday check-in', 'with a QR code — no paper register')}${bullet('Tithes &amp; offerings', 'recorded properly, in your currency')}${bullet('SMS, WhatsApp &amp; email', 'to the whole church, a department or a branch')}${bullet('Flyers in minutes,', 'branch reports and an AI assistant')}<tr><td style="height:12px"></td></tr></table></td></tr>`}
 <tr><td align="center" style="padding:26px 32px 6px;"><a href="${link('signup')}" style="display:inline-block;background:#6c34ff;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;padding:15px 30px;border-radius:999px;">Start your free trial</a>
