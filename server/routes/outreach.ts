@@ -28,7 +28,8 @@ const staff = [
 const str = (v: unknown, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const EMAIL = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/
 /** Safe daily volume for cold outreach from the main domain (configurable). */
-const DAILY_CAP = Number(process.env.OUTREACH_DAILY_CAP || 60)
+// 0 (the default) = no daily limit. Set OUTREACH_DAILY_CAP on Render (e.g. 60) to cap sends per rolling 24 hours.
+const DAILY_CAP = Math.max(0, Number(process.env.OUTREACH_DAILY_CAP) || 0)
 const VIDEO_URL = process.env.OUTREACH_VIDEO_URL || 'https://youtu.be/4TxzwhzIyQ8'
 
 const SITE = (env.siteUrl.includes('localhost') ? 'https://www.ziondesk.com' : env.siteUrl).replace(/\/$/, '')
@@ -179,7 +180,7 @@ outreachRoutes.get(
     const sentToday = (sends ?? []).filter((x) => x.status !== 'failed' && new Date(x.sent_at).getTime() > since).length
     // When the next slots free up: the window is a rolling 24 hours from each send.
     const inWindow = (sends ?? []).filter((x) => x.status !== 'failed' && new Date(x.sent_at).getTime() > since).map((x) => new Date(x.sent_at).getTime()).sort((p, q) => p - q)
-    const nextSlotAt = inWindow.length >= DAILY_CAP ? new Date(inWindow[inWindow.length - DAILY_CAP] + 864e5).toISOString() : null
+    const nextSlotAt = DAILY_CAP && inWindow.length >= DAILY_CAP ? new Date(inWindow[inWindow.length - DAILY_CAP] + 864e5).toISOString() : null
     const pending = list.filter((c) => !c.researched_at && !['unsubscribed', 'bounced', 'signed_up'].includes(c.status)).length
     if (pending) void enrichPending()
     res.json({ contacts: list, campaigns: campaigns ?? [], stats, dailyCap: DAILY_CAP, sentToday, nextSlotAt, templates: TEMPLATES, emailReady: configured.email, pending, aiReady: Boolean(process.env.ANTHROPIC_API_KEY) })
@@ -421,7 +422,7 @@ outreachRoutes.post(
     const audience = AUDIENCES.includes(req.body?.audience) ? (req.body.audience as (typeof AUDIENCES)[number]) : 'new'
     const want = Math.max(1, Math.min(100, Number(req.body?.limit) || 50))
     const { data: recent } = await db().from('outreach_sends').select('id').neq('status', 'failed').gte('sent_at', new Date(Date.now() - 864e5).toISOString())
-    const left = Math.max(0, DAILY_CAP - (recent ?? []).length)
+    const left = DAILY_CAP ? Math.max(0, DAILY_CAP - (recent ?? []).length) : Infinity
     if (!left) throw new HttpError(429, `Daily limit reached (${DAILY_CAP} emails in 24 hours) — this protects ziondesk.com from spam filters. You can send again in a few hours.`)
 
     const [{ data: contacts }, { data: already }] = await Promise.all([
@@ -438,7 +439,7 @@ outreachRoutes.post(
       pool = pool.filter((x) => ids.has(x.id))
     }
     const batch = pool.slice(0, Math.min(want, left))
-    if (!batch.length) return res.json({ sent: 0, failed: 0, left, eligible: 0 })
+    if (!batch.length) return res.json({ sent: 0, failed: 0, left: DAILY_CAP ? left : null, eligible: 0 })
 
     // Claim, then send.
     const { data: claimed, error } = await db()
@@ -467,7 +468,7 @@ outreachRoutes.post(
       ),
     )
     if (failure) throw new HttpError(502, failure)
-    res.json({ sent: go.length, failed: 0, left: left - go.length, eligible: pool.length - go.length })
+    res.json({ sent: go.length, failed: 0, left: DAILY_CAP ? left - go.length : null, eligible: pool.length - go.length })
   }),
 )
 

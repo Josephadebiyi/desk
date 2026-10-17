@@ -129,7 +129,7 @@ export function AdminOutreach() {
             <div className="adm-kpi"><small>Clicked</small><b>{pct(totals.clicked, totals.reached)}</b><em>{totals.clicked} churches</em></div>
             <div className="adm-kpi"><small>Signed up</small><b>{totals.signed}</b></div>
             <div className="adm-kpi"><small>Opted out</small><b>{totals.out}</b></div>
-            <div className="adm-kpi"><small>Sent last 24 h</small><b>{data.sentToday}/{data.dailyCap}</b></div>
+            <div className="adm-kpi"><small>Sent last 24 h</small><b>{data.dailyCap ? `${data.sentToday}/${data.dailyCap}` : data.sentToday}</b></div>
           </div>
           {data.pending > 0 && (
             <p className="adm-ok" style={{ marginTop: 12 }}>
@@ -312,7 +312,7 @@ function Campaigns({ data, reload, setMsg, setOk }: Ctx) {
   const [audience, setAudience] = useState('new')
   const [size, setSize] = useState(20)
   const [busy, setBusy] = useState('')
-  const left = Math.max(0, data.dailyCap - data.sentToday)
+  const left = data.dailyCap ? Math.max(0, data.dailyCap - data.sentToday) : 100
 
   useEffect(() => {
     if (!sel) return setPreview('')
@@ -406,8 +406,8 @@ function Campaigns({ data, reload, setMsg, setOk }: Ctx) {
               onClick={() =>
                 window.confirm(`Send “${sel.name}” to up to ${Math.min(size, left)} churches (${AUDIENCE[audience].toLowerCase()})?`) &&
                 run('send', async () => {
-                  const r = await api<{ sent: number; left: number; eligible: number }>(`/admin/outreach/campaigns/${sel.id}/send`, { audience, limit: Math.min(size, left) })
-                  return r.sent ? `Sent to ${r.sent} churches. ${r.eligible} more waiting · ${r.left} left today.` : 'Nobody to send to in this audience.'
+                  const r = await api<{ sent: number; left: number | null; eligible: number }>(`/admin/outreach/campaigns/${sel.id}/send`, { audience, limit: Math.min(size, left) })
+                  return r.sent ? `Sent to ${r.sent} churches. ${r.eligible} more waiting${r.left == null ? '' : ` · ${r.left} left today`}.` : 'Nobody to send to in this audience.'
                 })
               }
             >
@@ -415,7 +415,7 @@ function Campaigns({ data, reload, setMsg, setOk }: Ctx) {
             </button>
           </div>
           <p className="adm-empty" style={{ textAlign: 'left', padding: '8px 0 0' }}>
-            {left ? `${left} of ${data.dailyCap} sends left in the next 24 hours — small daily batches keep you out of spam folders.` : `Daily limit reached (${data.dailyCap} per 24 hours, to keep ziondesk.com out of spam folders). Sending reopens ${data.nextSlotAt ? new Date(data.nextSlotAt).toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' }) : 'soon'}.`} A church never gets the same campaign twice; opted-out and signed-up churches are skipped.
+            {!data.dailyCap ? 'No daily limit — up to 100 per click. Sending in batches of 30–50 a day still helps keep ziondesk.com out of spam folders.' : left ? `${left} of ${data.dailyCap} sends left in the next 24 hours — small daily batches keep you out of spam folders.` : `Daily limit reached (${data.dailyCap} per 24 hours, to keep ziondesk.com out of spam folders). Sending reopens ${data.nextSlotAt ? new Date(data.nextSlotAt).toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' }) : 'soon'}.`} A church never gets the same campaign twice; opted-out and signed-up churches are skipped.
           </p>
           <div className="adm-row-actions" style={{ margin: '10px 0 14px' }}>
             <button type="button" className="adm-btn ghost" disabled={!!busy} onClick={() => run('test', async () => `Test sent to ${(await api<{ to: string }>(`/admin/outreach/campaigns/${sel.id}/test`, {})).to}.`)}>
