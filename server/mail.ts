@@ -26,7 +26,8 @@ export interface Outgoing {
 export function compose(kind: EmailKind, lang: unknown, to: string, vars: Record<string, string | number>, url?: string, opts: { unsubscribeUrl?: string; church?: { name: string; logoUrl?: string | null; email?: string | null } } = {}): Outgoing {
   const r = renderEmail({ kind, lang: asEmailLang(lang), vars, url, siteUrl: env.siteUrl, unsubscribeUrl: opts.unsubscribeUrl, church: opts.church })
   if (opts.church) {
-    const replyTo = opts.church.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(opts.church.email) ? opts.church.email : undefined
+    // One address, or a few admins' addresses separated by commas (from churchBrand).
+    const replyTo = opts.church.email && opts.church.email.split(',').every((e) => EMAIL_OK.test(e.trim())) ? opts.church.email : undefined
     return { to, ...r, fromName: opts.church.name.slice(0, 70) || undefined, ...(replyTo ? { replyTo } : {}) }
   }
   // One-click unsubscribe (Gmail / Yahoo bulk-sender rules) for marketing-type emails.
@@ -34,6 +35,7 @@ export function compose(kind: EmailKind, lang: unknown, to: string, vars: Record
   return { to, ...r, ...(headers ? { headers } : {}) }
 }
 
+const EMAIL_OK = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/
 export type ChurchBrand = { name: string; logoUrl?: string | null; email?: string | null }
 const brands = new Map<string, { at: number; brand: ChurchBrand }>()
 /** A church's name, logo and email for emails it sends to its own people (cached for 5 minutes). */
@@ -41,7 +43,13 @@ export async function churchBrand(churchId: string): Promise<ChurchBrand> {
   const hit = brands.get(churchId)
   if (hit && Date.now() - hit.at < 300_000) return hit.brand
   const { data } = await db().from('churches').select('name, logo_url, email').eq('id', churchId).maybeSingle()
-  const brand = { name: (data?.name as string) ?? '', logoUrl: (data?.logo_url as string | null) ?? null, email: (data?.email as string | null) ?? null }
+  let email = String(data?.email ?? '').trim()
+  // No church email in Church profile: replies go to the church's admins, never to ZionDesk.
+  if (!EMAIL_OK.test(email)) {
+    const { data: admins } = await db().from('church_users').select('profiles(email)').eq('church_id', churchId).eq('role', 'admin').limit(3)
+    email = ((admins ?? []) as unknown as { profiles: { email: string } | null }[]).map((a) => a.profiles?.email ?? '').filter((e) => EMAIL_OK.test(e)).join(', ')
+  }
+  const brand = { name: (data?.name as string) ?? '', logoUrl: (data?.logo_url as string | null) ?? null, email: email || null }
   brands.set(churchId, { at: Date.now(), brand })
   return brand
 }
@@ -66,7 +74,7 @@ const payload = (m: Outgoing) => ({
   html: m.html,
   text: m.text,
   ...(m.headers ? { headers: m.headers } : {}),
-  ...(m.replyTo ? { reply_to: m.replyTo } : env.emailReplyTo ? { reply_to: env.emailReplyTo } : {}),
+  ...(m.replyTo ? { reply_to: m.replyTo.split(',').map((e) => e.trim()) } : env.emailReplyTo ? { reply_to: env.emailReplyTo } : {}),
 })
 
 export async function sendEmail(m: Outgoing): Promise<string | undefined> {
