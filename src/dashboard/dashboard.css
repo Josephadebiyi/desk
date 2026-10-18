@@ -1133,3 +1133,46 @@ button.d-me:focus-visible, .tm .d-icon-btn:focus-visible { outline: 2px solid va
 .lc-tools { display: grid; gap: 10px; padding: 12px; border-radius: 14px; background: var(--d-row); }
 .lc-tools input[type=range] { width: 100%; accent-color: var(--purple); }
 @media (max-width: 720px) { .lc { grid-template-columns: 1fr; } }
+
+/* Settings → Connected churches */
+.cn { display: grid; gap: 16px; }
+.cn .d-hint-box { margin: 0; }
+.cn-group { display: grid; gap: 10px; }
+.cn-group h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.cn-card { display: grid; gap: 12px; }
+.cn-card header { display: flex; align-items: center; gap: 12px; }
+.cn-card header > div { display: grid; flex: 1; min-width: 0; }
+.cn-card header b { font-size: 16px; overflow: hidden; text-overflow: ellipsis; }
+.cn-card header small { color: var(--muted); font-size: 12.5px; }
+.cn-card header img, .cn-av { width: 44px; height: 44px; border-radius: 12px; object-fit: contain; background: var(--d-panel-2); flex-shrink: 0; }
+.cn-av { display: grid; place-items: center; font-weight: 700; font-size: 14px; color: var(--purple); }
+.cn-facts { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; padding: 0; margin: 0; font-size: 13.5px; color: var(--muted); }
+.cn-facts li { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.cn-facts a { color: var(--text); }
+.cn-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.cn-stats span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--d-panel-2); font-size: 13px; font-weight: 600; }
+.cn-events { display: grid; gap: 6px; font-size: 13.5px; }
+.cn-events > small { color: var(--muted); font-weight: 600; }
+.cn-events > div { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cn-row { display: flex; gap: 8px; min-width: 0; }
+.cn-row input { flex: 1; min-width: 0; height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
+.cn-join.is-invite { border: 2px solid var(--purple); }
+.cn-confirm { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, var(--purple) 8%, var(--d-panel)); font-size: 14px; line-height: 1.5; }
+.cn-err { margin: 8px 0 0; color: #d33; font-size: 13.5px; }
+.cn-ok { margin: 0; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, #2fbf71 12%, var(--d-panel)); color: var(--text); font-size: 13.5px; }
+.cn-invite { display: grid; gap: 14px; }
+.cn-invite .d-panel-head { margin-bottom: 0; }
+.cn-as { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; font-size: 14px; }
+.cn-as legend { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.cn-as label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.cn-as label.is-off { opacity: 0.45; cursor: default; }
+.cn-or { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); }
+.cn-codes { display: grid; gap: 8px; }
+.cn-codes > small { color: var(--muted); font-weight: 600; }
+.cn-code { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--d-panel-2); font-size: 13px; color: var(--muted); }
+.cn-code code { font-size: 15px; font-weight: 700; letter-spacing: 0.06em; color: var(--text); }
+.cn-code span { flex: 1; min-width: 0; }
+@media (max-width: 560px) {
+  .cn-card header { flex-wrap: wrap; }
+  .cn-row { flex-direction: column; }
+}

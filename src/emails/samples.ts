@@ -15,6 +15,7 @@ export const SAMPLE_VARS: Record<string, string | number> = {
   prayer: 'May this new year of your life overflow with God’s grace, peace and joy. May He guide every step you take.',
   subject: 'What’s new in ZionDesk this month',
   branch: 'Lekki',
+  other: 'Grace Chapel Lekki',
   period: 'October 2026',
   branches: 'Lekki, Ikeja, Abuja',
   note: 'The building fund total doesn’t match the bank statement. Please check.',
@@ -28,6 +29,7 @@ export const EMAIL_GROUPS: { title: string; kinds: string[] }[] = [
   { title: 'Billing', kinds: ['subscriptionConfirmed', 'paymentReceipt', 'trialEnding', 'paymentFailed', 'planExpired', 'promoEnded'] },
   { title: 'Newsletter', kinds: ['newsletter'] },
   { title: 'Support & flyer requests', kinds: ['supportReceived', 'flyerReceived'] },
+  { title: 'Connected churches', kinds: ['churchInviteSub', 'churchInviteHead', 'churchConnected', 'churchDisconnected'] },
   { title: 'Branch reports', kinds: ['branchReminder', 'branchOverdue', 'branchMissing', 'branchSubmitted', 'branchReturned'] },
   { title: 'Sent by churches to members', kinds: ['registered', 'message', 'giftReceipt', 'claimReceived', 'claimAlert', 'birthday', 'birthdayPrayer', 'eventReminder', 'meetingInvite'] },
 ]

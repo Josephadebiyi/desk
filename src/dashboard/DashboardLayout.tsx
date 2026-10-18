@@ -401,7 +401,8 @@ export default function DashboardLayout() {
           <span className="spinner dark" /> {t('common.loading')}
         </div>
       )
-    if (!session.session) return <Navigate to="/login" replace />
+    // Links from emails (e.g. a church invitation) come back to the same page after signing in.
+    if (!session.session) return <Navigate to={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`} replace />
     if (!session.church) return <Navigate to="/register?step=church" replace />
   }
   return (

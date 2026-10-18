@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, apiChurch, apiUrl } from '../lib/api'
 import { updatePassword, uploadLogo } from '../lib/auth'
 import { LogoCheck } from './LogoCheck'
+import { Connections } from './Connections'
 import { useSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
 import { GoogleMeetLogo } from '../components/GoogleMeet'
@@ -24,7 +25,7 @@ import { ONLINE_GIVING } from '../lib/features'
 
 const ROLES: Role[] = ['admin', 'finance', 'leader', 'branch']
 
-type Tab = 'account' | 'language' | 'profile' | 'structure' | 'team' | 'plan' | 'ai' | 'integrations' | 'data'
+type Tab = 'account' | 'language' | 'profile' | 'structure' | 'connections' | 'team' | 'plan' | 'ai' | 'integrations' | 'data'
 const CURRENCIES: readonly string[] = CHURCH_CURRENCIES
 
 function Saved({ show }: { show: boolean }) {
@@ -1085,6 +1086,7 @@ export default function Settings() {
       ? ([
           { id: 'profile', label: t('settings.tabs.profile') },
           { id: 'structure', label: t('settings.tabs.structure') },
+          { id: 'connections', label: t('conn.tab') },
           { id: 'team', label: t('settings.tabs.team') },
           { id: 'plan', label: t('settings.tabs.plan') },
           { id: 'ai', label: t('settings.tabs.ai') },
@@ -1104,6 +1106,7 @@ export default function Settings() {
       {tab === 'language' && <LanguageSettings />}
       {tab === 'profile' && <Profile />}
       {tab === 'structure' && <Structure />}
+      {tab === 'connections' && <Connections />}
       {tab === 'team' && <Team />}
       {tab === 'plan' && <Plan />}
       {tab === 'ai' && <ChurchAiSettings />}
