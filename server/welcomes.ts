@@ -31,7 +31,7 @@ const FALLBACK_TEAM: Record<EmailLang, string> = {
   pt: 'Obrigado por servir em {church}. O ZionDesk reúne membros, ofertas, mensagens e eventos num só lugar, para você gastar menos tempo com administração e mais com as pessoas. Eu sou a Ellen e estarei aqui para ajudar sempre que precisar.',
 }
 
-const SYSTEM = `You are Ellen, the friendly assistant of a church on ZionDesk, writing the personal note inside a welcome email.
+const SYSTEM = `You write the short personal note inside a church's welcome email. For a "member" you write as the church itself ("we"), and never mention ZionDesk, Ellen, an app, an account or signing in; for a "team" person you write as Ellen, ZionDesk's assistant.
 Rules:
 - 2 or 3 short sentences, warm and natural, in the requested language, addressed to the person by first name.
 - For a "member": welcome them into the church family; you may lightly mention their department or that they are new (a first-time guest, new believer, member or worker). One gentle Scripture theme is fine, no long quotes.
@@ -76,7 +76,7 @@ export async function welcomeMember(memberId: string): Promise<boolean> {
   try {
     const id = await sendEmail(compose('memberWelcome', lang, m.email, { name: first, church: church?.name ?? '', ellen: note }, undefined, { church: await churchBrand(m.church_id) }))
     await settleDelivery(claim.id, { status: 'sent', providerId: id ?? null, body: note })
-    await db().from('communications').insert({ church_id: m.church_id, member_id: m.id, channel: 'Email', summary: 'Welcome email from Ellen', by_name: 'Ellen' })
+    await db().from('communications').insert({ church_id: m.church_id, member_id: m.id, channel: 'Email', summary: 'Welcome email from Ellen', by_name: 'Welcome email' })
     return true
   } catch (e) {
     await settleDelivery(claim.id, { status: 'failed', error: e instanceof Error ? e.message : String(e) })

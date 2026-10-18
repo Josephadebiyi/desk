@@ -1,6 +1,6 @@
 /**
- * Ellen's welcome emails: to a new member of a church (sent as the church — church logo and name, no ZionDesk
- * branding or account wording: members never sign in), and to a new team member (with the link to create their
+ * Ellen's welcome emails: to a new member of a church (sent as the church — church logo and name, signed by the
+ * church, no ZionDesk or Ellen branding and no account wording: members never sign in), and to a new team member (with the link to create their
  * password and sign in). {ellen} is Ellen's personal note (written by Claude, or a standard one).
  * Vars: {name} {church} {ellen} — team only: {inviter} {role} {email}
  */
@@ -15,7 +15,7 @@ export const GREETING_EMAILS: Record<EmailLang, Record<GreetingKind, EmailCopy>>
       subject: 'Welcome to {church}, {name}!',
       eyebrow: '{church}',
       title: 'Welcome to the family, {name}!',
-      body: ['{ellen}', 'If you ever have a question or a prayer request, just reply to this email.', 'With love,<br /><b>Ellen</b>, on behalf of {church}'],
+      body: ['{ellen}', 'If you ever have a question or a prayer request, just reply to this email.', 'With love,<br /><b>{church}</b>'],
       note: 'You’re receiving this because you’re part of {church}.',
     },
     teamWelcome: {
@@ -32,7 +32,7 @@ export const GREETING_EMAILS: Record<EmailLang, Record<GreetingKind, EmailCopy>>
       subject: '¡Bienvenido a {church}, {name}!',
       eyebrow: '{church}',
       title: '¡Bienvenido a la familia, {name}!',
-      body: ['{ellen}', 'Si tienes alguna pregunta o petición de oración, responde a este correo.', 'Con cariño,<br /><b>Ellen</b>, en nombre de {church}'],
+      body: ['{ellen}', 'Si tienes alguna pregunta o petición de oración, responde a este correo.', 'Con cariño,<br /><b>{church}</b>'],
       note: 'Recibes este correo porque formas parte de {church}.',
     },
     teamWelcome: {
@@ -49,7 +49,7 @@ export const GREETING_EMAILS: Record<EmailLang, Record<GreetingKind, EmailCopy>>
       subject: 'Bienvenue à {church}, {name} !',
       eyebrow: '{church}',
       title: 'Bienvenue dans la famille, {name} !',
-      body: ['{ellen}', 'Pour toute question ou demande de prière, il suffit de répondre à cet e-mail.', 'Avec affection,<br /><b>Ellen</b>, au nom de {church}'],
+      body: ['{ellen}', 'Pour toute question ou demande de prière, il suffit de répondre à cet e-mail.', 'Avec affection,<br /><b>{church}</b>'],
       note: 'Vous recevez cet e-mail car vous faites partie de {church}.',
     },
     teamWelcome: {
@@ -66,7 +66,7 @@ export const GREETING_EMAILS: Record<EmailLang, Record<GreetingKind, EmailCopy>>
       subject: 'Willkommen bei {church}, {name}!',
       eyebrow: '{church}',
       title: 'Willkommen in der Familie, {name}!',
-      body: ['{ellen}', 'Wenn du eine Frage oder ein Gebetsanliegen hast, antworte einfach auf diese E-Mail.', 'Herzlich,<br /><b>Ellen</b>, im Namen von {church}'],
+      body: ['{ellen}', 'Wenn du eine Frage oder ein Gebetsanliegen hast, antworte einfach auf diese E-Mail.', 'Herzlich,<br /><b>{church}</b>'],
       note: 'Du erhältst diese E-Mail, weil du zu {church} gehörst.',
     },
     teamWelcome: {
@@ -83,7 +83,7 @@ export const GREETING_EMAILS: Record<EmailLang, Record<GreetingKind, EmailCopy>>
       subject: 'Bem-vindo a {church}, {name}!',
       eyebrow: '{church}',
       title: 'Bem-vindo à família, {name}!',
-      body: ['{ellen}', 'Se tiver alguma pergunta ou pedido de oração, é só responder a este e-mail.', 'Com carinho,<br /><b>Ellen</b>, em nome de {church}'],
+      body: ['{ellen}', 'Se tiver alguma pergunta ou pedido de oração, é só responder a este e-mail.', 'Com carinho,<br /><b>{church}</b>'],
       note: 'Você recebe este e-mail porque faz parte de {church}.',
     },
     teamWelcome: {
