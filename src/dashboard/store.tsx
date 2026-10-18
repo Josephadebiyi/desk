@@ -3,6 +3,7 @@ import { seedMembers } from './seed'
 import { uid, type Communication, type Gift, type Member, type MemberInput, type Role } from './types'
 import { useSession } from '../lib/session'
 import { loadMembers, members as db } from '../data/remote'
+import { api } from '../lib/api'
 
 /**
  * Member store. Persists to localStorage for the trial/preview build.
@@ -108,7 +109,11 @@ export function MemberStoreProvider({ children, demo = false }: { children: Reac
       addMember: (m) => {
         const member: Member = { ...m, id: uid(), communications: [], giving: [] }
         setMembers((all) => [member, ...all])
-        if (live) db.insert(churchId, member)
+        // Once saved, Ellen emails them a welcome (the server sends it once, and skips it when welcomes are off).
+        if (live)
+          void db.insert(churchId, member).then((ok) => {
+            if (ok && member.email) api(`/members/${member.id}/welcome`, {}).catch((e) => console.error('[welcome]', e))
+          })
         return member
       },
       updateMember: (id, m) => {

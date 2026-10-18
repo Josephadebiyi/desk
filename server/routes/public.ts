@@ -11,6 +11,7 @@ import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, route } from '../db'
 import { configured, env } from '../env'
 import { compose, sendEmail, sendEmails } from '../mail'
+import { welcomeMember } from '../welcomes'
 
 export const publicRoutes = Router()
 
@@ -113,8 +114,10 @@ publicRoutes.post(
     if (error) throw error
     await db().from('communications').insert({ church_id: church.id, member_id: member.id, channel: 'Note', summary: `__selfreg:${type}:${language}`, by_name: 'ZionDesk' })
 
+    // Ellen's welcome (once per member); the plain "thanks for registering" email if welcomes are switched off.
     if (email && configured.email) {
-      await sendEmail(compose('registered', language, email, { church: church.name, name: fullName.split(' ')[0] })).catch((e) => console.error('[register email]', e))
+      const welcomed = await welcomeMember(member.id).catch((e) => (console.error('[register welcome]', e), false))
+      if (!welcomed) await sendEmail(compose('registered', language, email, { church: church.name, name: fullName.split(' ')[0] })).catch((e) => console.error('[register email]', e))
     }
     res.json({ ok: true })
   }),

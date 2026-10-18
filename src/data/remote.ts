@@ -102,7 +102,12 @@ export async function loadMembers(churchId: string): Promise<Member[]> {
 }
 
 export const members = {
-  insert: (churchId: string, m: Member, source = 'manual') => bg(sb().from('members').insert({ ...memberToRow(churchId, m), source }), 'add member'),
+  /** Resolves true once the row is saved (the query runs once; errors are logged like other syncs). */
+  insert: (churchId: string, m: Member, source = 'manual') => {
+    const p = Promise.resolve(sb().from('members').insert({ ...memberToRow(churchId, m), source }))
+    bg(p, 'add member')
+    return p.then((r) => !r.error, () => false)
+  },
   insertMany: async (churchId: string, list: Member[]) => {
     for (let i = 0; i < list.length; i += 500) bg(sb().from('members').insert(list.slice(i, i + 500).map((m) => ({ ...memberToRow(churchId, m), source: 'import' }))), 'import members')
   },

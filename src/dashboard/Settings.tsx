@@ -811,6 +811,9 @@ function ChurchAiSettings() {
           <label className="d-inline-check" style={{ alignSelf: 'end' }}>
             <input type="checkbox" checked={s.suggestions} onChange={(e) => ai.updateSettings({ suggestions: e.target.checked })} /> {t('settings.ai.suggestions')}
           </label>
+          <label className="d-inline-check" style={{ gridColumn: '1 / -1' }}>
+            <input type="checkbox" checked={s.welcomeEmails !== false} onChange={(e) => ai.updateSettings({ welcomeEmails: e.target.checked })} /> {t('settings.ai.welcomeEmails')}
+          </label>
         </div>
       </section>
 

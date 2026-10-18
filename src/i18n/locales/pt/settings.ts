@@ -146,6 +146,7 @@ const settings: Dict['settings'] = {
     enable: 'Ativar {name}',
     langNote: 'A Ellen responde no idioma da app de cada pessoa ou no idioma em que escreve.',
     suggestions: 'Mostrar sugestões proativas',
+    welcomeEmails: "A Ellen envia um e-mail de boas-vindas a cada novo membro (adicionado aqui ou pelo link / QR de cadastro)",
     costs: 'Custo estimado das mensagens',
     costsNote: 'Mostrado antes de qualquer envio em massa para ver o custo primeiro.',
     perMessage: '{channel} (USD por mensagem)',

@@ -17,6 +17,7 @@ import { logOutbound } from '../inbox'
 import { withChurchName } from '../../src/emails/sender'
 import { ageOn, birthdayPrayers, prayersEnabled } from '../prayers'
 import { smsUsage } from '../smsQuota'
+import { teamNote, welcomeMember } from '../welcomes'
 
 export const appRoutes = Router()
 appRoutes.get('/sms/usage', requireCaller(), route(async (req, res) => { res.json(await smsUsage(req.caller!.churchId)) }))
@@ -77,9 +78,23 @@ appRoutes.post(
       url = data.properties.action_link
     }
     if (configured.email) {
-      await sendEmail(compose('teamInvite', lang, email, { name: name.split(' ')[0], inviter: req.caller!.name || req.caller!.email, church: church?.name ?? '', role: ROLE_NAME[lang][role] }, url))
+      const vars = { name: name.split(' ')[0], inviter: req.caller!.name || req.caller!.email, church: church?.name ?? '', role: ROLE_NAME[lang][role], email }
+      // New to ZionDesk: Ellen's welcome with the "Create my password" link. Already has an account: the sign-in invite.
+      if (existing) await sendEmail(compose('teamInvite', lang, email, vars, url))
+      else await sendEmail(compose('teamWelcome', lang, email, { ...vars, ellen: await teamNote({ firstName: vars.name, church: vars.church, lang, role: vars.role }) }, url))
     }
     res.json({ ok: true, emailed: configured.email })
+  }),
+)
+
+/** Ellen's welcome email to a member just added in the dashboard (sent once; skipped when welcomes are off). */
+appRoutes.post(
+  '/members/:id/welcome',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    const { data: m } = await db().from('members').select('id, church_id').eq('id', req.params.id).maybeSingle()
+    if (!m || m.church_id !== req.caller!.churchId) throw new HttpError(404, 'Member not found')
+    res.json({ sent: await welcomeMember(m.id) })
   }),
 )
 

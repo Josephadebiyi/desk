@@ -146,6 +146,7 @@ const settings: Dict['settings'] = {
     enable: '{name} aktivieren',
     langNote: 'Ellen antwortet in der App-Sprache jeder Person oder in der Sprache, in der geschrieben wird.',
     suggestions: 'Proaktive Vorschläge anzeigen',
+    welcomeEmails: "Ellen schickt jedem neuen Mitglied eine Willkommens-E-Mail (hier hinzugefügt oder über den Anmelde-Link / QR-Code)",
     costs: 'Geschätzte Nachrichtenkosten',
     costsNote: 'Wird vor jedem Massenversand angezeigt, damit du die Kosten zuerst siehst.',
     perMessage: '{channel} (USD pro Nachricht)',

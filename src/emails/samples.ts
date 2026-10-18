@@ -16,6 +16,8 @@ export const SAMPLE_VARS: Record<string, string | number> = {
   subject: 'What’s new in ZionDesk this month',
   branch: 'Lekki',
   other: 'Grace Chapel Lekki',
+  ellen: 'We’re so glad you’ve joined the Worship team at Grace Chapel, Ade. Like the psalmist, may your songs be a sweet offering, and may you find real friendship here.',
+  email: 'ade@example.com',
   period: 'October 2026',
   branches: 'Lekki, Ikeja, Abuja',
   note: 'The building fund total doesn’t match the bank statement. Please check.',
@@ -24,12 +26,12 @@ export const SAMPLE_VARS: Record<string, string | number> = {
 
 /** Groups for the admin email gallery. */
 export const EMAIL_GROUPS: { title: string; kinds: string[] }[] = [
-  { title: 'Account & sign-up', kinds: ['welcomeAccount', 'confirmSignup', 'resetPassword', 'magicLink', 'emailChange', 'teamInvite', 'accountDeleted'] },
+  { title: 'Account & sign-up', kinds: ['welcomeAccount', 'confirmSignup', 'resetPassword', 'magicLink', 'emailChange', 'teamInvite', 'teamWelcome', 'accountDeleted'] },
   { title: 'Finish sign-up reminders (weekly)', kinds: ['finishSignup1', 'finishSignup2', 'finishSignup3', 'finishSignup4'] },
   { title: 'Billing', kinds: ['subscriptionConfirmed', 'paymentReceipt', 'trialEnding', 'paymentFailed', 'planExpired', 'promoEnded'] },
   { title: 'Newsletter', kinds: ['newsletter'] },
   { title: 'Support & flyer requests', kinds: ['supportReceived', 'flyerReceived'] },
   { title: 'Connected churches', kinds: ['churchInviteSub', 'churchInviteHead', 'churchConnected', 'churchDisconnected'] },
   { title: 'Branch reports', kinds: ['branchReminder', 'branchOverdue', 'branchMissing', 'branchSubmitted', 'branchReturned'] },
-  { title: 'Sent by churches to members', kinds: ['registered', 'message', 'giftReceipt', 'claimReceived', 'claimAlert', 'birthday', 'birthdayPrayer', 'eventReminder', 'meetingInvite'] },
+  { title: 'Sent by churches to members', kinds: ['memberWelcome', 'registered', 'message', 'giftReceipt', 'claimReceived', 'claimAlert', 'birthday', 'birthdayPrayer', 'eventReminder', 'meetingInvite'] },
 ]

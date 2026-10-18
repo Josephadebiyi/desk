@@ -145,6 +145,7 @@ export default {
     enable: 'Enable {name}',
     langNote: 'Ellen answers in each person’s app language, or in the language they write in.',
     suggestions: 'Show proactive suggestions',
+    welcomeEmails: "Ellen emails a welcome to every new member (added here or through the QR / join link)",
     costs: 'Message cost estimates',
     costsNote: 'Shown before any bulk send so you can see the cost first.',
     perMessage: '{channel} (USD per message)',

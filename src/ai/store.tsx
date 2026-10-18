@@ -17,6 +17,8 @@ export interface AiSettings {
   enabled: ProviderStatus['enabled']
   language: string
   suggestions: boolean
+  /** Ellen emails a welcome to each new member (dashboard or QR join). On unless switched off. */
+  welcomeEmails: boolean
   /** Monthly limits per plan and feature — editable by the SaaS administrator. */
   limits: Record<PlanId, Record<UsageFeature, number>>
   /** Credits each action consumes — editable. */
@@ -54,6 +56,7 @@ const DEFAULT_SETTINGS: AiSettings = {
   enabled: { claude: true, gemini: false, openai: false },
   language: 'English',
   suggestions: true,
+  welcomeEmails: true,
   limits: {
     essentials: { requests: 300, designs: 7, imageEdits: 20, transcriptionHours: 0, clips: 0, storageGb: 5 },
     plus: { requests: 1000, designs: 12, imageEdits: 100, transcriptionHours: 15, clips: 30, storageGb: 50 },

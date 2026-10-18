@@ -10,6 +10,7 @@ import { LIFECYCLE, type LifecycleKind } from './lifecycle'
 import { BRANCH_EMAILS, type BranchKind } from './branches'
 import { SUPPORT_EMAILS, type SupportKind } from './support'
 import { CONNECTION_EMAILS, type ConnectionKind } from './connections'
+import { GREETING_EMAILS, type GreetingKind } from './greetings'
 
 type BaseKind =
   | 'confirmSignup'
@@ -30,7 +31,7 @@ type BaseKind =
   | 'planExpired'
   | 'birthdayPrayer'
   | 'promoEnded'
-export type EmailKind = BaseKind | LifecycleKind | BranchKind | SupportKind | ConnectionKind
+export type EmailKind = BaseKind | LifecycleKind | BranchKind | SupportKind | ConnectionKind | GreetingKind
 
 export interface EmailCopy {
   subject: string
@@ -229,9 +230,9 @@ const pt: Catalog = {
 }
 
 export const CATALOG: Record<EmailLang, Record<EmailKind, EmailCopy>> = {
-  en: { ...en, ...LIFECYCLE.en, ...BRANCH_EMAILS.en, ...SUPPORT_EMAILS.en, ...CONNECTION_EMAILS.en },
-  es: { ...es, ...LIFECYCLE.es, ...BRANCH_EMAILS.es, ...SUPPORT_EMAILS.es, ...CONNECTION_EMAILS.es },
-  fr: { ...fr, ...LIFECYCLE.fr, ...BRANCH_EMAILS.fr, ...SUPPORT_EMAILS.fr, ...CONNECTION_EMAILS.fr },
-  de: { ...de, ...LIFECYCLE.de, ...BRANCH_EMAILS.de, ...SUPPORT_EMAILS.de, ...CONNECTION_EMAILS.de },
-  pt: { ...pt, ...LIFECYCLE.pt, ...BRANCH_EMAILS.pt, ...SUPPORT_EMAILS.pt, ...CONNECTION_EMAILS.pt },
+  en: { ...en, ...LIFECYCLE.en, ...BRANCH_EMAILS.en, ...SUPPORT_EMAILS.en, ...CONNECTION_EMAILS.en, ...GREETING_EMAILS.en },
+  es: { ...es, ...LIFECYCLE.es, ...BRANCH_EMAILS.es, ...SUPPORT_EMAILS.es, ...CONNECTION_EMAILS.es, ...GREETING_EMAILS.es },
+  fr: { ...fr, ...LIFECYCLE.fr, ...BRANCH_EMAILS.fr, ...SUPPORT_EMAILS.fr, ...CONNECTION_EMAILS.fr, ...GREETING_EMAILS.fr },
+  de: { ...de, ...LIFECYCLE.de, ...BRANCH_EMAILS.de, ...SUPPORT_EMAILS.de, ...CONNECTION_EMAILS.de, ...GREETING_EMAILS.de },
+  pt: { ...pt, ...LIFECYCLE.pt, ...BRANCH_EMAILS.pt, ...SUPPORT_EMAILS.pt, ...CONNECTION_EMAILS.pt, ...GREETING_EMAILS.pt },
 }
