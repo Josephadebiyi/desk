@@ -16,6 +16,7 @@ import { getLang as getLangOf, getLocale, localeOf, translate, tr, type Lang } f
 import { STAGES, can, type Communication, type Member, type Role } from '../dashboard/types'
 import type { Audience, Campaign, ChurchEvent, Settings, Channel } from '../dashboard/workspace'
 import { uid } from '../dashboard/types'
+import { hasYear } from '../lib/birthday'
 import type { Block, PendingAction, ToolDef, ToolResult } from './types'
 
 export interface ToolContext {
@@ -56,7 +57,7 @@ export const reminderVars = (e: { title: string; date: string; start: string; me
 const firstName = (m: Member) => m.fullName.split(' ')[0]
 const daysAgo = (d: string) => Math.floor((Date.now() - new Date(d + 'T00:00:00').getTime()) / 864e5)
 const age = (dob: string) => {
-  if (!dob) return null
+  if (!hasYear(dob)) return null
   const d = new Date(dob + 'T00:00:00')
   const n = new Date()
   let a = n.getFullYear() - d.getFullYear()

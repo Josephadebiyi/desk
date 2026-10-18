@@ -58,6 +58,6 @@ export async function birthdayPrayers(church: string, people: Celebrant[]): Prom
 
 export const ageOn = (dob: string, today = new Date()) => {
   const d = new Date(dob + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return null
+  if (Number.isNaN(d.getTime()) || d.getFullYear() === 1904) return null // 1904 = birthday given without a year
   return today.getFullYear() - d.getFullYear()
 }

@@ -8,7 +8,7 @@ export const COLUMNS: { key: keyof MemberInput; label: string; tkey: string; ali
   { key: 'whatsapp', label: 'WhatsApp', tkey: 'members.whatsapp', aliases: ['whatsapp number', 'whatsapp no'] },
   { key: 'email', label: 'Email', tkey: 'members.email', aliases: ['email address', 'e-mail'] },
   { key: 'gender', label: 'Gender', tkey: 'members.gender', aliases: ['sex'] },
-  { key: 'dob', label: 'Date of birth', tkey: 'members.dob', aliases: ['dob', 'birthday', 'birth date', 'date of birth'] },
+  { key: 'dob', label: 'Birthday', tkey: 'members.dob', aliases: ['dob', 'birthday', 'birth date', 'date of birth', 'birth day'] },
   { key: 'address', label: 'Address', tkey: 'members.address', aliases: ['home address', 'residential address'] },
   { key: 'branch', label: 'Branch', tkey: 'members.branch', aliases: ['campus', 'location'] },
   { key: 'department', label: 'Department', tkey: 'members.department', aliases: ['ministry', 'unit', 'team'] },
@@ -31,6 +31,15 @@ function toDate(v: unknown): string {
   if (m) return `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`
   const d = new Date(s)
   return isNaN(+d) ? '' : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** Birthdays: a full date keeps its month + day; '12/03', '12 March', 'March 12' (no year) work too. Stored in 1904. */
+function toBirthday(v: unknown): string {
+  const s = String(v ?? '').trim()
+  const md = s.match(/^(\d{1,2})[/.-](\d{1,2})$/) // dd/mm
+  if (md && +md[2] >= 1 && +md[2] <= 12 && +md[1] >= 1 && +md[1] <= 31) return `1904-${pad(+md[2])}-${pad(+md[1])}`
+  const full = toDate(v) || (s && !/\d{4}/.test(s) ? toDate(`${s} 2000`) : '')
+  return full ? `1904-${full.slice(5)}` : ''
 }
 
 /** Accepts 'es', 'Spanish', 'Español'… */
@@ -97,7 +106,7 @@ export async function parseMemberFile(file: File): Promise<ParsedImport> {
       whatsapp: str('whatsapp'),
       email,
       gender: oneOf([...GENDERS, ''] as const, get('gender'), '', 'gender'),
-      dob: toDate(get('dob')),
+      dob: toBirthday(get('dob')),
       address: str('address'),
       branch: str('branch'),
       department: str('department'),
@@ -123,7 +132,7 @@ function toSheetRows(members: Member[], includeGiving: boolean) {
     const groups: Partial<Record<keyof MemberInput, string>> = { gender: 'gender', membershipStatus: 'status', stage: 'stage' }
     COLUMNS.forEach((c) => {
       const v = (m[c.key] as string) ?? ''
-      row[headerOf(c)] = c.key === 'language' ? LANGS.find((l) => l.code === v)?.native ?? v : groups[c.key] && v ? tr(`enums.${groups[c.key]}.${v}`) : v
+      row[headerOf(c)] = c.key === 'dob' ? (v ? `${v.slice(8, 10)}/${v.slice(5, 7)}` : '') : c.key === 'language' ? LANGS.find((l) => l.code === v)?.native ?? v : groups[c.key] && v ? tr(`enums.${groups[c.key]}.${v}`) : v
     })
     if (includeGiving) row[tr('members.totalGiving')] = m.giving.reduce((s, g) => s + g.amount, 0)
     return row
@@ -146,7 +155,7 @@ export async function exportMembers(members: Member[], format: 'csv' | 'xlsx', i
 export function downloadTemplate() {
   const header = COLUMNS.map(headerOf).join(',')
   const example = [
-    'Grace Okafor', '+234 803 555 0101', '+234 803 555 0101', 'grace@example.com', tr('enums.gender.Female'), '1994-05-12',
+    'Grace Okafor', '+234 803 555 0101', '+234 803 555 0101', 'grace@example.com', tr('enums.gender.Female'), '12/05',
     '12 Admiralty Way', 'Main Campus', 'Worship', tr('enums.status.Active'), '2026-09-28', tr('enums.stage.Newcomer'), tr('pub.heardOpt.friend'), 'English',
   ].map((v) => `"${v}"`).join(',')
   download(new Blob([`${header}\n${example}\n`], { type: 'text/csv;charset=utf-8' }), 'ziondesk-member-import-template.csv')

@@ -13,7 +13,7 @@ const members: Dict['members'] = {
   fullNameReq: 'Nome completo *',
   fullNamePh: 'ex. Grace Okafor',
   gender: 'Género',
-  dob: 'Data de nascimento',
+  dob: 'Aniversário',
   address: 'Morada',
   addressPh: 'Rua, cidade',
   phone: 'Telefone',

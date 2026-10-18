@@ -8,7 +8,7 @@ const pub: Dict['pub'] = {
   sameWa: 'Meine WhatsApp-Nummer ist meine Telefonnummer',
   email: 'E-Mail',
   gender: 'Geschlecht',
-  dob: 'Geburtsdatum',
+  dob: 'Geburtstag',
   address: 'Adresse',
   branch: 'Standort',
   department: 'Bereich, in dem du mitarbeitest',

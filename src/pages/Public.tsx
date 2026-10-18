@@ -18,6 +18,7 @@ import { PhoneInput } from '../components/PhoneInput'
 import { countryFromText } from '../lib/countries'
 import { manualMethods, METHODS as GIVE_METHODS, MethodLogo, publicLabel } from '../lib/giveMethods'
 import { ONLINE_GIVING } from '../lib/features'
+import { BirthdayInput, cleanBirthday } from '../lib/birthday'
 
 /**
  * Public, no-login pages opened from shared links and QR codes:
@@ -201,7 +202,7 @@ function JoinForm() {
       whatsapp: f.sameWa ? f.phone.trim() : f.whatsapp.trim(),
       email: f.email.trim(),
       gender: f.gender,
-      dob: f.dob,
+      dob: cleanBirthday(f.dob),
       address: f.address.trim(),
       branch: f.branch,
       department: type === 'member' ? f.department : '',
@@ -279,7 +280,7 @@ function JoinForm() {
         {type !== 'newcomer' && (
           <label className="pub-field">
             <span>{t('pub.dob')}</span>
-            <input type="date" value={f.dob} onChange={(e) => set('dob', e.target.value)} />
+            <BirthdayInput value={f.dob} onChange={(v) => set('dob', v)} />
           </label>
         )}
         {field('address', t('pub.address'), { autoComplete: 'street-address' })}

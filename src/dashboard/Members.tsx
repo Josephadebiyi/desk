@@ -52,6 +52,7 @@ import {
 } from './types'
 import { PhoneInput } from '../components/PhoneInput'
 import { countryFromText } from '../lib/countries'
+import { BirthdayInput, cleanBirthday, fmtBirthday } from '../lib/birthday'
 
 const PAGE = 15
 
@@ -156,10 +157,22 @@ function MemberForm({
     if (f.phone && !/^[+\d][\d\s()-]{5,}$/.test(f.phone)) err.phone = t('members.errPhone')
     setErrors(err)
     if (Object.keys(err).length) return
-    onSave({ ...f, fullName: f.fullName.trim(), whatsapp: sameWa ? f.phone : f.whatsapp })
+    onSave({ ...f, dob: cleanBirthday(f.dob), fullName: f.fullName.trim(), whatsapp: sameWa ? f.phone : f.whatsapp })
   }
 
-  const homeCountry = countryFromText(useWorkspace().settings.location)?.code
+  const { settings, updateSettings } = useWorkspace()
+  const { role } = useMembers()
+  const homeCountry = countryFromText(settings.location)?.code
+  const [newDept, setNewDept] = useState<string | null>(null)
+  const addDept = () => {
+    const name = (newDept ?? '').trim().slice(0, 60)
+    if (name) {
+      const known = settings.departments.find((d) => d.toLowerCase() === name.toLowerCase())
+      if (!known) updateSettings({ departments: [...settings.departments, name] })
+      set('department', known ?? name)
+    }
+    setNewDept(null)
+  }
   const field = (k: keyof MemberInput, label: string, props: Record<string, unknown> = {}) => (
     <label className={`d-field ${errors[k] ? 'has-error' : ''}`}>
       <span>{label}</span>
@@ -189,7 +202,10 @@ function MemberForm({
           <div className="d-grid">
             {field('fullName', t('members.fullNameReq'), { autoFocus: true, placeholder: t('members.fullNamePh') })}
             {select('gender', t('members.gender'), GENDERS, true, 'gender')}
-            {field('dob', t('members.dob'), { type: 'date' })}
+            <label className="d-field">
+              <span>{t('members.dob')}</span>
+              <BirthdayInput value={f.dob} onChange={(v) => set('dob', v)} />
+            </label>
             {field('address', t('members.address'), { placeholder: t('members.addressPh') })}
           </div>
         </fieldset>
@@ -236,7 +252,35 @@ function MemberForm({
             {select('stage', t('members.stageField'), STAGES, false, 'stage')}
             {select('membershipStatus', t('members.status'), STATUSES, false, 'status')}
             {select('branch', t('members.branch'), branches)}
-            {select('department', t('members.department'), departments, true)}
+            {newDept === null ? (
+              <label className="d-field">
+                <span>{t('members.department')}</span>
+                <select value={f.department} onChange={(e) => (e.target.value === '__new' ? setNewDept('') : set('department', e.target.value))}>
+                  <option value="">—</option>
+                  {departments.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                  {role === 'admin' && <option value="__new">+ {t('settings.structure.addDept')}</option>}
+                </select>
+              </label>
+            ) : (
+              <label className="d-field">
+                <span>{t('settings.structure.addDept')}</span>
+                <input
+                  autoFocus
+                  value={newDept}
+                  maxLength={60}
+                  onChange={(e) => setNewDept(e.target.value)}
+                  onBlur={addDept}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.preventDefault(), addDept())
+                    if (e.key === 'Escape') (e.preventDefault(), e.stopPropagation(), setNewDept(null))
+                  }}
+                />
+              </label>
+            )}
             {field('dateJoined', t('members.dateJoined'), { type: 'date' })}
           </div>
         </fieldset>
@@ -491,7 +535,7 @@ function MemberDetail({ member, onClose, onEdit }: { member: Member; onClose: ()
         <InfoRow icon={<MessageCircle size={15} />} label={t('members.whatsappShort')} value={member.whatsapp} />
         <InfoRow icon={<Mail size={15} />} label={t('members.email')} value={member.email} />
         <InfoRow icon={<User size={15} />} label={t('members.gender')} value={tEnum('gender', member.gender)} />
-        <InfoRow icon={<Cake size={15} />} label={t('members.dob')} value={fmtDate(member.dob)} />
+        <InfoRow icon={<Cake size={15} />} label={t('members.dob')} value={member.dob ? fmtBirthday(member.dob) : '—'} />
         <InfoRow icon={<MapPin size={15} />} label={t('members.address')} value={member.address} />
         <InfoRow icon={<Building2 size={15} />} label={t('members.branch')} value={member.branch} />
         <InfoRow icon={<Users size={15} />} label={t('members.department')} value={member.department} />

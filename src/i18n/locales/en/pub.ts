@@ -7,7 +7,7 @@ export default {
   sameWa: 'My WhatsApp number is the same as my phone number',
   email: 'Email',
   gender: 'Gender',
-  dob: 'Date of birth',
+  dob: 'Birthday',
   address: 'Address',
   branch: 'Branch',
   department: 'Department you serve in',

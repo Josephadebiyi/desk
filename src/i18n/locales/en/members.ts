@@ -12,7 +12,7 @@ export default {
   fullNameReq: 'Full name *',
   fullNamePh: 'e.g. Grace Okafor',
   gender: 'Gender',
-  dob: 'Date of birth',
+  dob: 'Birthday',
   address: 'Address',
   addressPh: 'Street, city',
   phone: 'Phone number',
