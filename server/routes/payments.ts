@@ -21,7 +21,7 @@ import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
 import { cancelSubscription, createCheckout, createSubaccount, ensurePaymentPlan, listBanks, listSubscriptions, resolveAccount, verifyByReference, verifyTransaction, type VerifiedTx, activateSubscription } from '../flutterwave'
-import { compose, sendEmail } from '../mail'
+import { churchBrand, compose, sendEmail } from '../mail'
 import { AFRICAN_CURRENCIES, billingCurrency, chargeCurrency, PAYSTACK_CURRENCIES, PLAN_PRICES, planPrice, type BillingCurrency, type FlwCurrency } from '../../src/lib/currency'
 import * as paystack from '../paystack'
 import { customerFor, fromStripeAmount, TAX_CODE_DIGITAL_SERVICE, integrationId, periodEnd, planFromPrice, planPriceId, promoCoupon, stripe, toStripeAmount, type Stripe } from '../stripe'
@@ -181,7 +181,7 @@ async function fulfil(p: any, churchBilling: Record<string, unknown>, stopOldSub
           amount: new Intl.NumberFormat(loc, { style: 'currency', currency: p.currency }).format(p.amount),
           fund: p.fund ?? '',
           date: new Date().toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' }),
-        }),
+        }, undefined, { church: await churchBrand(p.church_id) }),
       ).catch((e) => console.error('[receipt]', e))
     }
   } else if (p.kind === 'design_request') {

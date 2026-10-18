@@ -29,9 +29,11 @@ export interface RenderInput {
   siteUrl: string
   /** Adds an unsubscribe link (newsletters, sign-up reminders). */
   unsubscribeUrl?: string
+  /** Sent by a church to its own people: the church's logo and name replace ZionDesk's in the header and footer. */
+  church?: { name: string; logoUrl?: string | null }
 }
 
-export function renderEmail({ kind, lang, vars, url, siteUrl, unsubscribeUrl }: RenderInput) {
+export function renderEmail({ kind, lang, vars, url, siteUrl, unsubscribeUrl, church }: RenderInput) {
   const c = CATALOG[lang][kind]
   const v = safeVars(vars)
   if (v.text) v.text = richText(v.text)
@@ -39,7 +41,8 @@ export function renderEmail({ kind, lang, vars, url, siteUrl, unsubscribeUrl }: 
   const title = fill(c.title, v)
   const body = c.body.map((p) => fill(p, v))
   const note = c.note ? fill(c.note, v) : ''
-  const footer = EMAIL[lang].common.footer
+  const footer = church ? `© ${esc(church.name)}` : EMAIL[lang].common.footer
+  const logo = church?.logoUrl && /^https:\/\//.test(church.logoUrl) ? church.logoUrl : null
   const preheader = stripTags(body[body.length > 1 ? 1 : 0] ?? '').slice(0, 140)
 
   const html = `<!doctype html>
@@ -51,7 +54,13 @@ export function renderEmail({ kind, lang, vars, url, siteUrl, unsubscribeUrl }: 
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 30px rgba(60,30,140,.08);">
   <tr><td style="padding:22px 32px;background:#ffffff;border-bottom:1px solid #efedf6;">
-    <img src="${esc(siteUrl)}/brand/logo-color.png" alt="ZionDesk" height="34" style="display:block;height:34px;border:0;" />
+    ${
+      church
+        ? logo
+          ? `<img src="${esc(logo)}" alt="${esc(church.name)}" height="44" style="display:block;height:44px;max-width:220px;border:0;object-fit:contain;" />`
+          : `<span style="font-family:'DM Serif Display',Georgia,serif;font-size:22px;color:${INK};">${esc(church.name)}</span>`
+        : `<img src="${esc(siteUrl)}/brand/logo-color.png" alt="ZionDesk" height="34" style="display:block;height:34px;border:0;" />`
+    }
   </td></tr>
   <tr><td style="background:${PURPLE};background-image:linear-gradient(135deg,#7b45ff 0%,#5a24e8 100%);padding:30px 32px 32px;">
     <span style="display:inline-block;margin:0 0 12px;padding:5px 12px;border-radius:999px;background:${LIME};font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#18210a;">${fill(c.eyebrow, v)}</span>

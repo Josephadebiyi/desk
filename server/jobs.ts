@@ -7,7 +7,7 @@
 import { asEmailLang } from '../src/emails/strings'
 import { db } from './db'
 import { configured } from './env'
-import { compose, sendEmails } from './mail'
+import { churchBrand, compose, sendEmails } from './mail'
 import { audienceMembers, claimDeliveries, phoneOf, sendCampaign, settleDelivery, smsSenderOf, twilio, type Audience } from './messaging'
 import { ageOn, birthdayPrayers } from './prayers'
 import { sendWhatsApp } from './whatsapp'
@@ -46,6 +46,7 @@ export async function runHourly() {
       if (count) continue
       const { data: church } = await db().from('churches').select('name').eq('id', e.church_id).single()
       const people = (await audienceMembers(e.church_id, e.audience as Audience)).filter((m) => m.email)
+      const brand = await churchBrand(e.church_id)
       // Claim each person first: a second run (or a retry after a crash) skips everyone already claimed.
       const claimed = await claimDeliveries(
         people.map((m) => ({ church_id: e.church_id, member_id: m.id, channel: 'Email', language: asEmailLang(m.language), to_address: m.email, dedupe_key: `reminder:${e.id}:${m.id}` })),
@@ -62,7 +63,7 @@ export async function runHourly() {
           date: start.toLocaleDateString(loc, { weekday: 'long', month: 'long', day: 'numeric' }),
           time: start.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' }),
         }
-        return compose(e.google_meet && e.meet_link ? 'meetingInvite' : 'eventReminder', lang, m.email, vars, e.meet_link ?? undefined)
+        return compose(e.google_meet && e.meet_link ? 'meetingInvite' : 'eventReminder', lang, m.email, vars, e.meet_link ?? undefined, { church: brand })
       })
       let ids: (string | undefined)[] = []
       let failure = ''
@@ -136,7 +137,8 @@ async function runBirthdays() {
       try {
         let providerId: string | undefined
         if (channel === 'Email') {
-          ;[providerId] = await sendEmails([prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }) : compose('birthday', lang, m.email, { church: name(churchId), name: first })])
+          const brand = { church: await churchBrand(churchId) }
+          ;[providerId] = await sendEmails([prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }, undefined, brand) : compose('birthday', lang, m.email, { church: name(churchId), name: first }, undefined, brand)])
         } else if (channel === 'WhatsApp' && configured.whatsappCloud) {
           providerId = await sendWhatsApp(to, text!, lang)
         } else {

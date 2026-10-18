@@ -11,7 +11,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { asEmailLang, type EmailLang } from '../src/emails/strings'
 import { db } from './db'
 import { configured } from './env'
-import { compose, sendEmail } from './mail'
+import { churchBrand, compose, sendEmail } from './mail'
 import { claimDeliveries, settleDelivery } from './messaging'
 
 const LANG_NAME: Record<EmailLang, string> = { en: 'English', es: 'Spanish', fr: 'French', de: 'German', pt: 'Portuguese' }
@@ -65,7 +65,7 @@ export async function welcomeMember(memberId: string): Promise<boolean> {
   if (!m?.email) return false
   // Only people added in the last day — the welcome is for new members, not old records.
   if (Date.now() - new Date(m.created_at).getTime() > 864e5) return false
-  const { data: church } = await db().from('churches').select('name, ai_settings').eq('id', m.church_id).single()
+  const { data: church } = await db().from('churches').select('name, email, logo_url, ai_settings').eq('id', m.church_id).single()
   if ((church?.ai_settings as { welcomeEmails?: boolean } | null)?.welcomeEmails === false) return false
 
   const lang = asEmailLang(m.language)
@@ -74,7 +74,7 @@ export async function welcomeMember(memberId: string): Promise<boolean> {
   const first = m.full_name.split(' ')[0]
   const note = await ellenNote('member', { firstName: first, church: church?.name ?? '', lang, stage: m.stage, department: m.department })
   try {
-    const id = await sendEmail(compose('memberWelcome', lang, m.email, { name: first, church: church?.name ?? '', ellen: note }))
+    const id = await sendEmail(compose('memberWelcome', lang, m.email, { name: first, church: church?.name ?? '', ellen: note }, undefined, { church: await churchBrand(m.church_id) }))
     await settleDelivery(claim.id, { status: 'sent', providerId: id ?? null, body: note })
     await db().from('communications').insert({ church_id: m.church_id, member_id: m.id, channel: 'Email', summary: 'Welcome email from Ellen', by_name: 'Ellen' })
     return true

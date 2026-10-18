@@ -10,7 +10,7 @@ import { Router } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, requireCaller, route } from '../db'
 import { configured, env } from '../env'
-import { compose, sendEmail, sendEmails } from '../mail'
+import { churchBrand, compose, sendEmail, sendEmails } from '../mail'
 import { claimDeliveries, personalize, phoneOf, sendCampaign, settleDelivery, smsSenderOf, twilio } from '../messaging'
 import { sendWhatsApp } from '../whatsapp'
 import { logOutbound } from '../inbox'
@@ -125,7 +125,7 @@ appRoutes.post(
           amount: new Intl.NumberFormat(loc, { style: 'currency', currency: church?.currency ?? 'USD' }).format(claim.amount),
           fund: claim.fund,
           date: new Date(claim.date + 'T00:00:00').toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' }),
-        }),
+        }, undefined, { church: await churchBrand(claim.church_id) }),
       ).catch((e) => console.error('[receipt]', e))
     }
     res.json({ ok: true, memberId: member?.id ?? null })
@@ -183,7 +183,7 @@ appRoutes.post(
     }
     try {
       let providerId: string | undefined
-      if (channel === 'Email') [providerId] = await sendEmails([compose('birthdayPrayer', lang, to, { church: church?.name ?? '', name: first, prayer: text })])
+      if (channel === 'Email') [providerId] = await sendEmails([compose('birthdayPrayer', lang, to, { church: church?.name ?? '', name: first, prayer: text }, undefined, { church: await churchBrand(m.church_id) })])
       else if (channel === 'WhatsApp' && configured.whatsappCloud) providerId = await sendWhatsApp(to, body, lang)
       else providerId = await twilio(channel, to, body, { sender: smsSenderOf(church), churchId: m.church_id })
       await settleDelivery(claim.id, { status: 'sent', providerId })

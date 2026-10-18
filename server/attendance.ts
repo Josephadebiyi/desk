@@ -139,7 +139,7 @@ export async function sendFollowup(churchId: string, a: Absentee, byName: string
     channel = 'SMS'
     await logOutbound({ churchId, memberId: a.memberId, name: a.name, to: a.phone, channel, body, providerId, byName })
   } else if (a.email && configured.email) {
-    providerId = await sendEmail(compose('message', a.language, a.email, { church: churchName, subject: churchName, text }))
+    providerId = await sendEmail(compose('message', a.language, a.email, { church: churchName, subject: churchName, text }, undefined, { church: { name: churchName, logoUrl: church?.logo_url, email: church?.email } }))
     channel = 'Email'
   }
   if (!channel) throw new Error('No WhatsApp, phone or email for this person.')

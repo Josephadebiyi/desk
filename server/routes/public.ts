@@ -10,7 +10,7 @@ import { Router, type Request } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
 import { db, HttpError, route } from '../db'
 import { configured, env } from '../env'
-import { compose, sendEmail, sendEmails } from '../mail'
+import { churchBrand, compose, sendEmail, sendEmails } from '../mail'
 import { welcomeMember } from '../welcomes'
 
 export const publicRoutes = Router()
@@ -117,7 +117,7 @@ publicRoutes.post(
     // Ellen's welcome (once per member); the plain "thanks for registering" email if welcomes are switched off.
     if (email && configured.email) {
       const welcomed = await welcomeMember(member.id).catch((e) => (console.error('[register welcome]', e), false))
-      if (!welcomed) await sendEmail(compose('registered', language, email, { church: church.name, name: fullName.split(' ')[0] })).catch((e) => console.error('[register email]', e))
+      if (!welcomed) await sendEmail(compose('registered', language, email, { church: church.name, name: fullName.split(' ')[0] }, undefined, { church: await churchBrand(church.id) })).catch((e) => console.error('[register email]', e))
     }
     res.json({ ok: true })
   }),
@@ -144,7 +144,7 @@ publicRoutes.post(
 
     if (configured.email) {
       const mails = []
-      if (email) mails.push(compose('claimReceived', language, email, { church: church.name, name: name.split(' ')[0], amount: money(amount, church.currency, language), fund, reference }))
+      if (email) mails.push(compose('claimReceived', language, email, { church: church.name, name: name.split(' ')[0], amount: money(amount, church.currency, language), fund, reference }, undefined, { church: await churchBrand(church.id) }))
       // Tell the church's Administrators and Finance team, each in their own language.
       const { data: team } = await db().from('church_users').select('user_id, role').eq('church_id', church.id).in('role', ['admin', 'finance'])
       const ids = (team ?? []).map((t) => t.user_id)

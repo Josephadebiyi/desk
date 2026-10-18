@@ -6,7 +6,7 @@ import { renderEmail } from '../src/emails/render'
 import type { EmailKind } from '../src/emails/catalog'
 import { asEmailLang } from '../src/emails/strings'
 import { configured, env } from './env'
-import { HttpError } from './db'
+import { db, HttpError } from './db'
 
 export interface Outgoing {
   to: string
@@ -19,11 +19,31 @@ export interface Outgoing {
   headers?: Record<string, string>
 }
 
-export function compose(kind: EmailKind, lang: unknown, to: string, vars: Record<string, string | number>, url?: string, opts: { unsubscribeUrl?: string } = {}): Outgoing {
-  const r = renderEmail({ kind, lang: asEmailLang(lang), vars, url, siteUrl: env.siteUrl, unsubscribeUrl: opts.unsubscribeUrl })
+/**
+ * opts.church: an email from the church to its own people (not a ZionDesk account email) — the church's name and
+ * logo instead of ZionDesk's, sent as the church, and replies go to the church's email address.
+ */
+export function compose(kind: EmailKind, lang: unknown, to: string, vars: Record<string, string | number>, url?: string, opts: { unsubscribeUrl?: string; church?: { name: string; logoUrl?: string | null; email?: string | null } } = {}): Outgoing {
+  const r = renderEmail({ kind, lang: asEmailLang(lang), vars, url, siteUrl: env.siteUrl, unsubscribeUrl: opts.unsubscribeUrl, church: opts.church })
+  if (opts.church) {
+    const replyTo = opts.church.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(opts.church.email) ? opts.church.email : undefined
+    return { to, ...r, fromName: opts.church.name.slice(0, 70) || undefined, ...(replyTo ? { replyTo } : {}) }
+  }
   // One-click unsubscribe (Gmail / Yahoo bulk-sender rules) for marketing-type emails.
   const headers = opts.unsubscribeUrl ? { 'List-Unsubscribe': `<${opts.unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } : undefined
   return { to, ...r, ...(headers ? { headers } : {}) }
+}
+
+export type ChurchBrand = { name: string; logoUrl?: string | null; email?: string | null }
+const brands = new Map<string, { at: number; brand: ChurchBrand }>()
+/** A church's name, logo and email for emails it sends to its own people (cached for 5 minutes). */
+export async function churchBrand(churchId: string): Promise<ChurchBrand> {
+  const hit = brands.get(churchId)
+  if (hit && Date.now() - hit.at < 300_000) return hit.brand
+  const { data } = await db().from('churches').select('name, logo_url, email').eq('id', churchId).maybeSingle()
+  const brand = { name: (data?.name as string) ?? '', logoUrl: (data?.logo_url as string | null) ?? null, email: (data?.email as string | null) ?? null }
+  brands.set(churchId, { at: Date.now(), brand })
+  return brand
 }
 
 async function resend(path: string, body: unknown) {

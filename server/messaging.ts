@@ -217,7 +217,7 @@ export async function sendCampaign(campaignId: string, byName: string) {
     const out = recipients.map((m) => {
       const { lang, text } = textFor(m)
       const subject = c.subject || text.split(/[.!?\n]/)[0].slice(0, 80)
-      return { m, lang, text, mail: compose('message', lang, m.email, { church: churchName, subject, text }) }
+      return { m, lang, text, mail: compose('message', lang, m.email, { church: churchName, subject, text }, undefined, { church: { name: churchName, logoUrl: church?.logo_url, email: church?.email } }) }
     })
     let ids: (string | undefined)[] = []
     let failure = ''
