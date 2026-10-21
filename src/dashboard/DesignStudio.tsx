@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Flyer, flyerName, flyerSample, FLYER_TEMPLATES, type FlyerId } from '../components/Flyers'
 import { tr, useT } from '../i18n'
 import { AiFlyer } from './AiFlyer'
+import { StudioHome } from './StudioHome'
 import { AskAI, fmtDate, Kpi, PageHead, PlanGate, Tabs } from './kit'
 import { confirmAction, withConfirm } from './confirm'
 import { formatMoney } from '../lib/currency'
@@ -626,7 +627,7 @@ function DesignTeam() {
 export default function DesignStudio() {
   const { designs, requests } = useWorkspace()
   const [params] = useSearchParams()
-  const [tab, setTab] = useState<'ai' | 'create' | 'saved' | 'team'>(params.get('tab') === 'team' ? 'team' : params.get('title') ? 'create' : 'ai')
+  const [tab, setTab] = useState<'studio' | 'ai' | 'create' | 'saved' | 'team'>(params.get('tab') === 'team' ? 'team' : params.get('tab') === 'ai' ? 'ai' : params.get('title') ? 'create' : 'studio')
   const activeReqs = useMemo(() => requests.filter((r) => r.status !== 'Delivered').length, [requests])
   const { t } = useT()
 
@@ -641,6 +642,7 @@ export default function DesignStudio() {
           value={tab}
           onChange={setTab}
           tabs={[
+            { id: 'studio', label: t('studio.tab') },
             { id: 'ai', label: t('design.tabs.ai') },
             { id: 'create', label: t('design.tabs.create') },
             { id: 'saved', label: `${t('design.tabs.saved')}${designs.length ? ` (${designs.length})` : ''}` },
@@ -654,6 +656,7 @@ export default function DesignStudio() {
           <Creator />
         </PlanGate>
       )}
+      {tab === 'studio' && <StudioHome />}
       {tab === 'ai' && <AiFlyer />}
       {tab === 'saved' && <MyDesigns onOpen={() => setTab('ai')} />}
       {tab === 'team' && (

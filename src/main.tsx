@@ -30,6 +30,7 @@ const Giving = lazy(() => import('./dashboard/Giving.tsx'))
 const Messaging = lazy(() => import('./dashboard/Messaging.tsx'))
 const Events = lazy(() => import('./dashboard/Events.tsx'))
 const DesignStudio = lazy(() => import('./dashboard/DesignStudio.tsx'))
+const DesignEditor = lazy(() => import('./editor/DesignEditor.tsx'))
 const ChurchAI = lazy(() => import('./dashboard/ChurchAI.tsx'))
 const Reports = lazy(() => import('./dashboard/Reports.tsx'))
 const Settings = lazy(() => import('./dashboard/Settings.tsx'))
@@ -95,6 +96,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="messaging" element={<Messaging />} />
           <Route path="events" element={<Events />} />
           <Route path="design" element={<DesignStudio />} />
+          <Route path="design/edit/:id" element={<DesignEditor />} />
           <Route path="ai" element={<ChurchAI />} />
           <Route path="assistant" element={<Navigate to="/dashboard/ai" replace />} />
           <Route path="reports" element={<Reports />} />

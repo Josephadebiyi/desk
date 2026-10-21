@@ -25,7 +25,7 @@ const LANG_NAME: Record<string, string> = { en: 'English', es: 'Spanish', fr: 'F
 const str = (v: unknown, max = 300) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const caller = admin ? [requireCaller(['admin', 'leader'])] : [] // local preview without a database stays open (dev only)
 
-async function usage(churchId: string) {
+export async function usage(churchId: string) {
   const { data: church } = await db().from('churches').select('plan').eq('id', churchId).single()
   const start = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
   const { count } = await db().from('ai_usage').select('id', { count: 'exact', head: true }).eq('church_id', churchId).eq('feature', 'designs').gte('at', start)

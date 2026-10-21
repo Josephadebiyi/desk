@@ -26,6 +26,7 @@ import att from './att'
 import cf from './cf'
 import br from './br'
 import conn from './conn'
+import studio from './studio'
 
-const dict: Dict = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att, cf, br, conn }
+const dict: Dict = { common, lang, enums, dash, kit, members, links, pub, settings, ai, tpl, site, emailPreview, flyer, ov, giving, msg, events, design, reports, help, auth, legal, att, cf, br, conn, studio }
 export default dict
