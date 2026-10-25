@@ -12,6 +12,10 @@ import { db, HttpError, route } from '../db'
 import { configured, env } from '../env'
 import { churchBrand, compose, sendEmail, sendEmails } from '../mail'
 import { welcomeMember } from '../welcomes'
+import { findExisting, normEmail, normPhone, sameBirthday } from '../../src/lib/duplicates'
+
+/** Same person submitting twice within seconds (double tap, two tabs) → one record. */
+const recent = new Map<string, number>()
 
 export const publicRoutes = Router()
 
@@ -90,6 +94,19 @@ publicRoutes.post(
     const dob = /^\d{4}-\d{2}-\d{2}$/.test(str(b.dob)) ? str(b.dob) : null
     const branch = (church.branches as string[]).includes(str(b.branch)) ? str(b.branch) : (church.branches as string[])[0] ?? ''
     const department = type === 'member' && (church.departments as string[]).includes(str(b.department)) ? str(b.department) : ''
+
+    // Already in this church (same email or phone; same name only if the birthday matches too)? Tell them.
+    const lockKeys = [normEmail(email) && `${church.id}:e:${normEmail(email)}`, normPhone(phone) && `${church.id}:p:${normPhone(phone)}`].filter(Boolean) as string[]
+    const now = Date.now()
+    for (const [k, t] of recent) if (now - t > 30_000) recent.delete(k)
+    if (lockKeys.some((k) => recent.has(k))) throw new HttpError(409, 'ALREADY_REGISTERED')
+    lockKeys.forEach((k) => recent.set(k, now))
+    const { data: existing } = await db().from('members').select('id, full_name, email, phone, whatsapp, dob').eq('church_id', church.id).limit(20000)
+    const hit = findExisting({ fullName, email, phone, whatsapp: str(b.whatsapp, 40), dob }, existing ?? [])
+    if (hit && (hit.reason !== 'name' || sameBirthday(dob, hit.match.dob))) {
+      console.log(`[register] ${church.id}: already a member (${hit.reason})`)
+      throw new HttpError(409, 'ALREADY_REGISTERED')
+    }
 
     const { data: member, error } = await db()
       .from('members')

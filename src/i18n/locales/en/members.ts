@@ -12,6 +12,7 @@ export default {
   fullNameReq: 'Full name *',
   fullNamePh: 'e.g. Grace Okafor',
   gender: 'Gender',
+  dup: {"title": "{name} is already a member", "email": "Someone with this email address is already in your members.", "phone": "Someone with this phone number is already in your members.", "name": "Someone with exactly this name is already in your members. If it’s a different person, you can still add them.", "addAnyway": "Add anyway", "importSkip": "{count} already in your members (same email or phone) will be skipped.", "skipped": "{count} already existed", "button": "Duplicates ({count})", "dialog": "Possible duplicates", "intro": "These records look like the same person. Merging keeps one record with all their notes, giving, check-ins and messages, and fills in any missing details.", "none": "No duplicates found.", "reasons": {"email": "Same email", "phone": "Same phone", "name": "Same name"}, "kept": "kept", "merge": "Merge", "mergeTitle": "Merge {count} records into {name}?", "mergeBody": "The extra records are removed after their history is moved across. This can’t be undone.", "merged": "Merged into {name}"},
   dob: 'Birthday',
   address: 'Address',
   addressPh: 'Street, city',

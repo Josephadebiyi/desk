@@ -13,6 +13,7 @@ const members: Dict['members'] = {
   fullNameReq: 'Nom complet *',
   fullNamePh: 'ex. Grace Okafor',
   gender: 'Genre',
+  dup: {"title": "{name} est déjà membre", "email": "Une personne avec cette adresse e-mail figure déjà parmi vos membres.", "phone": "Une personne avec ce numéro figure déjà parmi vos membres.", "name": "Une personne portant exactement ce nom figure déjà parmi vos membres. S’il s’agit de quelqu’un d’autre, vous pouvez quand même l’ajouter.", "addAnyway": "Ajouter quand même", "importSkip": "{count} déjà présent(s) parmi vos membres (même e-mail ou téléphone) seront ignorés.", "skipped": "{count} existaient déjà", "button": "Doublons ({count})", "dialog": "Doublons possibles", "intro": "Ces fiches semblent correspondre à la même personne. La fusion garde une seule fiche avec toutes ses notes, dons, présences et messages, et complète les informations manquantes.", "none": "Aucun doublon trouvé.", "reasons": {"email": "Même e-mail", "phone": "Même téléphone", "name": "Même nom"}, "kept": "conservée", "merge": "Fusionner", "mergeTitle": "Fusionner {count} fiches dans {name} ?", "mergeBody": "Les fiches en trop sont supprimées après le transfert de leur historique. C’est définitif.", "merged": "Fusionné dans {name}"},
   dob: 'Anniversaire',
   address: 'Adresse',
   addressPh: 'Rue, ville',

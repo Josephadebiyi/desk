@@ -13,6 +13,7 @@ const members: Dict['members'] = {
   fullNameReq: 'Vollständiger Name *',
   fullNamePh: 'z. B. Grace Okafor',
   gender: 'Geschlecht',
+  dup: {"title": "{name} ist bereits Mitglied", "email": "Eine Person mit dieser E-Mail-Adresse ist bereits bei Ihren Mitgliedern.", "phone": "Eine Person mit dieser Telefonnummer ist bereits bei Ihren Mitgliedern.", "name": "Eine Person mit genau diesem Namen ist bereits bei Ihren Mitgliedern. Wenn es jemand anderes ist, können Sie sie trotzdem hinzufügen.", "addAnyway": "Trotzdem hinzufügen", "importSkip": "{count} bereits vorhandene Mitglieder (gleiche E-Mail oder Telefonnummer) werden übersprungen.", "skipped": "{count} waren schon vorhanden", "button": "Doppelte Einträge ({count})", "dialog": "Mögliche doppelte Einträge", "intro": "Diese Einträge scheinen dieselbe Person zu sein. Beim Zusammenführen bleibt ein Eintrag mit allen Notizen, Spenden, Check-ins und Nachrichten, fehlende Angaben werden ergänzt.", "none": "Keine doppelten Einträge gefunden.", "reasons": {"email": "Gleiche E-Mail", "phone": "Gleiche Telefonnummer", "name": "Gleicher Name"}, "kept": "bleibt", "merge": "Zusammenführen", "mergeTitle": "{count} Einträge zu {name} zusammenführen?", "mergeBody": "Die überzähligen Einträge werden gelöscht, nachdem ihr Verlauf übertragen wurde. Das lässt sich nicht rückgängig machen.", "merged": "Zusammengeführt zu {name}"},
   dob: 'Geburtstag',
   address: 'Adresse',
   addressPh: 'Straße, Ort',

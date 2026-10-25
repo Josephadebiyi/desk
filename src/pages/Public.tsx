@@ -18,6 +18,7 @@ import { PhoneInput } from '../components/PhoneInput'
 import { countryFromText } from '../lib/countries'
 import { manualMethods, METHODS as GIVE_METHODS, MethodLogo, publicLabel } from '../lib/giveMethods'
 import { ONLINE_GIVING } from '../lib/features'
+import { findExisting, sameBirthday } from '../lib/duplicates'
 import { BirthdayInput, cleanBirthday } from '../lib/birthday'
 
 /**
@@ -48,10 +49,13 @@ const usePub = () => useContext(PubCtx)!
 
 function LocalPub({ children }: { children: ReactNode }) {
   const { settings, addClaim } = useWorkspace()
-  const { addMember, logCommunication } = useMembers()
+  const { members, addMember, logCommunication } = useMembers()
   const value: Pub = {
     settings,
     register: async (m, type) => {
+      // same rule as the live server: one registration per person
+      const hit = findExisting(m, members)
+      if (hit && (hit.reason !== 'name' || sameBirthday(m.dob, hit.match.dob))) throw new Error('ALREADY_REGISTERED')
       const created = addMember(m)
       // Marks people who registered themselves through a link (counted on the Links page).
       logCommunication(created.id, { channel: 'Note', summary: `__selfreg:${type}:${m.language}`, date: today(), by: 'ZionDesk' })
@@ -216,7 +220,8 @@ function JoinForm() {
     try {
       await register(input, type)
     } catch (ex) {
-      setErrors({ consent: ex instanceof Error ? ex.message : String(ex) })
+      const msg = ex instanceof Error ? ex.message : String(ex)
+      setErrors({ consent: msg === 'ALREADY_REGISTERED' ? t('pub.already', { church: settings.churchName }) : msg })
       return
     } finally {
       setSending(false)

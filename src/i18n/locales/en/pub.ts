@@ -7,6 +7,7 @@ export default {
   sameWa: 'My WhatsApp number is the same as my phone number',
   email: 'Email',
   gender: 'Gender',
+  already: "You’re already registered with {church} — there’s no need to register again. If your details have changed, please let the church office know.",
   dob: 'Birthday',
   address: 'Address',
   branch: 'Branch',

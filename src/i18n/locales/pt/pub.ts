@@ -8,6 +8,7 @@ const pub: Dict['pub'] = {
   sameWa: 'O meu WhatsApp é o mesmo número do telefone',
   email: 'E-mail',
   gender: 'Género',
+  already: "Você já está cadastrado em {church} — não precisa se cadastrar de novo. Se seus dados mudaram, avise a secretaria da igreja.",
   dob: 'Aniversário',
   address: 'Morada',
   branch: 'Sede',

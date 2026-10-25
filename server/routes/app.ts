@@ -88,6 +88,44 @@ appRoutes.post(
 )
 
 /** Ellen's welcome email to a member just added in the dashboard (sent once; skipped when welcomes are off). */
+/**
+ * Merge duplicate member records into one (Members → Duplicates). Keeps `keep`, fills its empty details from the
+ * others, moves their history (notes, gifts, check-ins, messages, conversations) onto it, then removes the copies.
+ */
+appRoutes.post(
+  '/members/merge',
+  requireCaller(['admin']),
+  route(async (req, res) => {
+    const churchId = req.caller!.churchId
+    const keep = String(req.body?.keep ?? '')
+    const others = (Array.isArray(req.body?.remove) ? req.body.remove : []).map(String).filter((x: string) => x !== keep).slice(0, 20)
+    if (!/^[0-9a-f-]{36}$/i.test(keep) || !others.length || others.some((x: string) => !/^[0-9a-f-]{36}$/i.test(x))) throw new HttpError(400, 'Choose the records to merge.')
+    const { data: rows } = await db().from('members').select('*').eq('church_id', churchId).in('id', [keep, ...others])
+    const main = rows?.find((r) => r.id === keep)
+    const dupes = (rows ?? []).filter((r) => r.id !== keep)
+    if (!main || dupes.length !== others.length) throw new HttpError(404, 'Member not found')
+    // Fill blanks on the kept record from the copies (never overwrite what it already has).
+    const patch: Record<string, unknown> = {}
+    for (const k of ['phone', 'whatsapp', 'email', 'gender', 'dob', 'address', 'branch', 'department'] as const) if (!main[k]) for (const d of dupes) if (d[k] && !patch[k]) patch[k] = d[k]
+    const notes = [main.notes, ...dupes.map((d) => d.notes)].filter(Boolean)
+    if (notes.length > 1) patch.notes = [...new Set(notes)].join(' · ').slice(0, 2000)
+    const earliest = [main.date_joined, ...dupes.map((d) => d.date_joined)].filter(Boolean).sort()[0]
+    if (earliest && earliest !== main.date_joined) patch.date_joined = earliest
+    if (Object.keys(patch).length) await db().from('members').update(patch).eq('id', keep)
+    // Check-ins: one per person per service — drop the copies' check-ins on days the kept record already has.
+    const { data: have } = await db().from('attendance').select('service_date').eq('member_id', keep)
+    const days = (have ?? []).map((a) => a.service_date)
+    if (days.length) await db().from('attendance').delete().in('member_id', others).in('service_date', days)
+    for (const table of ['communications', 'gifts', 'attendance', 'deliveries', 'conversations']) {
+      const { error } = await db().from(table).update({ member_id: keep }).in('member_id', others).eq('church_id', churchId)
+      if (error && error.code !== '42P01') throw new HttpError(500, `Could not move ${table}: ${error.message}`)
+    }
+    await db().from('members').delete().in('id', others).eq('church_id', churchId)
+    console.log(`[members] ${churchId}: merged ${others.length} duplicate(s) into ${keep}`)
+    res.json({ ok: true, merged: others.length })
+  }),
+)
+
 appRoutes.post(
   '/members/:id/welcome',
   requireCaller(['admin', 'leader']),

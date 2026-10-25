@@ -53,6 +53,7 @@ import {
 import { PhoneInput } from '../components/PhoneInput'
 import { countryFromText } from '../lib/countries'
 import { BirthdayInput, cleanBirthday, fmtBirthday } from '../lib/birthday'
+import { duplicateGroups, findExisting, type MatchReason } from '../lib/duplicates'
 
 const PAGE = 15
 
@@ -448,6 +449,46 @@ function ImportDialog({ onClose, onImport }: { onClose: () => void; onImport: (r
 
 /* ───────────────────────── Detail panel ───────────────────────── */
 
+/** Members that look like the same person, with a one-click merge (keeps the most complete record). */
+function DuplicatesDialog({ groups, onClose, onOpen, onMerge }: { groups: { reason: MatchReason; members: Member[] }[]; onClose: () => void; onOpen: (id: string) => void; onMerge: (keep: string, remove: string[], name: string) => void }) {
+  const { t } = useT()
+  const score = (m: Member) => [m.email, m.phone, m.whatsapp, m.dob, m.address, m.department].filter(Boolean).length * 10 + m.communications.length + m.giving.length
+  return (
+    <Modal title={t('members.dup.dialog')} onClose={onClose} wide>
+      <p className="d-muted">{t('members.dup.intro')}</p>
+      {!groups.length && <p className="d-muted">{t('members.dup.none')}</p>}
+      <div className="mb-dupes">
+        {groups.map((g) => {
+          const sorted = [...g.members].sort((a, b) => score(b) - score(a) || a.dateJoined.localeCompare(b.dateJoined))
+          const keep = sorted[0]
+          return (
+            <section key={keep.id} className="d-panel mb-dupe">
+              <header>
+                <b>{keep.fullName}</b>
+                <span className="d-chip">{t(`members.dup.reasons.${g.reason}`)}</span>
+              </header>
+              <ul>
+                {sorted.map((m, i) => (
+                  <li key={m.id}>
+                    <button type="button" className="d-link" onClick={() => onOpen(m.id)}>
+                      {m.fullName}
+                    </button>
+                    <small>{[m.phone, m.email, m.dateJoined && fmtDate(m.dateJoined)].filter(Boolean).join(' · ')}</small>
+                    {i === 0 && <em>{t('members.dup.kept')}</em>}
+                  </li>
+                ))}
+              </ul>
+              <button type="button" className="d-btn d-btn-ink" onClick={() => onMerge(keep.id, sorted.slice(1).map((m) => m.id), keep.fullName)}>
+                {t('members.dup.merge')}
+              </button>
+            </section>
+          )
+        })}
+      </div>
+    </Modal>
+  )
+}
+
 function InfoRow({ icon, label, value, action }: { icon: ReactNode; label: string; value: ReactNode; action?: ReactNode }) {
   return (
     <div className="d-info">
@@ -638,7 +679,9 @@ function MemberDetail({ member, onClose, onEdit }: { member: Member; onClose: ()
 /* ───────────────────────── Page ───────────────────────── */
 
 export default function Members({ initialOpenId, preview = false }: { initialOpenId?: string; preview?: boolean } = {}) {
-  const { members, role, addMember, updateMember, removeMembers, importMembers } = useMembers()
+  const { members, role, addMember, updateMember, removeMembers, importMembers, mergeMembers } = useMembers()
+  const [showDupes, setShowDupes] = useState(false)
+  const dupes = useMemo(() => duplicateGroups(members), [members])
   const [params, setParams] = useSearchParams()
   const [q, setQ] = useState('')
   const [stage, setStage] = useState<Stage | ''>('')
@@ -877,6 +920,11 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
           </div>
           <div className="d-tool-actions">
             {!preview && <AskAI label={t('members.askAi')} k="followUp" />}
+            {role === 'admin' && dupes.length > 0 && (
+              <button type="button" className="d-btn" onClick={() => setShowDupes(true)}>
+                <Users size={15} /> {t('members.dup.button', { count: dupes.length })}
+              </button>
+            )}
             {can.importExport(role) && (
               <>
                 <button type="button" className="d-btn" onClick={() => setImporting(true)}>
@@ -1081,6 +1129,18 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
             departments={departments}
             onClose={() => setEditing(null)}
             onSave={async (m) => {
+              if (editing === 'new') {
+                // Already a member? Show who it matches; adding anyway is the admin's call.
+                const hit = findExisting(m, members)
+                if (hit) {
+                  const ok = await confirmAction({ title: t('members.dup.title', { name: hit.match.fullName }), body: t(`members.dup.${hit.reason}`), confirmLabel: t('members.dup.addAnyway'), danger: true })
+                  if (!ok) {
+                    setEditing(null)
+                    setOpenId(hit.match.id)
+                    return
+                  }
+                }
+              }
               if (!(await confirmAction({ title: editing === 'new' ? t('cf.memberAddTitle', { name: m.fullName }) : t('cf.memberSaveTitle', { name: m.fullName }), confirmLabel: t('cf.save') }))) return
               if (editing === 'new') {
                 const created = addMember(m)
@@ -1097,14 +1157,42 @@ export default function Members({ initialOpenId, preview = false }: { initialOpe
       </AnimatePresence>
 
       <AnimatePresence>
+        {showDupes && (
+          <DuplicatesDialog
+            groups={dupes}
+            onClose={() => setShowDupes(false)}
+            onOpen={(id) => (setShowDupes(false), setOpenId(id))}
+            onMerge={async (keep, remove, name) => {
+              if (!(await confirmAction({ title: t('members.dup.mergeTitle', { count: remove.length + 1, name }), body: t('members.dup.mergeBody'), confirmLabel: t('members.dup.merge') }))) return
+              try {
+                await mergeMembers(keep, remove)
+                setToast(t('members.dup.merged', { name }))
+              } catch (e) {
+                setToast(e instanceof Error ? e.message : String(e))
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {importing && (
           <ImportDialog
             onClose={() => setImporting(false)}
             onImport={async (rows) => {
-              if (!(await confirmAction({ title: t('cf.importTitle', { count: rows.length }), body: t('cf.importBody'), confirmLabel: t('common.import') }))) return
-              const n = importMembers(rows)
+              // Skip people already in the church (or listed twice in the file); a name alone doesn't count.
+              const seen: typeof members = [...members]
+              const fresh = rows.filter((r) => {
+                const hit = findExisting(r, seen)
+                if (hit && hit.reason !== 'name') return false
+                seen.push({ ...r, id: '', communications: [], giving: [] })
+                return true
+              })
+              const skipped = rows.length - fresh.length
+              if (!(await confirmAction({ title: t('cf.importTitle', { count: fresh.length }), body: skipped ? `${t('members.dup.importSkip', { count: skipped })} ${t('cf.importBody')}` : t('cf.importBody'), confirmLabel: t('common.import') }))) return
+              const n = fresh.length ? importMembers(fresh) : 0
               setImporting(false)
-              setToast(t('members.toastImported', { count: n }))
+              setToast(skipped ? `${t('members.toastImported', { count: n })} · ${t('members.dup.skipped', { count: skipped })}` : t('members.toastImported', { count: n }))
             }}
           />
         )}

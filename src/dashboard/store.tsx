@@ -35,6 +35,8 @@ interface Store {
   updateMember: (id: string, m: Partial<MemberInput>) => void
   removeMembers: (ids: string[]) => void
   importMembers: (rows: MemberInput[]) => number
+  /** Merge duplicate records into `keep` (its history, notes and missing details are combined). */
+  mergeMembers: (keep: string, remove: string[]) => Promise<void>
   logCommunication: (id: string, c: Omit<Communication, 'id'>) => void
   logCommunicationMany: (ids: string[], c: Omit<Communication, 'id'>) => void
   addGift: (memberId: string, g: Omit<Gift, 'id'>) => void
@@ -129,6 +131,21 @@ export function MemberStoreProvider({ children, demo = false }: { children: Reac
         setMembers((all) => [...created, ...all])
         if (live) db.insertMany(churchId, created)
         return created.length
+      },
+      mergeMembers: async (keep, remove) => {
+        if (live) {
+          await api('/members/merge', { keep, remove })
+          await reload()
+          return
+        }
+        setMembers((all) => {
+          const main = all.find((x) => x.id === keep)
+          const dupes = all.filter((x) => remove.includes(x.id))
+          if (!main) return all
+          const merged: Member = { ...main, communications: [...main.communications, ...dupes.flatMap((d) => d.communications)], giving: [...main.giving, ...dupes.flatMap((d) => d.giving)] }
+          for (const k of ['phone', 'whatsapp', 'email', 'gender', 'dob', 'address', 'branch', 'department'] as const) if (!merged[k]) (merged as unknown as Record<string, unknown>)[k] = dupes.find((d) => d[k])?.[k] ?? merged[k]
+          return all.filter((x) => !remove.includes(x.id)).map((x) => (x.id === keep ? merged : x))
+        })
       },
       logCommunication: (id, c) => {
         const entry = { ...c, id: uid() }

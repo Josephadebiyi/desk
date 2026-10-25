@@ -13,6 +13,7 @@ const members: Dict['members'] = {
   fullNameReq: 'Nome completo *',
   fullNamePh: 'ex. Grace Okafor',
   gender: 'Género',
+  dup: {"title": "{name} já é membro", "email": "Já existe alguém com este e-mail entre os seus membros.", "phone": "Já existe alguém com este telefone entre os seus membros.", "name": "Já existe alguém com exatamente este nome entre os seus membros. Se for outra pessoa, você ainda pode adicionar.", "addAnyway": "Adicionar mesmo assim", "importSkip": "{count} que já estão entre os seus membros (mesmo e-mail ou telefone) serão ignorados.", "skipped": "{count} já existiam", "button": "Duplicados ({count})", "dialog": "Possíveis duplicados", "intro": "Estes registros parecem ser a mesma pessoa. Ao mesclar, fica um só registro com todas as notas, ofertas, presenças e mensagens, e os dados que faltam são completados.", "none": "Nenhum duplicado encontrado.", "reasons": {"email": "Mesmo e-mail", "phone": "Mesmo telefone", "name": "Mesmo nome"}, "kept": "mantido", "merge": "Mesclar", "mergeTitle": "Mesclar {count} registros em {name}?", "mergeBody": "Os registros extras são removidos depois que o histórico é transferido. Não dá para desfazer.", "merged": "Mesclado em {name}"},
   dob: 'Aniversário',
   address: 'Morada',
   addressPh: 'Rua, cidade',
