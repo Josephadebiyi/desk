@@ -13,6 +13,22 @@ export async function smsUsage(churchId: string) {
   return { month: smsMonth(), used, limit, remaining: Math.max(0, limit - used) }
 }
 
+/**
+ * Gives a reservation back when the provider definitely refused the message (it was never accepted, so it
+ * can't be delivered or billed). Network errors and timeouts stay counted — the message may have gone out.
+ */
+export async function releaseSms(churchId: string, text: string) {
+  const month = smsMonth()
+  const n = smsSegments(text)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data } = await db().from('sms_monthly_usage').select('used').eq('church_id', churchId).eq('month', month).maybeSingle()
+    if (!data || data.used <= 0) return
+    // compare-and-set, so two releases at the same moment can't both subtract from the same value
+    const { data: done } = await db().from('sms_monthly_usage').update({ used: Math.max(0, data.used - n) }).eq('church_id', churchId).eq('month', month).eq('used', data.used).select('used')
+    if (done?.length) return
+  }
+}
+
 /** Reserve atomically before submission. Attempts remain counted after ambiguous provider failures. */
 export async function reserveSms(churchId: string, text: string) {
   const { data, error } = await db().rpc('reserve_sms_segments', { p_church: churchId, p_segments: smsSegments(text) })

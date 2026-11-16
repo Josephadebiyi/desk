@@ -42,6 +42,8 @@ export interface AskOutcome {
  * local router understands, so people can ask in their own language without a language model.
  */
 const PHRASES: [RegExp, string][] = [
+  [/\bnew[\s-]+comers?\b|\bnew[\s-]+visitors?\b|\bfirst[\s-]*timers?\b|\bvisitors?\b/g, ' newcomers '],
+  [/\bnew[\s-]+converts?\b/g, ' converts '],
   [/cumple(n)? a[nñ]os|cumplea[nñ]os|anniversaires?|geburtstag\w*|anivers[aá]rios?|fazem anos|faz anos/g, ' birthday '],
   [/seguimiento|suivis?\b|nachbetreuung|acompanhamentos?/g, ' follow-up '],
   [/(mi |mon |ma |meine |minha )?atenci[oó]n|(mon |votre )?attention|aufmerksamkeit|aten[cç][aã]o/g, ' need my attention '],
@@ -179,7 +181,14 @@ function audienceFrom(t: string, ctx: ToolContext): { type: 'all' | 'stage' | 'd
   return { type: 'all', value: '' }
 }
 
-const channelFrom = (t: string) => (/\bemail\b/.test(t) ? 'Email' : /\bsms\b|\btext\b/.test(t) ? 'SMS' : 'WhatsApp')
+/** One channel named → that channel; none, several or "all channels" → every channel each person has. */
+function channelFrom(t: string) {
+  if (/all (the )?channels|every channel|everywhere/.test(t)) return 'All'
+  const named = [/\be-?mails?\b/.test(t) && 'Email', /\bsms\b|\btext messages?\b/.test(t) && 'SMS', /\bwhats ?app\b/.test(t) && 'WhatsApp'].filter(Boolean) as string[]
+  return named.length === 1 ? named[0] : 'All'
+}
+/** The request says what the message should say (thanks, prayers, hopes…) — a writer (Claude) should compose it. */
+const hasWritingInstructions = (t: string) => /\b(thank|thanks|pray|prayers?|bless\w*|hope|encourag\w*|congratulat\w*|appreciat\w*|add|include|say|saying|let them know|apolog\w*|invite|celebrat\w*|scripture|verse)\b/.test(t)
 
 const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase())
 
@@ -216,15 +225,20 @@ function route(raw: string, ctx: ToolContext): ToolResult & { denied?: boolean; 
   if (/\bsermon|\breels?\b|\bclips?\b|transcri|livestream|\bpreach|\bdevotional\b/.test(t)) {
     return honest('media', tr('ai.route.sermons'), tr('ai.route.sermonsNote'))
   }
-  if (/prayer request|counsel/.test(t)) return honest('memberCare', tr('ai.route.prayer'), tr('ai.route.prayerNote'))
+  if (/prayer request|counsel/.test(t) && !/\bsend\b|\bmessage\b/.test(t)) return honest('memberCare', tr('ai.route.prayer'), tr('ai.route.prayerNote'))
   if (/\bevery (day|week|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b|\bwhen (someone|a visitor|a new)|\bautomat/.test(t)) {
     return honest('automation', tr('ai.route.automation'), tr('ai.route.automationNote'))
   }
 
   // Briefing / attention
   if (/birthday|celebrant/.test(t)) {
-    if (/\bsend\b/.test(t)) return runTool('getBirthdays', { range: 'today' }, ctx)
+    if (/\b(send|wish|greet|pray)\b/.test(t) && !/week|month|tomorrow/.test(t)) return runTool('sendBirthdayGreetings', {}, ctx)
     return runTool('getBirthdays', { range: /today|celebrat/.test(t) ? 'today' : /month/.test(t) ? 'month' : 'week' }, ctx)
+  }
+  if (/\bnewcomers?\b|\bconverts?\b/.test(t) && /follow.?up|\bthank|\bpray/.test(t) && !/\bwho\b|\bshow\b|\blist\b/.test(t)) {
+    // "Follow up the newcomers": the standard Monday thank-you with a prayer. Dictated wording → Claude writes it.
+    const r = runTool('followUpNewcomers', {}, ctx)
+    return { ...r, needsModel: /\bsay|\btell|\bhope|\badd|\binclude|["“]/.test(t) }
   }
   if (/follow.?up|followed up|been contacted|hasn'?t been contacted|haven'?t been contacted|newcomers from/.test(t)) {
     if (/\bassign\b/.test(t)) return honest('followUp', tr('ai.route.assign'), undefined)
@@ -279,7 +293,9 @@ function route(raw: string, ctx: ToolContext): ToolResult & { denied?: boolean; 
     let vars: Record<string, string> | undefined
     if (!body) {
       // Built-in templates are sent to each member in their own communication language.
-      if (/welcome/.test(t)) template = 'welcome'
+      const toNewcomers = aud.type === 'stage' && (aud.value === 'Newcomer' || aud.value === 'Convert')
+      if (toNewcomers && /thank|visit|pray|welcome|came|coming|hope/.test(t)) template = 'newcomerThanks'
+      else if (/welcome/.test(t)) template = 'welcome'
       else if (/birthday/.test(t)) template = 'birthday'
       else {
         const tell = raw.match(/\b(?:tell|dile|dites?|sag|diz)\s+(?:the |all |our |a |à |aos? |los |les |den )?\w+(?: members| team)?\s+(?:that\s+|que\s+|dass\s+)?(.+)/i)?.[1]
@@ -293,7 +309,9 @@ function route(raw: string, ctx: ToolContext): ToolResult & { denied?: boolean; 
       }
     }
     if (template) body = tpl(template, vars)
-    return runTool('prepareMessage', { body, channel: channelFrom(t), audienceType: aud.type, audienceValue: aud.value, template, vars }, ctx)
+    const prepared = runTool('prepareMessage', { body, channel: channelFrom(t), audienceType: aud.type, audienceValue: aud.value, template, vars }, ctx)
+    // "Thank them… add prayers…": Claude writes exactly what was asked; this prepared message is the fallback.
+    return { ...prepared, needsModel: !quoted && hasWritingInstructions(t) }
   }
   if (/\b(write|draft|compose)\b/.test(t) && /message|announcement|reminder|text|note/.test(t)) {
     return runTool('draftMessage', { purpose: /welcome|newcomer/.test(t) ? 'welcome' : /birthday/.test(t) ? 'birthday' : /thank/.test(t) ? 'thanks' : 'reminder' }, ctx)
@@ -353,7 +371,14 @@ const SYSTEM = `You are Ellen, the AI assistant inside ZionDesk church managemen
 Always reply in the language the user writes in. If they ask for content in another language (for example "write this in French"), write that content in the requested language.
 Use the provided tools to answer; they return the church's real records. Never invent numbers, names or events — if a tool can't answer, say "I don't have enough information to answer that yet."
 Never make spiritual judgments about people (say "attendance follow-up suggested", not "backsliding"). Leadership makes pastoral decisions.
-Keep answers short, warm and practical. Use simple language — no technical terms.`
+Keep answers short, warm and practical. Use simple language — no technical terms.
+You are the pastor's assistant. Follow the request exactly:
+- Sending a message: always call prepareMessage (it asks for confirmation before anything is sent). Write the whole message yourself in "body", saying what was asked — thanks, invitations, encouragement — in a warm church voice, starting "Hi {first_name},". Keep it SHORT: 2–3 sentences, under 300 characters, no emojis — it goes out by SMS and WhatsApp.
+- When prayers are asked for (and for any thank-you, welcome or care message), end with a one-line prayer ("May the Lord…").
+- Pick the right people: newcomers / new comers / visitors / first-timers / guests → audienceType "stage", audienceValue "Newcomer"; new converts → "Convert"; workers → "Worker". Only use "all" when the user means everyone.
+- Channel: "All" (WhatsApp, SMS and email) unless the user names one channel.
+- Birthday greetings for today → sendBirthdayGreetings. Thank-you + prayer to Sunday's newcomers → followUpNewcomers when they ask for the standard Monday follow-up; prepareMessage when they dictate the wording.
+- Never say you've sent something: the user confirms first.`
 
 export async function ask(
   text: string,

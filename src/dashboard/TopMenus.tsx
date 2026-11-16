@@ -64,6 +64,7 @@ export function NotificationsMenu() {
       designRequests: ws.requests,
       claims: ws.claims,
       messageCost: ai.settings.messageCost,
+      prayerInMessages: ai.settings.prayerInMessages !== false,
       actions: { addCampaign: ws.addCampaign, logCommunicationMany: m.logCommunicationMany, saveEvent: ws.saveEvent },
     } as ToolContext
     const now = new Date().toISOString()

@@ -197,6 +197,15 @@ export interface WorkspaceData {
 
 const ok = <T,>(r: { data: T | null; error: unknown }, fallback: T): T => (r.error ? fallback : r.data ?? fallback)
 
+type TeamRow = { role: Role; branch?: string | null; departments?: string[] | null; can_edit_members?: boolean; can_send_messages?: boolean }
+const teamAccess = (x: TeamRow) => ({
+  role: x.role,
+  branch: x.branch ?? null,
+  departments: x.departments ?? [],
+  canEditMembers: Boolean(x.can_edit_members),
+  canSendMessages: Boolean(x.can_send_messages),
+})
+
 export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
   const s = sb()
   const [church, ev, camp, exp, gifts, des, reqs, msgs, cu, inv, links, claims, tpl] = await Promise.all([
@@ -208,7 +217,7 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
     s.from('designs').select('*').eq('church_id', churchId).order('created_at', { ascending: false }),
     s.from('design_requests').select('*').eq('church_id', churchId).order('created_at', { ascending: false }),
     s.from('design_request_messages').select('*').eq('church_id', churchId).order('at'),
-    s.from('church_users').select('user_id, role, branch, profiles(full_name, email)').eq('church_id', churchId),
+    s.from('church_users').select('*, profiles(full_name, email)').eq('church_id', churchId),
     s.from('team_invites').select('*').eq('church_id', churchId).eq('status', 'Invited'),
     s.from('share_links').select('*').eq('church_id', churchId).order('created_at'),
     s.from('transfer_claims').select('*').eq('church_id', churchId).order('created_at', { ascending: false }),
@@ -266,11 +275,11 @@ export async function loadWorkspace(churchId: string): Promise<WorkspaceData> {
       messages: reqMsgs.filter((m) => m.request_id === x.id).map((m) => ({ id: m.id, from: m.sender, text: m.text, at: m.at })),
     })),
     team: [
-      ...(ok(cu, []) as unknown as { user_id: string; role: Role; branch: string | null; profiles: { full_name: string; email: string } | null }[]).map((x) => {
+      ...(ok(cu, []) as unknown as (TeamRow & { user_id: string; profiles: { full_name: string; email: string } | null })[]).map((x) => {
         const p = x.profiles
-        return { id: x.user_id, name: p?.full_name || p?.email || '—', email: p?.email ?? '', role: x.role, branch: x.branch, status: 'Active' as const }
+        return { id: x.user_id, name: p?.full_name || p?.email || '—', email: p?.email ?? '', ...teamAccess(x), status: 'Active' as const }
       }),
-      ...ok(inv, [] as { id: string; name: string; email: string; role: Role; branch: string | null }[]).map((x) => ({ id: `invite:${x.id}`, name: x.name, email: x.email, role: x.role, branch: x.branch, status: 'Invited' as const })),
+      ...ok(inv, [] as (TeamRow & { id: string; name: string; email: string })[]).map((x) => ({ id: `invite:${x.id}`, name: x.name, email: x.email, ...teamAccess(x), status: 'Invited' as const })),
     ],
     links: ok(links, [] as Record<string, never>[]).filter((x: Record<string, unknown>) => x.type !== 'checkin').map((x: Record<string, unknown>) => ({ id: x.id as string, type: x.type as ShareLink['type'], label: x.label as string, branch: x.branch as string, fund: x.fund as string, createdAt: x.created_at as string })),
     claims: ok(claims, [] as Record<string, never>[]).map((x: Record<string, unknown>) => ({
@@ -360,10 +369,19 @@ export const ws = {
   },
   postRequestMessage: (churchId: string, requestId: string, id: string, text: string) =>
     bg(sb().from('design_request_messages').insert({ id, church_id: churchId, request_id: requestId, sender: 'you', text }), 'message designer'),
-  updateTeamRole: (churchId: string, id: string, role: Role, branch: string | null = null) =>
-    id.startsWith('invite:')
-      ? bg(sb().from('team_invites').update({ role, branch }).eq('id', id.slice(7)).eq('church_id', churchId), 'change role')
-      : bg(sb().from('church_users').update({ role, branch }).eq('user_id', id).eq('church_id', churchId), 'change role'),
+  /** Role plus its scope: a branch for branch leaders; departments and switches for department heads. */
+  updateTeamAccess: (churchId: string, id: string, t: { role: Role; branch?: string | null; departments?: string[]; canEditMembers?: boolean; canSendMessages?: boolean }) => {
+    const dept = t.role === 'department'
+    const row = {
+      role: t.role,
+      branch: t.role === 'branch' ? t.branch ?? null : null,
+      // Only sent for department heads, so churches that haven't run migration 0021 keep working.
+      ...(dept ? { departments: t.departments ?? [], can_edit_members: t.canEditMembers === true, can_send_messages: t.canSendMessages === true } : {}),
+    }
+    return id.startsWith('invite:')
+      ? bg(sb().from('team_invites').update(row).eq('id', id.slice(7)).eq('church_id', churchId), 'change role')
+      : bg(sb().from('church_users').update(row).eq('user_id', id).eq('church_id', churchId), 'change role')
+  },
   removeTeam: (churchId: string, id: string) =>
     id.startsWith('invite:')
       ? bg(sb().from('team_invites').update({ status: 'Revoked' }).eq('id', id.slice(7)).eq('church_id', churchId), 'revoke invite')

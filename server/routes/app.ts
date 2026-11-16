@@ -5,6 +5,9 @@
  *   POST /api/claims/:id/confirm     confirm a bank transfer → gift + receipt (admin, finance)
  *   POST /api/claims/:id/decline     (admin, finance)
  *   POST /api/members/:id/birthday-send  send one member a birthday message by Email, WhatsApp or SMS (admin, leader)
+ *   POST /api/care/birthdays          Ellen: today's birthday prayers to this church's celebrants, every channel (admin, leader)
+ *   GET  /api/care/newcomers          who the Monday follow-up would reach (admin, leader)
+ *   POST /api/care/newcomers          Ellen: thank-you + prayer to last Sunday's newcomers, every channel (admin, leader)
  */
 import { Router } from 'express'
 import { asEmailLang } from '../../src/emails/strings'
@@ -18,26 +21,33 @@ import { withChurchName } from '../../src/emails/sender'
 import { ageOn, birthdayPrayers, prayersEnabled } from '../prayers'
 import { smsUsage } from '../smsQuota'
 import { teamNote, welcomeMember } from '../welcomes'
+import { lastSunday, runBirthdays, runNewcomerFollowups, sundayNewcomers } from '../care'
 
 export const appRoutes = Router()
 appRoutes.get('/sms/usage', requireCaller(), route(async (req, res) => { res.json(await smsUsage(req.caller!.churchId)) }))
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ROLE_NAME: Record<string, Record<string, string>> = {
-  en: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader', branch: 'Branch leader' },
-  es: { admin: 'Administrador', finance: 'Finanzas', leader: 'Líder de ministerio', branch: 'Líder de sede' },
-  fr: { admin: 'Administrateur', finance: 'Finances', leader: 'Responsable de ministère', branch: 'Responsable d’antenne' },
-  de: { admin: 'Administrator', finance: 'Finanzen', leader: 'Bereichsleiter', branch: 'Standortleiter' },
-  pt: { admin: 'Administrador', finance: 'Finanças', leader: 'Líder de ministério', branch: 'Líder de filial' },
+  en: { admin: 'Administrator', finance: 'Finance', leader: 'Ministry leader', branch: 'Branch leader', department: 'Department head' },
+  es: { admin: 'Administrador', finance: 'Finanzas', leader: 'Líder de ministerio', branch: 'Líder de sede', department: 'Jefe de departamento' },
+  fr: { admin: 'Administrateur', finance: 'Finances', leader: 'Responsable de ministère', branch: 'Responsable d’antenne', department: 'Responsable de département' },
+  de: { admin: 'Administrator', finance: 'Finanzen', leader: 'Bereichsleiter', branch: 'Standortleiter', department: 'Abteilungsleiter' },
+  pt: { admin: 'Administrador', finance: 'Finanças', leader: 'Líder de ministério', branch: 'Líder de filial', department: 'Chefe de departamento' },
 }
 const LOCALE: Record<string, string> = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT' }
 
 appRoutes.post(
   '/campaigns/:id/send',
-  requireCaller(['admin', 'leader']),
+  requireCaller(['admin', 'leader', 'department']),
   route(async (req, res) => {
-    const { data: c } = await db().from('campaigns').select('id, church_id, scheduled_for, status').eq('id', req.params.id).maybeSingle()
+    const { data: c } = await db().from('campaigns').select('id, church_id, scheduled_for, status, audience').eq('id', req.params.id).maybeSingle()
     if (!c || c.church_id !== req.caller!.churchId) throw new HttpError(404, 'Message not found')
+    // Department heads: only when allowed to send, and only to their own departments.
+    if (req.caller!.role === 'department') {
+      const a = c.audience as { type?: string; value?: string } | null
+      if (!req.caller!.canSendMessages) throw new HttpError(403, 'Your access does not include sending messages.')
+      if (a?.type !== 'department' || !req.caller!.departments.includes(String(a.value))) throw new HttpError(403, 'You can only message your own department.')
+    }
     if (c.status === 'Sent') throw new HttpError(409, 'This message was already sent')
     // Scheduled messages are sent by the cron job when their time comes.
     if (c.scheduled_for && new Date(c.scheduled_for) > new Date()) return res.json({ scheduled: true })
@@ -51,22 +61,27 @@ appRoutes.post(
   route(async (req, res) => {
     const name = String(req.body?.name ?? '').trim().slice(0, 120)
     const email = String(req.body?.email ?? '').trim().toLowerCase()
-    const role = ['admin', 'finance', 'leader', 'branch'].includes(req.body?.role) ? req.body.role : 'leader'
+    const role = ['admin', 'finance', 'leader', 'branch', 'department'].includes(req.body?.role) ? req.body.role : 'leader'
     const lang = asEmailLang(req.body?.language)
     if (!name || !EMAIL_RE.test(email)) throw new HttpError(400, 'Name and a valid email are required')
     const churchId = req.caller!.churchId
-    const { data: church } = await db().from('churches').select('name, branches').eq('id', churchId).single()
+    const { data: church } = await db().from('churches').select('name, branches, departments').eq('id', churchId).single()
     // A branch leader is tied to one of the church's branches.
     const branch = role === 'branch' ? String(req.body?.branch ?? '').trim() : null
     if (role === 'branch' && !((church?.branches as string[] | null) ?? []).includes(branch!)) throw new HttpError(400, 'Choose one of your branches for this branch leader.')
+    // A department head is tied to one or more of the church's departments, with two switches.
+    const known = (church?.departments as string[] | null) ?? []
+    const departments = role === 'department' ? [...new Set((Array.isArray(req.body?.departments) ? req.body.departments : []).map(String))].filter((d): d is string => known.includes(d as string)) : null
+    if (role === 'department' && !departments!.length) throw new HttpError(400, 'Choose at least one department for this department head.')
+    const access = role === 'department' ? { departments, can_edit_members: req.body?.canEditMembers === true, can_send_messages: req.body?.canSendMessages === true } : {}
 
-    await db().from('team_invites').upsert({ church_id: churchId, name, email, role, branch, language: lang, status: 'Invited' }, { onConflict: 'church_id,email' })
+    await db().from('team_invites').upsert({ church_id: churchId, name, email, role, branch, language: lang, status: 'Invited', ...access }, { onConflict: 'church_id,email' })
 
     // Existing ZionDesk user → add straight away and send a sign-in link; new user → invite link.
     const { data: existing } = await db().from('profiles').select('id').eq('email', email).maybeSingle()
     let url = `${env.siteUrl}/login`
     if (existing) {
-      await db().from('church_users').upsert({ church_id: churchId, user_id: existing.id, role, branch }, { onConflict: 'church_id,user_id' })
+      await db().from('church_users').upsert({ church_id: churchId, user_id: existing.id, role, branch, ...access }, { onConflict: 'church_id,user_id' })
       await db().from('team_invites').update({ status: 'Accepted' }).eq('church_id', churchId).eq('email', email)
     } else {
       const { data, error } = await db().auth.admin.generateLink({
@@ -128,10 +143,11 @@ appRoutes.post(
 
 appRoutes.post(
   '/members/:id/welcome',
-  requireCaller(['admin', 'leader']),
+  requireCaller(['admin', 'leader', 'department']),
   route(async (req, res) => {
-    const { data: m } = await db().from('members').select('id, church_id').eq('id', req.params.id).maybeSingle()
+    const { data: m } = await db().from('members').select('id, church_id, department').eq('id', req.params.id).maybeSingle()
     if (!m || m.church_id !== req.caller!.churchId) throw new HttpError(404, 'Member not found')
+    if (req.caller!.role === 'department' && !(req.caller!.canEditMembers && req.caller!.departments.includes(m.department))) throw new HttpError(404, 'Member not found')
     res.json({ sent: await welcomeMember(m.id) })
   }),
 )
@@ -234,5 +250,39 @@ appRoutes.post(
       await settleDelivery(claim.id, { status: 'failed', error: reason })
       throw new HttpError(502, reason)
     }
+  }),
+)
+
+/* ───────── Ellen's care actions (run on request, for this church) ───────── */
+
+appRoutes.post(
+  '/care/birthdays',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    res.json(await runBirthdays({ churchId: req.caller!.churchId, byName: `Ellen (approved by ${req.caller!.name || 'the team'})` }))
+  }),
+)
+
+appRoutes.get(
+  '/care/newcomers',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    const people = await sundayNewcomers(req.caller!.churchId)
+    const ids = people.map((p) => p.id)
+    const { data: done } = ids.length ? await db().from('deliveries').select('member_id').in('member_id', ids).like('dedupe_key', 'newcomer:%') : { data: [] }
+    const already = new Set((done ?? []).map((d) => d.member_id))
+    res.json({
+      sunday: lastSunday(),
+      people: people.map((p) => ({ id: p.id, name: p.full_name, stage: p.stage, whatsapp: Boolean(p.whatsapp || p.phone), sms: Boolean(p.phone), email: Boolean(p.email), done: already.has(p.id) })),
+      channels: { whatsapp: configured.whatsapp, sms: configured.sms, email: configured.email },
+    })
+  }),
+)
+
+appRoutes.post(
+  '/care/newcomers',
+  requireCaller(['admin', 'leader']),
+  route(async (req, res) => {
+    res.json(await runNewcomerFollowups({ churchId: req.caller!.churchId, byName: `Ellen (approved by ${req.caller!.name || 'the team'})` }))
   }),
 )

@@ -25,7 +25,7 @@ import { initials } from './types'
 import { ThemeToggle, useTheme } from '../theme'
 import { MemberStoreProvider, useMembers } from './store'
 import { AiProvider } from '../ai/store'
-import { type Role } from './types'
+import { can, type Role } from './types'
 import { useT } from '../i18n'
 import { LanguagePopup } from '../i18n/LanguagePopup'
 import { ConfirmHost } from './confirm'
@@ -51,7 +51,15 @@ const NAV = [
   { to: '/dashboard/branches', key: 'branches' },
 ]
 /** Menu items per role: branch leaders only see their branch reports; ministry leaders don't see branch finance. */
-const navFor = (role: Role | null) => (role === 'branch' ? NAV.filter((n) => n.key === 'branches') : role === 'leader' ? NAV.filter((n) => n.key !== 'branches') : NAV)
+const DEPT_NAV = ['overview', 'ai', 'members', 'messaging', 'events']
+const navFor = (role: Role | null) =>
+  role === 'branch'
+    ? NAV.filter((n) => n.key === 'branches')
+    : role === 'department' // their departments' members, messages when allowed, and the church calendar
+      ? NAV.filter((n) => DEPT_NAV.includes(n.key) && (n.key !== 'messaging' || can.sendMessages(role)))
+      : role === 'leader'
+        ? NAV.filter((n) => n.key !== 'branches')
+        : NAV
 /** The top menu groups related pages so it stays short (6 entries instead of 11). */
 const GROUPS: { key: string; items: string[] }[] = [
   { key: 'overview', items: ['overview'] },
@@ -372,6 +380,8 @@ function Shell() {
   const session = useSession()
   // Branch leaders only use Branch reports (and Help).
   if (session.remote && session.role === 'branch' && !/^\/dashboard\/(branches|help)/.test(pathname)) return <Navigate to="/dashboard/branches" replace />
+  // Department heads: their pages only (overview, Ellen, members, messages, events, help, their own account and language in Settings).
+  if (session.remote && session.role === 'department' && !/^\/dashboard\/?($|ai|members|messaging|events|help|settings)/.test(pathname)) return <Navigate to="/dashboard" replace />
   if (loading)
     return (
       <div className="d-loading" role="status">

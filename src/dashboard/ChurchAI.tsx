@@ -211,9 +211,10 @@ export default function ChurchAI() {
       designRequests: ws.requests,
       claims: ws.claims,
       messageCost: ai.settings.messageCost,
+      prayerInMessages: ai.settings.prayerInMessages !== false,
       actions: { addCampaign: ws.addCampaign, logCommunicationMany: m.logCommunicationMany, saveEvent: ws.saveEvent },
     }),
-    [m, ws, ai.settings.messageCost, session],
+    [m, ws, ai.settings.messageCost, ai.settings.prayerInMessages, session],
   )
 
   const plan = ws.settings.plan
@@ -298,12 +299,12 @@ export default function ChurchAI() {
     }
   }, [params, setParams, send])
 
-  const confirm = (id: string) => {
+  const confirm = async (id: string) => {
     const p = pendings.current.get(id)
     if (!p) return
-    const result = p.run()
-    pendings.current.delete(id)
+    pendings.current.delete(id) // before awaiting, so a double click can't send twice
     setResolved((r) => ({ ...r, [id]: 'approved' }))
+    const result = await p.run()
     ai.log({ user: ctx.user!.name, agent: p.agent, action: result.activity ?? p.summary, entity: p.entity, result: 'success', approval: 'approved' })
     setThread((x) => [...x, { id: nextId(), from: 'ai', outcome: { ...result, provider: 'local' } }])
   }

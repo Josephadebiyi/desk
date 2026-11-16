@@ -1,6 +1,7 @@
 import type { Dict } from '../en'
 const tpl: Dict['tpl'] = {
   welcome: 'Hola {first_name}, ¡fue una alegría tenerte en {church}! Nos encantaría conocerte: responde cuando quieras y esperamos verte de nuevo este domingo. 💜',
+  newcomerThanks: 'Hola {first_name}, gracias por adorar con nosotros en {church}. Esperamos verte pronto. Que el Señor te bendiga y te guarde.',
   birthday: '¡Feliz cumpleaños, {first_name}! 🎉 Todos en {church} celebramos contigo hoy. ¡Que Dios bendiga tu nuevo año!',
   thanks: 'Gracias, {first_name}, por tu generosidad con {church}. Tus ofrendas hacen posible el ministerio. 🙏',
   reminder: 'Hola {first_name}, te recordamos: {event} es el {date} a las {time}. ¡Te esperamos! — {church}',

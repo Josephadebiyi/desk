@@ -179,6 +179,10 @@ export interface TeamMember {
   role: Role
   /** Branch leaders: their branch. */
   branch?: string | null
+  /** Department heads: their departments and what they may do there. */
+  departments?: string[]
+  canEditMembers?: boolean
+  canSendMessages?: boolean
   status: 'Active' | 'Invited'
 }
 
@@ -515,13 +519,14 @@ export function WorkspaceProvider({ children, demo = false }: { children: ReactN
       inviteTeam: (t) => {
         setTeam((all) => [...all, { ...t, id: `invite:${uid()}`, status: 'Invited' }])
         if (live)
-          callApi('/team/invite', { name: t.name, email: t.email, role: t.role, branch: t.branch ?? null, language: (t as { language?: string }).language })
+          callApi('/team/invite', { name: t.name, email: t.email, role: t.role, branch: t.branch ?? null, departments: t.departments ?? [], canEditMembers: t.canEditMembers === true, canSendMessages: t.canSendMessages === true, language: (t as { language?: string }).language })
             .then(reload)
             .catch((e) => console.error('[invite]', e))
       },
       updateTeam: (id, patch) => {
-        setTeam((all) => all.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-        if (live && patch.role) db.updateTeamRole(churchId, id, patch.role, patch.role === 'branch' ? patch.branch ?? null : null)
+        const next = { ...team.find((x) => x.id === id)!, ...patch }
+        setTeam((all) => all.map((x) => (x.id === id ? next : x)))
+        if (live && next.role) db.updateTeamAccess(churchId, id, next)
       },
       removeTeam: (id) => {
         setTeam((all) => all.filter((x) => x.id !== id))

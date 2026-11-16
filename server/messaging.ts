@@ -15,7 +15,8 @@ import { sendWhatsApp } from './whatsapp'
 import { withChurchName } from '../src/emails/sender'
 import { logOutbound } from './inbox'
 import { defaultSmsSender, validSmsSender } from '../src/lib/smsSender'
-import { reserveSms } from './smsQuota'
+import { releaseSms, reserveSms } from './smsQuota'
+import { closingPrayers, withPrayer } from './prayers'
 
 /** The church's SMS sender name: its saved choice, else one made from its name. */
 export const smsSenderOf = (c: { name?: string | null; sms_sender?: string | null } | null) =>
@@ -67,6 +68,8 @@ export function personalize(raw: string, lang: EmailLang, vars: Record<string, s
 
 /** Plain-language reasons for Twilio / WhatsApp error codes churches are likely to hit. */
 const TWILIO_ERRORS: Record<string, string> = {
+  '20003': 'Twilio refused the account: it is suspended, closed or the keys are wrong. Log in at twilio.com/console, check the account status and billing (a trial that ended, or a zero balance, does this), then update TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN on Render if they changed.',
+  '20005': 'The Twilio account is suspended. Check the account status and billing at twilio.com/console.',
   '21656': 'The WhatsApp template in TWILIO_WHATSAPP_CONTENT_SID doesn’t match: it must be a Text or Quick Reply template with exactly one variable, {{1}} (see /api/health → whatsappTemplateCheck).',
   '63016': 'WhatsApp only allows free text within 24 hours of the member messaging you. Outside that window an approved WhatsApp template is needed (TWILIO_WHATSAPP_CONTENT_SID).',
   '63015': 'The Twilio WhatsApp sandbox only delivers to phones that first sent the sandbox "join" code.',
@@ -94,7 +97,9 @@ const SENDER_NAME_REFUSED = new Set([21212, 21612, 21606, 21659, 21660, 21661])
 /** Countries where an unregistered sender name fails or is filtered (US/Canada: not allowed; Nigeria: needs registration). */
 const NO_SENDER_NAME = (process.env.SMS_NAME_SKIP ?? '+1,+234').split(',').map((x) => x.trim()).filter(Boolean)
 
-class TwilioError extends Error {
+/** Twilio errors about the account itself (not one number): sending more messages can't work until it's fixed. */
+export const TWILIO_ACCOUNT_ERRORS = new Set([20003, 20005, 20008, 20403, 21608, 30002])
+export class TwilioError extends Error {
   constructor(message: string, readonly code?: number) {
     super(message)
   }
@@ -110,7 +115,18 @@ export async function twilio(channel: 'SMS' | 'WhatsApp', to: string, body: stri
   if (channel === 'SMS') {
     if (!opts.churchId) throw new Error('A church is required to send SMS.')
     await reserveSms(opts.churchId, body)
+    try {
+      return await twilioSend(channel, to, body, opts)
+    } catch (e) {
+      // Twilio answered "no": nothing was sent, so the church's allowance gets the message back.
+      if (e instanceof TwilioError) await releaseSms(opts.churchId, body).catch(() => undefined)
+      throw e
+    }
   }
+  return twilioSend(channel, to, body, opts)
+}
+
+async function twilioSend(channel: 'SMS' | 'WhatsApp', to: string, body: string, opts: { freeform?: boolean; sender?: string | null; churchId?: string }): Promise<string | undefined> {
   if (channel === 'SMS' && opts.sender && !NO_SENDER_NAME.some((p) => to.startsWith(p))) {
     try {
       return await twilioPost({ From: opts.sender, To: to, Body: body })
@@ -201,12 +217,15 @@ export async function sendCampaign(campaignId: string, byName: string) {
   const { data: claimed } = await db().from('campaigns').update({ status: 'Sending' }).eq('id', campaignId).in('status', ['Queued', 'Scheduled', 'Failed']).select('id')
   if (!claimed?.length) throw new HttpError(409, c.status === 'Sent' ? 'This message was already sent.' : 'This message is already being sent.')
 
+  const rawFor = (lang: EmailLang) =>
+    c.template ? (overrides ?? []).find((o) => o.key === c.template && o.lang === lang)?.text ?? TPL[lang][c.template] ?? c.body : c.body
+  // A short closing prayer on every message (Settings → Ask Ellen → prayers), one per language, unless it already has one.
+  const wantsPrayer = (church?.ai_settings as { prayerInMessages?: boolean } | null)?.prayerInMessages !== false
+  const langs = [...new Set(recipients.map((m) => asEmailLang(m.language)))]
+  const prayers = wantsPrayer && recipients.length ? await closingPrayers(churchName, rawFor(langs[0] ?? 'en'), langs).catch(() => ({}) as Record<string, string>) : {}
   const textFor = (m: MemberRow) => {
     const lang = asEmailLang(m.language)
-    const raw = c.template
-      ? (overrides ?? []).find((o) => o.key === c.template && o.lang === lang)?.text ?? TPL[lang][c.template] ?? c.body
-      : c.body
-    return { lang, text: personalize(raw, lang, (c.vars ?? {}) as Record<string, string>, m.full_name.split(' ')[0], churchName) }
+    return { lang, text: withPrayer(personalize(rawFor(lang), lang, (c.vars ?? {}) as Record<string, string>, m.full_name.split(' ')[0], churchName), prayers[lang]) }
   }
 
   const rows: Record<string, unknown>[] = []
@@ -232,6 +251,8 @@ export async function sendCampaign(campaignId: string, byName: string) {
     })
   } else {
     const ready = channel === 'SMS' ? configured.sms : configured.whatsapp
+    // An account-level refusal (suspended account, wrong keys…) fails every message the same way: stop trying.
+    let accountError: string | null = null
     for (const m of recipients) {
       const { lang, text: raw } = textFor(m)
       const text = withChurchName(raw, churchName)
@@ -239,13 +260,17 @@ export async function sendCampaign(campaignId: string, byName: string) {
       let status = 'queued'
       let providerId: string | undefined
       let err: string | null = null
-      if (ready) {
+      if (ready && accountError) {
+        status = 'failed'
+        err = accountError
+      } else if (ready) {
         try {
           providerId = channel === 'WhatsApp' && configured.whatsappCloud ? await sendWhatsApp(to, text, lang) : await twilio(channel, to, text, { sender: smsSenderOf(church), churchId: c.church_id })
           status = 'sent'
         } catch (e) {
           status = 'failed'
           err = e instanceof Error ? e.message : 'send failed'
+          if (e instanceof TwilioError && e.code && TWILIO_ACCOUNT_ERRORS.has(e.code)) accountError = err
         }
       }
       rows.push({ church_id: c.church_id, campaign_id: c.id, member_id: m.id, channel, language: lang, to_address: to, status, provider_id: providerId ?? null, error: err })

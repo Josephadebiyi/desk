@@ -21,8 +21,9 @@ export class HttpError extends Error {
   }
 }
 
-/** branch = a branch leader: only sees and submits their own branch's reports. */
-export type Role = 'admin' | 'finance' | 'leader' | 'branch'
+/** branch = a branch leader: only sees and submits their own branch's reports.
+ *  department = a department head: only their departments' members, with per-person switches (migration 0021). */
+export type Role = 'admin' | 'finance' | 'leader' | 'branch' | 'department'
 export interface Caller {
   userId: string
   email: string
@@ -31,6 +32,10 @@ export interface Caller {
   role: Role
   /** Set for branch leaders: the branch they report for. */
   branch: string | null
+  /** Department heads: their departments and switches. */
+  departments: string[]
+  canEditMembers: boolean
+  canSendMessages: boolean
 }
 
 declare module 'express-serve-static-core' {
@@ -50,9 +55,12 @@ export function requireCaller(roles?: Role[]) {
       const data = { user }
       const churchId = String(req.headers['x-church-id'] ?? '')
       if (!/^[0-9a-f-]{36}$/i.test(churchId)) throw new HttpError(400, 'No church selected.')
-      let { data: link, error: linkError } = await db().from('church_users').select('role, branch').eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle()
-      // Before migration 0010 there is no branch column: fall back so nothing else breaks.
-      if (linkError?.code === '42703') ({ data: link } = await db().from('church_users').select('role').eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle())
+      type Link = { role: string; branch?: string | null; departments?: string[] | null; can_edit_members?: boolean; can_send_messages?: boolean }
+      const linkOf = (cols: string) => db().from('church_users').select(cols).eq('church_id', churchId).eq('user_id', data.user.id).maybeSingle<Link>()
+      let { data: link, error: linkError } = await linkOf('role, branch, departments, can_edit_members, can_send_messages')
+      // Before migrations 0010 / 0021 those columns don't exist: fall back so nothing else breaks.
+      if (linkError?.code === '42703') ({ data: link, error: linkError } = await linkOf('role, branch'))
+      if (linkError?.code === '42703') ({ data: link } = await linkOf('role'))
       if (!link) throw new HttpError(403, 'You are not part of this church.')
       if (roles && !roles.includes(link.role as Role)) throw new HttpError(403, 'Your role does not allow this.')
       // Branch leaders only reach routes that name them explicitly.
@@ -63,7 +71,10 @@ export function requireCaller(roles?: Role[]) {
         name: String(data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? ''),
         churchId,
         role: link.role as Role,
-        branch: ((link as { branch?: string | null }).branch as string | null) ?? null,
+        branch: link.branch ?? null,
+        departments: link.role === 'department' ? (link.departments ?? []) : [],
+        canEditMembers: link.role === 'department' ? Boolean(link.can_edit_members) : link.role === 'admin' || link.role === 'leader',
+        canSendMessages: link.role === 'department' ? Boolean(link.can_send_messages) : link.role === 'admin' || link.role === 'leader',
       }
       next()
     } catch (e) {
@@ -97,7 +108,7 @@ export function requireUser() {
     try {
       const user = await verifiedUser(req)
       const data = { user }
-      req.caller = { userId: data.user.id, email: data.user.email ?? '', name: String(data.user.user_metadata?.full_name ?? ''), churchId: '', role: 'leader', branch: null }
+      req.caller = { userId: data.user.id, email: data.user.email ?? '', name: String(data.user.user_metadata?.full_name ?? ''), churchId: '', role: 'leader', branch: null, departments: [], canEditMembers: false, canSendMessages: false }
       next()
     } catch (e) {
       next(e)

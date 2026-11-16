@@ -6,7 +6,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isLang, onPrefsSaved, useT, type Lang } from '../i18n'
-import type { Role } from '../dashboard/types'
+import { setDeptAccess, type Role } from '../dashboard/types'
 import { apiUrl, setApiChurch } from './api'
 import { remote, supabase } from './supabase'
 
@@ -17,6 +17,10 @@ export interface ChurchLink {
   role: Role
   /** Branch leaders: the branch they report for. */
   branch?: string | null
+  /** Department heads: their departments and switches. */
+  departments?: string[]
+  canEditMembers?: boolean
+  canSendMessages?: boolean
 }
 
 interface SessionApi {
@@ -123,7 +127,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const uid = s.user.id
       const [{ data: prof }, { data: links }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),
-        supabase.from('church_users').select('role, branch, churches(id, name, slug)').eq('user_id', uid),
+        // '*': works before and after the migrations that added branch / department columns.
+        supabase.from('church_users').select('*, churches(id, name, slug)').eq('user_id', uid),
       ])
       if (prof) {
         setProfile({ full_name: prof.full_name, email: prof.email, avatar_url: prof.avatar_url ?? null })
@@ -131,7 +136,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       let list: ChurchLink[] = (links ?? []).flatMap((l) => {
         const c = l.churches as unknown as { id: string; name: string; slug: string } | null
-        return c ? [{ id: c.id, name: c.name, slug: c.slug, role: l.role as Role, branch: (l.branch as string | null) ?? null }] : []
+        return c
+          ? [{ id: c.id, name: c.name, slug: c.slug, role: l.role as Role, branch: (l.branch as string | null) ?? null, departments: (l.departments as string[] | null) ?? [], canEditMembers: Boolean(l.can_edit_members), canSendMessages: Boolean(l.can_send_messages) }]
+          : []
       })
       // First sign-in after confirming email: create the church saved during sign-up.
       const pending = s.user.user_metadata?.pending_church as PendingChurch | undefined
@@ -184,6 +191,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [session])
 
   const church = churches.find((c) => c.id === churchId) ?? churches[0] ?? null
+  // Set during render (not in an effect) so the screens' first render already uses this church's access.
+  setDeptAccess(church?.role === 'department' ? { departments: church.departments ?? [], canEditMembers: church.canEditMembers === true, canSendMessages: church.canSendMessages === true } : { departments: [], canEditMembers: false, canSendMessages: false })
   useEffect(() => {
     setApiChurch(church?.id ?? '')
   }, [church?.id])

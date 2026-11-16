@@ -6,7 +6,7 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 import Inbox, { useInboxUnread } from './Inbox'
 import { AskAI, audienceLabel, audienceMembers, AudiencePicker, fmtDate, Kpi, Modal, NoAccess, PageHead, Tabs, tEnum, today } from './kit'
 import { useMembers } from './store'
-import { can } from './types'
+import { can, deptAccess } from './types'
 import { confirmAction, withConfirm } from './confirm'
 import { useWorkspace, type Audience, type Channel } from './workspace'
 import { LANGS, localeOf, translate, useT, type Lang } from '../i18n'
@@ -120,7 +120,9 @@ function Compose() {
   const navState = location.state as { draft?: string; template?: string; vars?: Record<string, string> } | null
   const startKey = (TEMPLATE_KEYS as readonly string[]).includes(navState?.template ?? '') ? (navState!.template as TemplateKey) : null
   const [channel, setChannel] = useState<Channel>('SMS')
-  const [audience, setAudience] = useState<Audience>({ type: 'all', value: '' })
+  // Department heads message their own departments only (the database and server enforce it too).
+  const ownDepts = role === 'department' ? deptAccess().departments : undefined
+  const [audience, setAudience] = useState<Audience>(ownDepts ? { type: 'department', value: ownDepts[0] ?? '' } : { type: 'all', value: '' })
   const [subject, setSubject] = useState('')
   // A template sends each member the version in their language; custom text is sent as written.
   const [tplKey, setTplKey] = useState<TemplateKey | null>(navState?.draft && !startKey ? null : startKey ?? 'sunday')
@@ -167,7 +169,7 @@ function Compose() {
     if (groups.length && !groups.some(([l]) => l === viewLang)) setViewLang(groups[0][0])
   }, [groups, viewLang])
 
-  if (!can.editMembers(role)) return <NoAccess what={t('msg.what')} />
+  if (!can.sendMessages(role)) return <NoAccess what={t('msg.what')} />
 
   const rawFor = (l: Lang) => edits[l] ?? (tplKey ? templates[tplKey]?.[l] ?? translate(l, `tpl.${tplKey}`) : custom)
   const textFor = (l: Lang) => {
@@ -263,7 +265,7 @@ function Compose() {
               </button>
             ))}
           </div>
-          <AudiencePicker value={audience} onChange={setAudience} />
+          <AudiencePicker value={audience} onChange={setAudience} onlyDepartments={ownDepts} />
           {channel === 'Email' && (
             <label className="d-field">
               <span>{t('msg.subject')}</span>

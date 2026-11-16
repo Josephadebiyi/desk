@@ -1,6 +1,7 @@
 /** Member-facing message templates. Each language has its own version; bulk sends pick the member's language. */
 export default {
   welcome: 'Hi {first_name}, it was such a joy to have you at {church}! We’d love to get to know you — reply anytime, and we hope to see you again this Sunday. 💜',
+  newcomerThanks: 'Hi {first_name}, thank you for worshipping with us at {church}. We hope to see you again soon. May the Lord bless and keep you.',
   birthday: 'Happy birthday, {first_name}! 🎉 Everyone at {church} is celebrating you today. God bless your new year!',
   thanks: 'Thank you, {first_name}, for your generosity to {church}. Your giving makes ministry possible. 🙏',
   reminder: 'Hi {first_name}, a reminder: {event} is on {date} at {time}. See you there! — {church}',

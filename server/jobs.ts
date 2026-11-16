@@ -1,17 +1,16 @@
 /**
  * Scheduled work (run by Render Cron Jobs, see render.yaml):
  *   hourly → send scheduled campaigns whose time has come; event reminders 24h ahead
- *   daily  → birthday emails to members, in each member's language
+ *   daily  → birthday prayers to members on every channel, birthday reminders to the team, and on Mondays a
+ *            thank-you with a prayer to Sunday's newcomers (see care.ts)
  * Each job is idempotent: it records what it sent so a re-run doesn't send twice.
  */
 import { asEmailLang } from '../src/emails/strings'
 import { db } from './db'
 import { configured } from './env'
 import { churchBrand, compose, sendEmails } from './mail'
-import { audienceMembers, claimDeliveries, phoneOf, sendCampaign, settleDelivery, smsSenderOf, twilio, type Audience } from './messaging'
-import { ageOn, birthdayPrayers } from './prayers'
-import { sendWhatsApp } from './whatsapp'
-import { withChurchName } from '../src/emails/sender'
+import { audienceMembers, claimDeliveries, sendCampaign, settleDelivery, type Audience } from './messaging'
+import { runBirthdayReminders, runBirthdays, runNewcomerFollowups } from './care'
 import { cancelSubscription, listSubscriptions } from './flutterwave'
 import { disableSubscription, subscriptionsOf } from './paystack'
 import { stripe } from './stripe'
@@ -83,83 +82,14 @@ export async function runHourly() {
 export async function runDaily() {
   const promos = await endPromos().catch((e) => (console.error('[promos]', e), null)) // before billing
   const billing = await runBilling().catch((e) => (console.error('[billing]', e), null))
-  const birthdays = await runBirthdays().catch((e) => (console.error('[birthdays]', e), 0))
+  const birthdays = await runBirthdays().catch((e) => (console.error('[birthdays]', e), null))
+  const birthdayReminders = await runBirthdayReminders().catch((e) => (console.error('[birthday reminders]', e), null))
+  // Monday (UTC): thank Sunday's newcomers and new converts, with a prayer.
+  const newcomers = new Date().getUTCDay() === 1 ? await runNewcomerFollowups().catch((e) => (console.error('[newcomers]', e), null)) : null
   const signupReminders = await runSignupReminders().catch((e) => (console.error('[signup reminders]', e), null))
   const followups = await runFollowups().catch((e) => (console.error('[followups]', e), null))
   const branchReports = await runBranchReminders().catch((e) => (console.error('[branch reminders]', e), null))
-  return { birthdays, billing, promos, signupReminders, followups, branchReports }
-}
-
-/**
- * Birthday greetings, once per person per day, in each member's language. With ANTHROPIC_API_KEY set, Claude writes
- * every celebrant their own prayer; otherwise the standard greeting.
- * Email when the member has one, otherwise WhatsApp, otherwise SMS (when those channels are on).
- * Each greeting is claimed before it's sent (deliveries.dedupe_key), so re-runs and retries never send twice, and
- * anyone already greeted by hand today (Overview → Birthdays) is skipped.
- */
-async function runBirthdays() {
-  if (!configured.email && !configured.whatsapp && !configured.sms) return 0
-  const today = new Date()
-  const date = today.toISOString().slice(0, 10)
-  const mmdd = date.slice(5)
-  const legacyStamp = `birthday:${date}`
-  const { data: people } = await db().from('members').select('id, church_id, full_name, email, whatsapp, phone, language, dob, gender, department, stage').not('dob', 'is', null).eq('membership_status', 'Active')
-  const todays = (people ?? []).filter((m) => String(m.dob).slice(5) === mmdd && (m.email || m.whatsapp || m.phone))
-  if (!todays.length) return 0
-  // Already greeted today: by an earlier run (old marker) or any claimed greeting (automatic or by hand).
-  const [{ data: legacy }, { data: claimedToday }] = await Promise.all([
-    db().from('deliveries').select('member_id').eq('provider_id', legacyStamp),
-    db().from('deliveries').select('member_id').like('dedupe_key', `birthday:${date}:%`),
-  ])
-  const already = new Set([...(legacy ?? []), ...(claimedToday ?? [])].map((s) => s.member_id))
-  const list = todays.filter((m) => !already.has(m.id))
-  const churchIds = [...new Set(list.map((m) => m.church_id))]
-  const { data: churches } = churchIds.length ? await db().from('churches').select('id, name, sms_sender').in('id', churchIds) : { data: [] }
-  const churchOf = (id: string) => churches?.find((c) => c.id === id) ?? null
-  const name = (id: string) => churchOf(id)?.name ?? ''
-  let count = 0
-  for (const churchId of churchIds) {
-    const members = list.filter((m) => m.church_id === churchId)
-    const prayers = await birthdayPrayers(
-      name(churchId),
-      members.map((m) => ({ id: m.id, firstName: m.full_name.split(' ')[0], age: ageOn(String(m.dob), today), gender: m.gender, department: m.department, stage: m.stage, language: asEmailLang(m.language) })),
-    )
-    for (const m of members) {
-      const lang = asEmailLang(m.language)
-      const first = m.full_name.split(' ')[0]
-      const prayer = prayers[m.id]
-      const channel = m.email && configured.email ? 'Email' : m.whatsapp && configured.whatsapp ? 'WhatsApp' : m.phone && configured.sms ? 'SMS' : null
-      if (!channel) continue
-      const to = channel === 'Email' ? m.email : phoneOf(channel === 'WhatsApp' ? m.whatsapp : m.phone)
-      const text = channel === 'Email' ? prayer ?? null : withChurchName(`🎉 ${first} — ${prayer ?? BIRTHDAY_LINE[lang]}`, name(churchId))
-      const [claim] = await claimDeliveries([{ church_id: churchId, member_id: m.id, channel, language: lang, to_address: to, dedupe_key: `birthday:${date}:${m.id}:${channel}`, body: text }])
-      if (!claim) continue // claimed by another run a moment ago
-      try {
-        let providerId: string | undefined
-        if (channel === 'Email') {
-          const brand = { church: await churchBrand(churchId) }
-          ;[providerId] = await sendEmails([prayer ? compose('birthdayPrayer', lang, m.email, { church: name(churchId), name: first, prayer }, undefined, brand) : compose('birthday', lang, m.email, { church: name(churchId), name: first }, undefined, brand)])
-        } else if (channel === 'WhatsApp' && configured.whatsappCloud) {
-          providerId = await sendWhatsApp(to, text!, lang)
-        } else {
-          providerId = await twilio(channel, to, text!, { sender: smsSenderOf(churchOf(churchId)), churchId })
-        }
-        await settleDelivery(claim.id, { status: 'sent', providerId })
-        count++
-      } catch (e) {
-        await settleDelivery(claim.id, { status: 'failed', error: e instanceof Error ? e.message : 'failed' })
-      }
-    }
-  }
-  return count
-}
-
-const BIRTHDAY_LINE: Record<string, string> = {
-  en: 'Happy birthday! May God bless you abundantly in your new year.',
-  es: '¡Feliz cumpleaños! Que Dios te bendiga abundantemente en tu nuevo año.',
-  fr: 'Joyeux anniversaire ! Que Dieu te bénisse abondamment pour cette nouvelle année.',
-  de: 'Alles Gute zum Geburtstag! Gott segne dich reich im neuen Lebensjahr.',
-  pt: 'Feliz aniversário! Que Deus o abençoe abundantemente no seu novo ano.',
+  return { birthdays, birthdayReminders, newcomers, billing, promos, signupReminders, followups, branchReports }
 }
 
 /* ───────── billing lifecycle (runs daily) ─────────

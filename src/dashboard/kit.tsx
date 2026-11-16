@@ -153,14 +153,14 @@ export const audienceLabel = (a: Audience) =>
         ? tr('kit.audience.dept', { name: a.value })
         : tr('kit.audience.branch', { name: a.value })
 
-export function AudiencePicker({ value, onChange }: { value: Audience; onChange: (a: Audience) => void }) {
+export function AudiencePicker({ value, onChange, onlyDepartments }: { value: Audience; onChange: (a: Audience) => void; onlyDepartments?: string[] }) {
   const { settings } = useWorkspace()
   const { members } = useMembers()
   const { t } = useT()
   const options: Record<Audience['type'], string[]> = {
     all: [],
     stage: ['Newcomer', 'Convert', 'Member', 'Worker'],
-    department: settings.departments,
+    department: onlyDepartments ?? settings.departments,
     branch: settings.branches,
   }
   const count = audienceMembers(members, value).length
@@ -176,10 +176,10 @@ export function AudiencePicker({ value, onChange }: { value: Audience; onChange:
               onChange({ type, value: options[type][0] ?? '' })
             }}
           >
-            <option value="all">{t('kit.audience.everyone')}</option>
-            <option value="stage">{t('kit.audience.aStage')}</option>
+            {!onlyDepartments && <option value="all">{t('kit.audience.everyone')}</option>}
+            {!onlyDepartments && <option value="stage">{t('kit.audience.aStage')}</option>}
             <option value="department">{t('kit.audience.aDept')}</option>
-            <option value="branch">{t('kit.audience.aBranch')}</option>
+            {!onlyDepartments && <option value="branch">{t('kit.audience.aBranch')}</option>}
           </select>
         </label>
         {value.type !== 'all' && (

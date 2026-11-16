@@ -52,18 +52,36 @@ export interface Member {
 export type MemberInput = Omit<Member, 'id' | 'communications' | 'giving'>
 
 /** branch = a branch leader: only sends their own branch's monthly report. */
-export type Role = 'admin' | 'finance' | 'leader' | 'branch'
+export type Role = 'admin' | 'finance' | 'leader' | 'branch' | 'department'
 
 export const ROLE_LABEL: Record<Role, string> = {
   admin: 'Administrator',
   finance: 'Finance',
   leader: 'Ministry leader',
   branch: 'Branch leader',
+  department: 'Department head',
 }
+
+/**
+ * Department heads' switches for the open church (set by the session). A department head sees only their
+ * departments' members; the database enforces it too (migration 0021) — these only shape the screens.
+ */
+export interface DeptAccess {
+  departments: string[]
+  canEditMembers: boolean
+  canSendMessages: boolean
+}
+let dept: DeptAccess = { departments: [], canEditMembers: false, canSendMessages: false }
+export const setDeptAccess = (a: DeptAccess) => (dept = a)
+export const deptAccess = () => dept
 
 export const can = {
   viewGiving: (r: Role) => r === 'admin' || r === 'finance',
-  editMembers: (r: Role) => r === 'admin' || r === 'leader',
+  editMembers: (r: Role) => r === 'admin' || r === 'leader' || (r === 'department' && dept.canEditMembers),
+  /** Send WhatsApp / SMS / email (department heads: to their own departments). */
+  sendMessages: (r: Role) => r === 'admin' || r === 'leader' || (r === 'department' && dept.canSendMessages),
+  /** Create and change events. */
+  editEvents: (r: Role) => r === 'admin' || r === 'leader',
   deleteMembers: (r: Role) => r === 'admin',
   importExport: (r: Role) => r === 'admin',
   /** HQ side of branch reports (see every branch, review, remind). */

@@ -54,7 +54,8 @@ export interface PendingAction {
   kind: ActionKind
   summary: string
   entity?: string
-  run: () => ToolResult
+  /** May wait for the server (e.g. sending), then reports what happened. */
+  run: () => ToolResult | Promise<ToolResult>
 }
 
 export interface ToolDef<I = Record<string, unknown>> {

@@ -18,6 +18,7 @@ import type { Audience, Campaign, ChurchEvent, Settings, Channel } from '../dash
 import { uid } from '../dashboard/types'
 import { hasYear } from '../lib/birthday'
 import type { Block, PendingAction, ToolDef, ToolResult } from './types'
+import { api } from '../lib/api'
 
 export interface ToolContext {
   user: { name: string; role: Role } | null
@@ -31,6 +32,8 @@ export interface ToolContext {
   designRequests: { status: string; title: string }[]
   claims?: { status: string }[]
   messageCost: Record<Channel, number>
+  /** Messages get a closing prayer (Settings → Ask Ellen); shown on the confirmation. */
+  prayerInMessages?: boolean
   actions: {
     addCampaign: (c: Omit<Campaign, 'id' | 'createdAt'>) => void
     logCommunicationMany: (ids: string[], c: Omit<Communication, 'id'>) => void
@@ -109,6 +112,19 @@ const list = (items: { title: string; sub?: string; href?: string }[], max = 8):
   items: items.slice(0, max),
   more: Math.max(0, items.length - max),
 })
+
+/** Runs one of Ellen's care sends on the server and reports what went out. */
+async function careSend(path: string, agent: 'memberCare' | 'followUp'): Promise<ToolResult> {
+  try {
+    const r = await api<{ people: number; sent: number; failed: number; channels: Record<string, number>; errors: string[] }>(path, {})
+    const detail = Object.entries(r.channels).filter(([, n]) => n).map(([c, n]) => `${c} ${n}`).join(' · ')
+    const blocks: Block[] = [{ type: 'text', text: r.sent ? tr('ai.pastoral.done', { sent: r.sent, people: r.people, detail }) : tr('ai.pastoral.doneNone') }]
+    if (r.failed) blocks.push({ type: 'notice', text: tr('ai.pastoral.failed', { failed: r.failed, errors: r.errors.slice(0, 3).join(' · ') }) })
+    return { agent, activity: tr('ai.pastoral.activity', { sent: r.sent }), blocks }
+  } catch (e) {
+    return { agent, blocks: [{ type: 'notice', text: tr('ai.pastoral.error', { error: e instanceof Error ? e.message : 'error' }) }] }
+  }
+}
 
 /* ───────── tool definitions ───────── */
 
@@ -440,7 +456,7 @@ export const TOOLS: ToolDef<any>[] = [
       required: ['title', 'date', 'start'],
       additionalProperties: false,
     },
-    allow: (r) => can.editMembers(r),
+    allow: (r) => can.editEvents(r),
     validate: (raw) => {
       const title = str(raw.title).slice(0, 80)
       const date = str(raw.date)
@@ -518,53 +534,72 @@ export const TOOLS: ToolDef<any>[] = [
     name: 'prepareMessage',
     agent: 'comms',
     kind: 'bulk',
-    description: 'Prepare a message to an audience. Sends only after the user confirms recipients, channel and cost.',
+    description:
+      'Prepare a message to an audience. Sends only after the user confirms recipients, channel and cost. Write the full message in `body` exactly as the user asked (thanks, prayers, details) — use {first_name} for the person’s name. ' +
+      'Channel "All" sends on every channel each person has (WhatsApp, SMS and Email); use it unless the user names one channel. ' +
+      'Audience: newcomers / visitors / first-timers → audienceType "stage", audienceValue "Newcomer"; new converts → "Convert"; workers → "Worker"; members → "Member".',
     schema: {
       type: 'object',
-      properties: { body: { type: 'string' }, channel: { type: 'string', enum: ['WhatsApp', 'SMS', 'Email'] }, audienceType: { type: 'string', enum: ['all', 'stage', 'department', 'branch'] }, audienceValue: { type: 'string' } },
+      properties: {
+        body: { type: 'string', description: 'The complete message, written as the user asked. Use {first_name} for the name.' },
+        channel: { type: 'string', enum: ['All', 'WhatsApp', 'SMS', 'Email'] },
+        audienceType: { type: 'string', enum: ['all', 'stage', 'department', 'branch'] },
+        audienceValue: { type: 'string', description: 'For stage: Newcomer, Convert, Member or Worker. Otherwise the department or branch name.' },
+      },
       required: ['body'],
       additionalProperties: false,
     },
-    allow: (r) => can.editMembers(r),
+    allow: (r) => can.sendMessages(r),
     validate: (raw) => {
       const body = str(raw.body).slice(0, 1000)
       const template = str(raw.template)
       const vars = (raw.vars && typeof raw.vars === 'object' ? raw.vars : undefined) as Record<string, string> | undefined
       if (!body) return tr('ai.send.askBody')
-      const channel = (['WhatsApp', 'SMS', 'Email'].includes(str(raw.channel)) ? str(raw.channel) : 'WhatsApp') as Channel
+      const channel = (['All', 'WhatsApp', 'SMS', 'Email'].includes(str(raw.channel)) ? str(raw.channel) : 'All') as Channel | 'All'
       const t = str(raw.audienceType)
-      const audience: Audience = ['stage', 'department', 'branch'].includes(t) && str(raw.audienceValue) ? { type: t as Audience['type'], value: str(raw.audienceValue) } : { type: 'all', value: '' }
+      // Stage names from the model may come in lower case or plural ("newcomers").
+      let value = str(raw.audienceValue)
+      if (t === 'stage') value = STAGES.find((s) => value.toLowerCase().replace(/s$/, '') === s.toLowerCase()) ?? value
+      const audience: Audience = ['stage', 'department', 'branch'].includes(t) && value ? { type: t as Audience['type'], value } : { type: 'all', value: '' }
       return { body, channel, audience, template, vars }
     },
     run: (ctx, input) => {
       const everyone = audienceMembers(ctx.members, input.audience)
-      const reachable = everyone.filter((m) => (input.channel === 'Email' ? m.email : input.channel === 'WhatsApp' ? m.whatsapp || m.phone : m.phone))
-      if (!reachable.length) return { agent: 'comms', blocks: [{ type: 'text', text: tr('ai.send.noContact', { audience: audienceLabel(input.audience), channel: input.channel }) }] }
+      const has = (m: Member, ch: Channel) => Boolean(ch === 'Email' ? m.email : ch === 'WhatsApp' ? m.whatsapp || m.phone : m.phone)
+      const channels: Channel[] = input.channel === 'All' ? ['WhatsApp', 'SMS', 'Email'] : [input.channel]
+      const perChannel = channels.map((ch) => ({ ch, people: everyone.filter((m) => has(m, ch)) })).filter((x) => x.people.length)
+      const reachable = everyone.filter((m) => perChannel.some((x) => x.people.includes(m)))
+      const channelLabel = input.channel === 'All' ? tr('ai.send.allChannels') : input.channel
+      if (!reachable.length) return { agent: 'comms', blocks: [{ type: 'text', text: tr('ai.send.noContact', { audience: audienceLabel(input.audience), channel: channelLabel }) }] }
       const sample = reachable[0]
       // Built-in templates go out in each member's own language; custom text is sent as written.
       const bodyFor = (lang: Lang) => (input.template ? tpl(input.template, input.vars, lang) : input.body)
       const preview = bodyFor(sample.language).replace(/\{first_name\}/g, firstName(sample)).replace(/\{church\}/g, ctx.settings.churchName)
-      const byLang = reachable.reduce<Record<string, number>>((acc, m) => ({ ...acc, [m.language]: (acc[m.language] ?? 0) + 1 }), {})
+      const langsOf = (people: Member[]) => people.reduce<Record<string, number>>((acc, m) => ({ ...acc, [m.language]: (acc[m.language] ?? 0) + 1 }), {})
+      const byLang = langsOf(reachable)
       const langSummary = Object.entries(byLang)
         .sort((a, b) => b[1] - a[1])
         .map(([l, n]) => `${new Intl.DisplayNames([getLocale()], { type: 'language' }).of(l) ?? l} ${n}`)
         .join(' · ')
-      const est = reachable.length * (ctx.messageCost[input.channel as Channel] ?? 0)
+      const est = perChannel.reduce((sum, x) => sum + x.people.length * (ctx.messageCost[x.ch] ?? 0), 0)
       const pending: PendingAction = {
         id: uid(),
         agent: 'comms',
         kind: 'bulk',
-        summary: tr('ai.send.summary', { channel: input.channel, audience: audienceLabel(input.audience), count: reachable.length }),
+        summary: tr('ai.send.summary', { channel: channelLabel, audience: audienceLabel(input.audience), count: reachable.length }),
         entity: audienceLabel(input.audience),
         run: () => {
-          ctx.actions.addCampaign({ channel: input.channel, audience: input.audience, recipients: reachable.length, subject: '', body: bodyFor(getLangOf()), scheduledFor: null, status: 'Queued', languages: byLang, template: input.template || undefined, vars: input.vars })
-          Object.keys(byLang).forEach((l) => {
-            const ids = reachable.filter((m) => m.language === l).map((m) => m.id)
-            ctx.actions.logCommunicationMany(ids, { channel: input.channel, summary: bodyFor(l as Lang).slice(0, 90), date: today(), by: tr('ai.send.by') })
-          })
+          for (const { ch, people } of perChannel) {
+            const langs = langsOf(people)
+            ctx.actions.addCampaign({ channel: ch, audience: input.audience, recipients: people.length, subject: '', body: bodyFor(getLangOf()), scheduledFor: null, status: 'Queued', languages: langs, template: input.template || undefined, vars: input.vars })
+            Object.keys(langs).forEach((l) => {
+              const ids = people.filter((m) => m.language === l).map((m) => m.id)
+              ctx.actions.logCommunicationMany(ids, { channel: ch, summary: bodyFor(l as Lang).slice(0, 90), date: today(), by: tr('ai.send.by') })
+            })
+          }
           return {
             agent: 'comms',
-            activity: tr('ai.send.activity', { channel: input.channel, count: reachable.length, audience: audienceLabel(input.audience) }),
+            activity: tr('ai.send.activity', { channel: channelLabel, count: reachable.length, audience: audienceLabel(input.audience) }),
             entity: audienceLabel(input.audience),
             blocks: [
               { type: 'text', text: tr('ai.send.queued', { count: reachable.length }) },
@@ -581,17 +616,99 @@ export const TOOLS: ToolDef<any>[] = [
           {
             type: 'confirm',
             id: pending.id,
-            title: tr('ai.send.title', { channel: input.channel }),
+            title: tr('ai.send.title', { channel: channelLabel }),
             rows: [
               { label: tr('ai.events.audience'), value: audienceLabel(input.audience) },
-              { label: tr('ai.send.recipients'), value: reachable.length < everyone.length ? tr('ai.send.recipientsOf', { count: reachable.length, total: everyone.length, channel: input.channel }) : String(reachable.length) },
+              { label: tr('ai.send.recipients'), value: reachable.length < everyone.length ? tr('ai.send.recipientsOf', { count: reachable.length, total: everyone.length, channel: channelLabel }) : String(reachable.length) },
               ...(input.template ? [{ label: tr('ai.send.languages'), value: langSummary }] : []),
-              { label: tr('ai.send.channel'), value: input.channel },
+              { label: tr('ai.send.channel'), value: perChannel.length > 1 ? perChannel.map((x) => `${x.ch} ${x.people.length}`).join(' · ') : perChannel[0].ch },
               { label: tr('ai.send.cost'), value: est ? money(est, 'USD', est < 1 ? 2 : 0) : tr('ai.send.free') },
               { label: tr('ai.send.preview', { name: firstName(sample) }), value: preview },
+              ...(ctx.prayerInMessages !== false ? [{ label: tr('ai.send.prayer'), value: tr('ai.send.prayerNote') }] : []),
             ],
             confirmLabel: tr('ai.send.confirm'),
           },
+        ],
+      }
+    },
+  },
+  {
+    name: 'sendBirthdayGreetings',
+    agent: 'memberCare',
+    kind: 'bulk',
+    description: 'Send today’s birthday greetings now: each celebrant gets a personal birthday prayer on WhatsApp, SMS and email (every channel they have). Asks for confirmation first. Use when the user asks to send/wish happy birthday to today’s celebrants.',
+    schema: { type: 'object', properties: {}, additionalProperties: false },
+    allow: (r) => can.sendMessages(r),
+    validate: () => ({}),
+    run: (ctx) => {
+      const rows = birthdaysWithin(ctx.members, 0).filter((x) => x.in === 0 && x.m.membershipStatus === 'Active')
+      if (!rows.length) return { agent: 'memberCare', blocks: [{ type: 'text', text: tr('ai.pastoral.bdayNone') }, { type: 'notice', text: tr('ai.pastoral.bdayAuto') }] }
+      const pending: PendingAction = {
+        id: uid(),
+        agent: 'memberCare',
+        kind: 'bulk',
+        summary: tr('ai.pastoral.summaryBday', { count: rows.length }),
+        run: () => careSend('/care/birthdays', 'memberCare'),
+      }
+      return {
+        agent: 'memberCare',
+        pending,
+        blocks: [
+          { type: 'text', text: tr('ai.pastoral.bdayIntro', { count: rows.length }) },
+          list(rows.map((x) => ({ title: x.m.fullName, sub: [x.m.whatsapp || x.m.phone ? 'WhatsApp' : '', x.m.phone ? 'SMS' : '', x.m.email ? 'Email' : ''].filter(Boolean).join(' · '), href: `/dashboard/members?id=${x.m.id}` }))),
+          {
+            type: 'confirm',
+            id: pending.id,
+            title: tr('ai.pastoral.bdayTitle'),
+            rows: [
+              { label: tr('ai.pastoral.people'), value: String(rows.length) },
+              { label: tr('ai.pastoral.channels'), value: tr('ai.pastoral.channelsAll') },
+            ],
+            confirmLabel: tr('ai.pastoral.confirm'),
+          },
+          { type: 'notice', text: tr('ai.pastoral.bdayAuto') },
+        ],
+      }
+    },
+  },
+  {
+    name: 'followUpNewcomers',
+    agent: 'followUp',
+    kind: 'bulk',
+    description: 'The standard after-Sunday follow-up: thank last Sunday’s newcomers and new converts for visiting, with a personal prayer for each, on WhatsApp, SMS and email. Each person gets it once. Asks for confirmation first.',
+    schema: { type: 'object', properties: {}, additionalProperties: false },
+    allow: (r) => can.sendMessages(r),
+    validate: () => ({}),
+    run: (ctx) => {
+      // Registered in the week up to last Sunday (the server also adds anyone who checked in on Sunday).
+      const now = new Date()
+      const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+      const from = isoLocal(new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() - 6))
+      const rows = ctx.members.filter((m) => (m.stage === 'Newcomer' || m.stage === 'Convert') && m.membershipStatus === 'Active' && m.dateJoined >= from)
+      const pending: PendingAction = {
+        id: uid(),
+        agent: 'followUp',
+        kind: 'bulk',
+        summary: tr('ai.pastoral.summaryNew'),
+        run: () => careSend('/care/newcomers', 'followUp'),
+      }
+      return {
+        agent: 'followUp',
+        pending,
+        blocks: [
+          { type: 'text', text: tr('ai.pastoral.newIntro') },
+          ...(rows.length ? [list(rows.map((m) => ({ title: m.fullName, sub: `${tEnum('stage', m.stage)} · ${fmtDate(m.dateJoined)}`, href: `/dashboard/members?id=${m.id}` })))] : []),
+          {
+            type: 'confirm',
+            id: pending.id,
+            title: tr('ai.pastoral.newTitle'),
+            rows: [
+              { label: tr('ai.pastoral.people'), value: `${rows.length} + ${tr('ai.pastoral.newCheckins')}` },
+              { label: tr('ai.pastoral.channels'), value: tr('ai.pastoral.channelsAll') },
+            ],
+            confirmLabel: tr('ai.pastoral.confirm'),
+          },
+          { type: 'notice', text: tr('ai.pastoral.newAuto') },
         ],
       }
     },
@@ -725,7 +842,7 @@ export const TOOLS: ToolDef<any>[] = [
     kind: 'draft',
     description: 'Start a flyer in the Design Studio with a title and date.',
     schema: { type: 'object', properties: { title: { type: 'string' }, when: { type: 'string' } }, additionalProperties: false },
-    allow: (r) => can.editMembers(r),
+    allow: (r) => can.editEvents(r),
     validate: (raw) => ({ title: str(raw.title).slice(0, 28) || tr('ai.design.defaultTitle'), when: str(raw.when).slice(0, 28) }),
     run: (ctx, { title, when }) => {
       const next = ctx.events.filter((e) => e.date >= today() && e.title.toLowerCase().includes(title.toLowerCase().split(' ')[0])).sort((a, b) => a.date.localeCompare(b.date))[0]

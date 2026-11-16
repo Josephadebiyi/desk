@@ -184,7 +184,7 @@ export default function Overview() {
                     <Sparkles size={15} />
                   </button>
                 )}
-                {live && can.editMembers(role) && (
+                {live && can.sendMessages(role) && (
                   <button type="button" className="d-icon-btn" title={t('ov.bdaySend')} aria-label={t('ov.bdaySend')} onClick={() => setSending(sending?.id === m.id ? null : m)}>
                     <Send size={15} />
                   </button>

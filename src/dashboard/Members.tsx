@@ -42,6 +42,7 @@ import {
   can,
   CHANNELS,
   GENDERS,
+  deptAccess,
   initials,
   STAGES,
   STATUSES,
@@ -140,8 +141,12 @@ function MemberForm({
   onClose: () => void
 }) {
   const { t, commLang } = useT()
+  // Department heads add and edit members of their own departments only.
+  const own = deptAccess().departments
+  const deptHead = own.length > 0
+  const deptOptions = deptHead ? own : departments
   const [f, setF] = useState<MemberInput>(() => {
-    if (!initial) return { ...EMPTY, language: commLang }
+    if (!initial) return { ...EMPTY, language: commLang, ...(deptHead ? { department: own[0] } : {}) }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, communications, giving, ...rest } = initial
     return rest
@@ -257,8 +262,8 @@ function MemberForm({
               <label className="d-field">
                 <span>{t('members.department')}</span>
                 <select value={f.department} onChange={(e) => (e.target.value === '__new' ? setNewDept('') : set('department', e.target.value))}>
-                  <option value="">—</option>
-                  {departments.map((o) => (
+                  {!deptHead && <option value="">—</option>}
+                  {deptOptions.map((o) => (
                     <option key={o} value={o}>
                       {o}
                     </option>

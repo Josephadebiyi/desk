@@ -23,7 +23,31 @@ import { Flag, LangCards } from '../i18n/Flags'
 import { getSignupCode } from '../lib/signupCode'
 import { ONLINE_GIVING } from '../lib/features'
 
-const ROLES: Role[] = ['admin', 'finance', 'leader', 'branch']
+const ROLES: Role[] = ['admin', 'finance', 'leader', 'department', 'branch']
+
+/** A department head's departments and switches (Team & roles). */
+function DeptAccessFields({ value, departments, onChange }: { value: { departments: string[]; canEditMembers: boolean; canSendMessages: boolean }; departments: string[]; onChange: (v: { departments: string[]; canEditMembers: boolean; canSendMessages: boolean }) => void }) {
+  const { t } = useT()
+  const toggle = (d: string) => onChange({ ...value, departments: value.departments.includes(d) ? value.departments.filter((x) => x !== d) : [...value.departments, d] })
+  return (
+    <div className="st-dept">
+      <span className="st-dept-label">{t('settings.team.departments')}</span>
+      <div className="st-dept-chips">
+        {departments.map((d) => (
+          <label key={d} className={`st-chip${value.departments.includes(d) ? ' on' : ''}`}>
+            <input type="checkbox" checked={value.departments.includes(d)} onChange={() => toggle(d)} /> {d}
+          </label>
+        ))}
+      </div>
+      <label className="d-inline-check">
+        <input type="checkbox" checked={value.canEditMembers} onChange={(e) => onChange({ ...value, canEditMembers: e.target.checked })} /> {t('settings.team.canEdit')}
+      </label>
+      <label className="d-inline-check">
+        <input type="checkbox" checked={value.canSendMessages} onChange={(e) => onChange({ ...value, canSendMessages: e.target.checked })} /> {t('settings.team.canMessage')}
+      </label>
+    </div>
+  )
+}
 
 type Tab = 'account' | 'language' | 'profile' | 'structure' | 'connections' | 'team' | 'plan' | 'ai' | 'integrations' | 'data'
 const CURRENCIES: readonly string[] = CHURCH_CURRENCIES
@@ -414,7 +438,8 @@ function Structure() {
 
 function Team() {
   const { team, inviteTeam, updateTeam, removeTeam, settings } = useWorkspace()
-  const [f, setF] = useState<{ name: string; email: string; role: Role; branch: string }>({ name: '', email: '', role: 'leader', branch: '' })
+  const blank = { name: '', email: '', role: 'leader' as Role, branch: '', departments: [] as string[], canEditMembers: false, canSendMessages: false }
+  const [f, setF] = useState(blank)
   // Branch leaders usually lead a branch other than the first (main) one.
   const defaultBranch = settings.branches[1] ?? settings.branches[0] ?? ''
   const [error, setError] = useState('')
@@ -427,7 +452,7 @@ function Team() {
         </div>
         <ul className="d-list">
           {team.map((tm) => (
-            <li key={tm.id}>
+            <li key={tm.id} className={tm.role === 'department' ? 'st-wrap' : undefined}>
               <span className="d-init d-init-p" style={{ width: 34, height: 34, fontSize: 12 }}>
                 {tm.name
                   .split(' ')
@@ -443,7 +468,9 @@ function Team() {
               <select className="st-role" value={tm.role} onChange={async (e) => {
                 const role = e.target.value as Role
                 const branch = role === 'branch' ? tm.branch || defaultBranch : null
-                if (await confirmAction({ title: t('cf.roleTitle', { name: tm.name, role: tEnum('role', role) + (branch ? ` · ${branch}` : '') }) })) updateTeam(tm.id, { role, branch })
+                // A new department head starts with one department, view only; the switches appear below.
+                const departments = role === 'department' ? (tm.departments?.length ? tm.departments : settings.departments.slice(0, 1)) : tm.departments
+                if (await confirmAction({ title: t('cf.roleTitle', { name: tm.name, role: tEnum('role', role) + (branch ? ` · ${branch}` : '') }) })) updateTeam(tm.id, { role, branch, departments })
               }} aria-label={t('settings.team.roleFor', { name: tm.name })}>
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -469,6 +496,13 @@ function Team() {
                   ))}
                 </select>
               )}
+              {tm.role === 'department' && (
+                <DeptAccessFields
+                  departments={settings.departments}
+                  value={{ departments: tm.departments ?? [], canEditMembers: tm.canEditMembers === true, canSendMessages: tm.canSendMessages === true }}
+                  onChange={(v) => v.departments.length && updateTeam(tm.id, { role: 'department', ...v })}
+                />
+              )}
               <button type="button" className="d-circle d-circle-sm" aria-label={t('settings.removeX', { name: tm.name })} onClick={withConfirm({ title: t('cf.teamRemoveTitle', { name: tm.name }), body: t('cf.teamRemoveBody'), danger: true, confirmLabel: t('cf.remove') }, () => removeTeam(tm.id))}>
                 <Trash2 size={13} />
               </button>
@@ -483,10 +517,12 @@ function Team() {
           if (!f.name.trim()) return setError(t('settings.team.errName'))
           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) return setError(t('common.invalidEmail'))
           if (f.role === 'branch' && !f.branch) return setError(t('br.errBranch'))
+          if (f.role === 'department' && !f.departments.length) return setError(t('settings.team.errDept'))
           setError('')
           if (!(await confirmAction({ title: t('cf.inviteTitle', { name: f.name.trim() }), body: t('cf.inviteBody', { email: f.email.trim() }), confirmLabel: t('cf.inviteBtn') }))) return
-          inviteTeam({ name: f.name.trim(), email: f.email.trim(), role: f.role, branch: f.role === 'branch' ? f.branch : null })
-          setF({ name: '', email: '', role: 'leader', branch: '' })
+          const dept = f.role === 'department'
+          inviteTeam({ name: f.name.trim(), email: f.email.trim(), role: f.role, branch: f.role === 'branch' ? f.branch : null, ...(dept ? { departments: f.departments, canEditMembers: f.canEditMembers, canSendMessages: f.canSendMessages } : {}) })
+          setF(blank)
         }}
       >
         <div className="d-panel-head">
@@ -510,6 +546,9 @@ function Team() {
             ))}
           </select>
         </label>
+        {f.role === 'department' && (
+          <DeptAccessFields departments={settings.departments} value={f} onChange={(v) => setF({ ...f, ...v })} />
+        )}
         {f.role === 'branch' && (
           <label className="d-field">
             <span>{t('br.branch')}</span>
@@ -813,6 +852,15 @@ function ChurchAiSettings() {
           </label>
           <label className="d-inline-check" style={{ gridColumn: '1 / -1' }}>
             <input type="checkbox" checked={s.welcomeEmails !== false} onChange={(e) => ai.updateSettings({ welcomeEmails: e.target.checked })} /> {t('settings.ai.welcomeEmails')}
+          </label>
+          <label className="d-inline-check" style={{ gridColumn: '1 / -1' }}>
+            <input type="checkbox" checked={s.prayerInMessages !== false} onChange={(e) => ai.updateSettings({ prayerInMessages: e.target.checked })} /> {t('settings.ai.prayerInMessages')}
+          </label>
+          <label className="d-inline-check" style={{ gridColumn: '1 / -1' }}>
+            <input type="checkbox" checked={s.newcomerFollowup !== false} onChange={(e) => ai.updateSettings({ newcomerFollowup: e.target.checked })} /> {t('settings.ai.newcomerFollowup')}
+          </label>
+          <label className="d-inline-check" style={{ gridColumn: '1 / -1' }}>
+            <input type="checkbox" checked={s.birthdayReminders !== false} onChange={(e) => ai.updateSettings({ birthdayReminders: e.target.checked })} /> {t('settings.ai.birthdayReminders')}
           </label>
         </div>
       </section>

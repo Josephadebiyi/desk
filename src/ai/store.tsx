@@ -19,6 +19,12 @@ export interface AiSettings {
   suggestions: boolean
   /** Ellen emails a welcome to each new member (dashboard or QR join). On unless switched off. */
   welcomeEmails: boolean
+  /** A short closing prayer is added to every message sent to members. On unless switched off. */
+  prayerInMessages: boolean
+  /** Monday: a thank-you with a prayer to Sunday's newcomers and new converts, on every channel. On unless switched off. */
+  newcomerFollowup: boolean
+  /** Daily email to the church's admins and leaders about today's and upcoming birthdays. On unless switched off. */
+  birthdayReminders: boolean
   /** Monthly limits per plan and feature — editable by the SaaS administrator. */
   limits: Record<PlanId, Record<UsageFeature, number>>
   /** Credits each action consumes — editable. */
@@ -57,6 +63,9 @@ const DEFAULT_SETTINGS: AiSettings = {
   language: 'English',
   suggestions: true,
   welcomeEmails: true,
+  prayerInMessages: true,
+  newcomerFollowup: true,
+  birthdayReminders: true,
   limits: {
     essentials: { requests: 300, designs: 7, imageEdits: 20, transcriptionHours: 0, clips: 0, storageGb: 5 },
     plus: { requests: 1000, designs: 12, imageEdits: 100, transcriptionHours: 15, clips: 30, storageGb: 50 },

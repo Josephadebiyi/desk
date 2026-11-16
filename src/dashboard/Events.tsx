@@ -141,7 +141,7 @@ function EventDetail({ ev, onClose, onEdit }: { ev: ChurchEvent; onClose: () => 
   const { t } = useT()
   const [att, setAtt] = useState(ev.attendance?.toString() ?? '')
   const past = ev.date <= today()
-  const edit = can.editMembers(role)
+  const edit = can.editEvents(role)
   const when = `${fmtDate(ev.date, { weekday: 'long', month: 'long', day: 'numeric' })} · ${fmtTime(ev.start)} – ${fmtTime(ev.end)}`
 
   return (
@@ -240,7 +240,7 @@ export default function Events() {
   const [form, setForm] = useState<{ ev?: ChurchEvent; date?: string } | null>(null)
   const [open, setOpen] = useState<ChurchEvent | null>(null)
   const { t, locale } = useT()
-  const edit = can.editMembers(role)
+  const edit = can.editEvents(role)
   // Weekday initials in the current language, starting on Sunday (2023-01-01 was a Sunday).
   const WEEK = Array.from({ length: 7 }, (_, i) => new Date(2023, 0, 1 + i).toLocaleDateString(locale, { weekday: 'short' }))
 
