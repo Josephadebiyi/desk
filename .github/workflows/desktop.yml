@@ -1,0 +1,101 @@
+# Builds the ZionDesk desktop apps: macOS (.dmg, universal Intel + Apple Silicon) and Windows (.exe installer).
+#   • Every run uploads the installers as downloadable artifacts (Actions → this run → Artifacts).
+#   • Pushing a tag like `desktop-v1.0.0` publishes a GitHub Release with them. The website's download
+#     buttons (/download) always point at the newest release: ZionDesk-mac.dmg and ZionDesk-Setup.exe.
+# Signing is optional — add these repository secrets when you have the certificates:
+#   macOS:   MAC_CSC_LINK (base64 .p12 "Developer ID Application"), MAC_CSC_KEY_PASSWORD,
+#            APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID   (notarization)
+#   Windows: WIN_CSC_LINK (base64 .pfx code-signing cert), WIN_CSC_KEY_PASSWORD
+name: Desktop apps
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['desktop-v*']
+    branches: ['**']
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+  pull_request:
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: mac
+          - os: windows-latest
+            target: win
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - run: npm ci
+
+      - name: Use the tag as the app version
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        shell: bash
+        run: npm version --no-git-tag-version --allow-same-version "${GITHUB_REF_NAME#desktop-v}"
+
+      - name: Build installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ matrix.target == 'mac' && secrets.MAC_CSC_LINK || secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ matrix.target == 'mac' && secrets.MAC_CSC_KEY_PASSWORD || secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          EXTRA=()
+          if [ -z "$CSC_LINK" ]; then
+            unset CSC_LINK CSC_KEY_PASSWORD
+            # No certificate: Windows builds unsigned; the Mac app is ad-hoc signed ("-"), which Apple
+            # silicon requires for the app to open at all (otherwise macOS reports it as damaged).
+            if [ "${{ matrix.target }}" = mac ]; then EXTRA+=("-c.mac.identity=-"); else export CSC_IDENTITY_AUTO_DISCOVERY=false; fi
+          fi
+          [ -z "$APPLE_ID" ] && unset APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+          if [[ "$GITHUB_REF" == refs/tags/desktop-v* ]]; then PUBLISH=always; else PUBLISH=never; fi
+          npx electron-builder --${{ matrix.target }} --publish "$PUBLISH" "${EXTRA[@]}"
+
+      - name: Check the Mac app (signature, Intel + Apple silicon)
+        if: matrix.target == 'mac'
+        run: |
+          APP=release/mac-universal/ZionDesk.app
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv "$APP" 2>&1 | grep -E 'Signature|Authority|TeamIdentifier|flags' || true
+          lipo -archs "$APP/Contents/MacOS/ZionDesk"
+          lipo -archs "$APP/Contents/MacOS/ZionDesk" | grep -q x86_64
+          lipo -archs "$APP/Contents/MacOS/ZionDesk" | grep -q arm64
+          /usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist"
+
+      - name: Launch the Mac app (must still be running after 15 s)
+        if: matrix.target == 'mac'
+        run: |
+          "release/mac-universal/ZionDesk.app/Contents/MacOS/ZionDesk" > launch.log 2>&1 &
+          PID=$!
+          sleep 15
+          cat launch.log
+          kill -0 "$PID" && echo "ZionDesk is running" && kill "$PID"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZionDesk-${{ matrix.target }}
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.exe
+            desktop/release/*.zip
+          if-no-files-found: error

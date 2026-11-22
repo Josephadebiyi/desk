@@ -19,6 +19,8 @@ const ForgotPassword = lazy(() => import('./pages/Auth.tsx').then((m) => ({ defa
 const ResetPassword = lazy(() => import('./pages/Auth.tsx').then((m) => ({ default: m.ResetPassword })))
 const EmailPreview = lazy(() => import('./pages/EmailPreview.tsx'))
 const Legal = lazy(() => import('./pages/Legal.tsx'))
+const DownloadPage = lazy(() => import('./pages/Download.tsx'))
+const DesktopAuth = lazy(() => import('./pages/DesktopAuth.tsx'))
 const JoinPage = lazy(() => import('./pages/Public.tsx').then((m) => ({ default: m.JoinPage })))
 const GivePage = lazy(() => import('./pages/Public.tsx').then((m) => ({ default: m.GivePage })))
 const CheckinPage = lazy(() => import('./pages/Public.tsx').then((m) => ({ default: m.CheckinPage })))
@@ -77,6 +79,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/email-preview" element={<EmailPreview />} />
+        <Route path="/download" element={<DownloadPage />} />
+        <Route path="/desktop-auth" element={<DesktopAuth />} />
         <Route path="/legal" element={<Legal page="hub" />} />
         <Route path="/privacy" element={<Legal page="privacy" />} />
         <Route path="/terms" element={<Legal page="terms" />} />

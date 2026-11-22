@@ -190,6 +190,7 @@ img { max-width: 100%; display: block; }
 .nav-actions { display: flex; align-items: center; gap: 10px; }
 .nav-login { font-family: var(--grotesk); font-weight: 600; font-size: 15px; padding: 8px 12px; }
 .nav-login:hover { color: var(--accent); }
+.nav-download { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .nav-mobile-end { display: none; align-items: center; gap: 10px; }
 .nav-burger { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; }
 .mobile-menu { display: flex; flex-direction: column; padding: 4px 0 16px; }
