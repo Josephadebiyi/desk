@@ -96,7 +96,8 @@
         "provider": "github",
         "owner": "josephadebiyi",
         "repo": "desk",
-        "releaseType": "release"
+        "releaseType": "release",
+        "tagNamePrefix": "desktop-v"
       }
     ],
     "protocols": [
