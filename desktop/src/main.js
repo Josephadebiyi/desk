@@ -5,6 +5,7 @@
 const { app, BrowserWindow, Menu, shell, session, screen } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
+const { setupUpdates } = require('./updates')
 
 const HOME = new URL(process.env.ZIONDESK_URL || 'https://ziondesk.com/dashboard')
 const APP_HOSTS = new Set([HOME.host, 'ziondesk.com', 'www.ziondesk.com', 'admin.ziondesk.com', 'api.ziondesk.com', 'desk-noae.onrender.com'])
@@ -71,6 +72,7 @@ function saveBounds(win) {
 }
 
 let win = null
+let updates = null
 let quitting = false
 
 function createWindow() {
@@ -156,7 +158,23 @@ function buildMenu() {
   const isMac = process.platform === 'darwin'
   const go = (p) => win && win.loadURL(new URL(p, HOME).href)
   const template = [
-    ...(isMac ? [{ role: 'appMenu' }] : []),
+    ...(isMac
+      ? [{
+          label: app.name,
+          submenu: [
+            { role: 'about' },
+            { label: 'Check for Updates…', click: () => updates?.checkNow() },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' },
+          ],
+        }]
+      : []),
     {
       label: 'File',
       submenu: [
@@ -198,6 +216,7 @@ function buildMenu() {
         { label: 'ZionDesk Help', click: () => go('/dashboard/help') },
         { label: 'Open ZionDesk in Browser', click: () => shell.openExternal(win?.webContents.getURL().startsWith('http') ? win.webContents.getURL() : HOME.href) },
         { label: 'Visit ziondesk.com', click: () => shell.openExternal('https://ziondesk.com') },
+        ...(isMac ? [] : [{ type: 'separator' }, { label: 'Check for Updates…', click: () => updates?.checkNow() }]),
       ],
     },
   ]
@@ -232,6 +251,18 @@ if (!app.requestSingleInstanceLock()) {
 
     buildMenu()
     createWindow()
+
+    // New app versions and announcements, published on the website (public/desktop.json).
+    updates = setupUpdates({
+      origin: HOME.origin,
+      getWindow: () => win,
+      openExternal,
+      openInApp: (url) => {
+        if (!win) createWindow()
+        if (isAppUrl(url)) win.loadURL(url)
+        else openExternal(url)
+      },
+    })
   })
 
   app.on('activate', () => {

@@ -43,5 +43,5 @@ export default {
   helpDamaged: '<b>Mac says “ZionDesk is damaged and can’t be opened”:</b> open <b>Terminal</b> (Applications → Utilities), paste <code>xattr -cr /Applications/ZionDesk.app</code>, press Return, then open ZionDesk again.',
   helpOffline: '<b>It says you’re offline:</b> ZionDesk needs the internet. Check your Wi-Fi — the app reconnects on its own.',
   helpUninstall: '<b>To remove it:</b> on a Mac, drag ZionDesk from Applications to the Bin. On Windows, open <b>Settings → Apps</b>, find ZionDesk and click <b>Uninstall</b>.',
-  updates: 'No updates to install: the app always opens the newest version of ZionDesk.',
+  updates: 'Website improvements reach the app instantly. When there’s a new version of the app itself, it tells you and brings you back here to download it.',
 }

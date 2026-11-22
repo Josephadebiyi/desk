@@ -52,6 +52,33 @@ without a new release).
 **Test builds:** every push that touches `desktop/` builds both apps. Open GitHub → **Actions → Desktop apps**
 → the run → *Artifacts* to download **ZionDesk-mac** / **ZionDesk-win** (sign-in to GitHub required).
 
+## Telling app users about updates and news
+
+Website changes need nothing: the app always loads the live ZionDesk. For everything else, edit
+**`public/desktop.json`** in the web app and deploy the website. Every installed app reads it on start-up and every
+6 hours (and from **ZionDesk → Check for Updates…** on Mac, **Help → Check for Updates…** on Windows).
+
+```json
+{
+  "latest": "1.1.0",
+  "notes": "Faster start-up and a new Members shortcut.",
+  "required": false,
+  "message": {
+    "id": "2026-12-christmas",
+    "title": "Christmas service rota",
+    "body": "The new rota is ready in Events.",
+    "url": "/dashboard/events"
+  }
+}
+```
+
+- **New app version:** release it (`desktop-v1.1.0` tag, then `npm run desktop:fetch` + build if you self-host the
+  installers), then set `"latest": "1.1.0"`. Anyone on an older version gets a pop-up: *A new version of ZionDesk is
+  available* → **Download update** opens ziondesk.com/download. They install over the old one; sign-in and
+  settings are kept. `"required": true` removes the *Later* button.
+- **Announcement:** set `"message"`. Each app shows it once as a Mac/Windows notification; clicking it opens `url`
+  inside the app. Use a new `id` for each new message. Set `"message": null` when there's nothing to say.
+
 ## Run or build locally
 
 ```bash
@@ -80,6 +107,7 @@ for a confirmation the first time (the /download page walks people through it):
 ## Files
 
 - `src/main.js` — window, menus, link and permission rules, offline handling
+- `src/updates.js` — update prompts and announcements from `public/desktop.json`
 - `src/preload.js` — exposes `window.ziondeskDesktop`
 - `src/offline.html` — the offline screen
 - `build/` — app icons (`icon.png`, `icon-mac.png`, `icon.ico`) and macOS entitlements

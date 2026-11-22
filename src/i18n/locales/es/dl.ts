@@ -44,6 +44,6 @@ const dl: Dict['dl'] = {
   helpDamaged: '<b>El Mac dice «ZionDesk está dañado y no se puede abrir»:</b> abre <b>Terminal</b> (Aplicaciones → Utilidades), pega <code>xattr -cr /Applications/ZionDesk.app</code>, pulsa Intro y vuelve a abrir ZionDesk.',
   helpOffline: '<b>Dice que no tienes conexión:</b> ZionDesk necesita internet. Revisa tu wifi; la app se reconecta sola.',
   helpUninstall: '<b>Para quitarla:</b> en un Mac, arrastra ZionDesk de Aplicaciones a la Papelera. En Windows, abre <b>Configuración → Aplicaciones</b>, busca ZionDesk y haz clic en <b>Desinstalar</b>.',
-  updates: 'No hay actualizaciones que instalar: la app siempre abre la versión más reciente de ZionDesk.',
+  updates: 'Las mejoras de la web llegan a la app al instante. Cuando haya una nueva versión de la propia app, te avisará y te traerá aquí para descargarla.',
 }
 export default dl
