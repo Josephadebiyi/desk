@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion'
-import { ArrowRight, Menu, X } from 'lucide-react'
+import { ArrowRight, Download, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from '../theme'
@@ -60,6 +60,9 @@ export default function Nav() {
         <div className="nav-actions">
           <LangMenu />
           <ThemeToggle />
+          <Link className="nav-login nav-download" to="/download" title={t('dl.title')}>
+            <Download size={15} /> {t('dl.link')}
+          </Link>
           <Link className="nav-login" to="/login">
             {t('site.nav.login')}
           </Link>
@@ -96,6 +99,9 @@ export default function Nav() {
                 {t(`site.nav.${l.label}`)}
               </a>
             ))}
+            <Link to="/download" onClick={() => setOpen(false)}>
+              {t('dl.link')}
+            </Link>
             <div className="mobile-menu-cta">
               <Link className="btn btn-outline" to="/login">
                 {t('site.nav.login')}

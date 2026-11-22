@@ -112,7 +112,7 @@ export default {
     tagline: 'Control your church operations and team’s productivity in one place.',
     sub: 'Get ministry updates', subscribe: 'Subscribe',
     platform: 'Platform', ministries: 'Ministries', company: 'Company',
-    hub: 'All-in-one hub', design: 'Design Studio', giving: 'Online giving', pricing: 'Pricing',
+    hub: 'All-in-one hub', design: 'Design Studio', giving: 'Online giving', pricing: 'Pricing', apps: 'Mac & Windows apps',
     pastors: 'Pastors', admins: 'Church admins', finance: 'Finance teams',
     stories: 'Stories', faq: 'FAQ', privacy: 'Privacy policy', terms: 'Terms of use', cookies: 'Cookie policy', legal: 'Legal & compliance',
     help: 'How can we help?', contact: 'Contact us', rights: '© {year} ZionDesk. All rights reserved.', photos: 'Photos from',

@@ -1362,7 +1362,7 @@ function Footer() {
   const navigate = useNavigate()
   const { t } = useT()
   const cols = [
-    { h: 'platform', links: [['hub', '#bento'], ['design', '#design'], ['giving', '#giving'], ['pricing', '#pricing']] },
+    { h: 'platform', links: [['hub', '#bento'], ['design', '#design'], ['giving', '#giving'], ['pricing', '#pricing'], ['apps', '/download']] },
     { h: 'ministries', links: [['pastors', '#ministries'], ['admins', '#ministries'], ['finance', '#ministries']] },
     { h: 'company', links: [['stories', '#stories'], ['faq', '#faq'], ['privacy', '/privacy'], ['terms', '/terms'], ['cookies', '/cookies'], ['legal', '/legal']] },
   ]

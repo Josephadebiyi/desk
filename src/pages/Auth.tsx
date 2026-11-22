@@ -36,6 +36,7 @@ import { getSignupCode, normalizeCode } from '../lib/signupCode'
 import { CountrySelect, PhoneInput } from '../components/PhoneInput'
 import { countryByCode } from '../lib/countries'
 import { supabase } from '../lib/supabase'
+import { desktopGoogleSignIn } from '../lib/desktop'
 import './auth.css'
 import { tr, useT } from '../i18n'
 import { CHURCH_CURRENCIES, currencyForRegion, formatMoney, guessCurrency, guessRegion, priceWithLocal } from '../lib/currency'
@@ -245,7 +246,9 @@ function GoogleIcon() {
 
 function GoogleButton({ label, onProfile, onError, returnTo }: { label: string; onProfile: (p: GoogleProfile) => void; onError: (m: string) => void; returnTo?: string }) {
   const [busy, setBusy] = useState(false)
+  const [inBrowser, setInBrowser] = useState(false)
   return (
+    <>
     <button
       type="button"
       className="btn-google"
@@ -253,6 +256,11 @@ function GoogleButton({ label, onProfile, onError, returnTo }: { label: string; 
       onClick={async () => {
         setBusy(true)
         try {
+          // Desktop app: Google refuses app windows, so sign-in finishes in the computer's own browser.
+          if (await desktopGoogleSignIn(returnTo || '/dashboard')) {
+            setInBrowser(true)
+            return
+          }
           onProfile(await signInWithGoogle(returnTo))
         } catch (err) {
           onError(
@@ -270,6 +278,8 @@ function GoogleButton({ label, onProfile, onError, returnTo }: { label: string; 
       {busy ? <span className="spinner dark" /> : <GoogleIcon />}
       {label}
     </button>
+    {inBrowser && <p className="google-browser-note">{tr('dl.auth.continueInBrowser')}</p>}
+    </>
   )
 }
 

@@ -10,5 +10,13 @@ const common: Dict['common'] = {
   ofTotal: '{from}–{to} von {total}', somethingWrong: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.', invalidEmail: 'Gib eine gültige E-Mail-Adresse ein',
   thisMonth: 'Diesen Monat', perMonth: '/Monat', plus: 'Plus', menu: 'Menü', backToSite: 'Zurück zur Website', lightMode: 'Heller Modus', darkMode: 'Dunkler Modus',
   switchToLight: 'Zum hellen Modus wechseln', switchToDark: 'Zum dunklen Modus wechseln',
+  crash: {
+    title: "Auf dieser Seite ist ein Fehler aufgetreten",
+    body: "Deine Daten sind sicher. Lade neu, um es noch einmal zu versuchen, oder geh zurück und mach weiter.",
+    reload: "Neu laden",
+    dashboard: "Zurück zum Dashboard",
+    home: "Zur Startseite",
+    details: "Technische Details",
+  },
 }
 export default common

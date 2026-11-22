@@ -34,3 +34,4 @@ Step-by-step setup: [docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md). Put your key
 - `api/` — AI and trial-email handlers used by the server
 - `supabase/migrations/` — database schema and security rules (run in order)
 - `render.yaml` — Render blueprint (web service + 2 cron jobs)
+- `desktop/` — Mac and Windows apps (Electron); installers are built by GitHub Actions — see [desktop/README.md](desktop/README.md)

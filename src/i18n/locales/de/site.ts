@@ -113,7 +113,7 @@ const site: Dict['site'] = {
     tagline: 'Steuere Abläufe und Produktivität deiner Gemeinde an einem Ort.',
     sub: 'Neuigkeiten erhalten', subscribe: 'Abonnieren',
     platform: 'Plattform', ministries: 'Dienste', company: 'Unternehmen',
-    hub: 'Alles in einem', design: 'Design-Studio', giving: 'Online-Spenden', pricing: 'Preise',
+    hub: 'Alles in einem', design: 'Design-Studio', giving: 'Online-Spenden', pricing: 'Preise', apps: 'Apps für Mac & Windows',
     pastors: 'Pastoren', admins: 'Gemeindeverwaltung', finance: 'Finanzteams',
     stories: 'Erfahrungen', faq: 'FAQ', privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', cookies: 'Cookie-Richtlinie', legal: 'Rechtliches & Compliance',
     help: 'Wie können wir helfen?', contact: 'Kontakt', rights: '© {year} ZionDesk. Alle Rechte vorbehalten.', photos: 'Fotos von',

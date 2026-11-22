@@ -113,7 +113,7 @@ const site: Dict['site'] = {
     tagline: 'Pilotez les activités de votre église et la productivité de votre équipe au même endroit.',
     sub: 'Recevoir les nouveautés', subscribe: 'S’abonner',
     platform: 'Plateforme', ministries: 'Ministères', company: 'Entreprise',
-    hub: 'Tout-en-un', design: 'Studio de design', giving: 'Dons en ligne', pricing: 'Tarifs',
+    hub: 'Tout-en-un', design: 'Studio de design', giving: 'Dons en ligne', pricing: 'Tarifs', apps: 'Apps Mac et Windows',
     pastors: 'Pasteurs', admins: 'Administrateurs', finance: 'Équipes finances',
     stories: 'Témoignages', faq: 'FAQ', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation', cookies: 'Politique de cookies', legal: 'Mentions légales et conformité',
     help: 'Comment pouvons-nous vous aider ?', contact: 'Nous contacter', rights: '© {year} ZionDesk. Tous droits réservés.', photos: 'Photos de',

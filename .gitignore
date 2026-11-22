@@ -38,3 +38,6 @@ ziondesk-hostinger/
 email-previews/
 ziondesk-admin 2/
 ziondesk-hostinger 2/
+
+# desktop installers fetched for the website build (npm run desktop:fetch) — too big for git
+public/downloads/

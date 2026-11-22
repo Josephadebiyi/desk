@@ -1,0 +1,116 @@
+{
+  "name": "ziondesk-desktop",
+  "productName": "ZionDesk",
+  "version": "1.0.2",
+  "description": "ZionDesk \u2014 church management, on your desktop",
+  "author": "ZionDesk",
+  "homepage": "https://ziondesk.com",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:local": "ZIONDESK_URL=http://localhost:5173/dashboard electron .",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.1"
+  },
+  "build": {
+    "appId": "com.ziondesk.desktop",
+    "productName": "ZionDesk",
+    "copyright": "\u00a9 ZionDesk",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "build/icon-mac.png",
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "ZionDesk uses the camera for check-in QR scanning and Design Studio photos.",
+        "NSMicrophoneUsageDescription": "ZionDesk uses the microphone when you talk to Ellen."
+      },
+      "minimumSystemVersion": "12.0",
+      "artifactName": "ZionDesk-mac.${ext}"
+    },
+    "dmg": {
+      "title": "ZionDesk",
+      "artifactName": "ZionDesk-mac.${ext}"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "ZionDesk-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ZionDesk"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "josephadebiyi",
+        "repo": "desk",
+        "releaseType": "release",
+        "tagNamePrefix": "desktop-v"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "ZionDesk",
+        "schemes": [
+          "ziondesk"
+        ]
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/josephadebiyi/desk.git"
+  }
+}
