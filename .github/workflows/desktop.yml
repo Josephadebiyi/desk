@@ -1,0 +1,75 @@
+# Builds the ZionDesk desktop apps: macOS (.dmg, universal Intel + Apple Silicon) and Windows (.exe installer).
+#   • Every run uploads the installers as downloadable artifacts (Actions → this run → Artifacts).
+#   • Pushing a tag like `desktop-v1.0.0` also attaches them to a draft GitHub Release.
+# Signing is optional — add these repository secrets when you have the certificates:
+#   macOS:   MAC_CSC_LINK (base64 .p12 "Developer ID Application"), MAC_CSC_KEY_PASSWORD,
+#            APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID   (notarization)
+#   Windows: WIN_CSC_LINK (base64 .pfx code-signing cert), WIN_CSC_KEY_PASSWORD
+name: Desktop apps
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['desktop-v*']
+    branches: ['**']
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+  pull_request:
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: mac
+          - os: windows-latest
+            target: win
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - run: npm ci
+
+      - name: Use the tag as the app version
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        shell: bash
+        run: npm version --no-git-tag-version --allow-same-version "${GITHUB_REF_NAME#desktop-v}"
+
+      - name: Build installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ matrix.target == 'mac' && secrets.MAC_CSC_LINK || secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ matrix.target == 'mac' && secrets.MAC_CSC_KEY_PASSWORD || secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Without a certificate, build unsigned instead of failing.
+          [ -z "$CSC_LINK" ] && unset CSC_LINK CSC_KEY_PASSWORD && export CSC_IDENTITY_AUTO_DISCOVERY=false
+          [ -z "$APPLE_ID" ] && unset APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+          if [[ "$GITHUB_REF" == refs/tags/desktop-v* ]]; then PUBLISH=always; else PUBLISH=never; fi
+          npx electron-builder --${{ matrix.target }} --publish "$PUBLISH"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZionDesk-${{ matrix.target }}
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.exe
+            desktop/release/*-mac.zip
+          if-no-files-found: error
