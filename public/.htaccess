@@ -25,6 +25,16 @@ DirectoryIndex index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
+# Desktop installers (/downloads, see scripts/fetch-desktop.mjs): download, don't display.
+AddType application/x-apple-diskimage .dmg
+AddType application/vnd.microsoft.portable-executable .exe
+<FilesMatch "\.(dmg|exe)$">
+  <IfModule mod_headers.c>
+    Header set Content-Disposition "attachment"
+    Header set Cache-Control "public, max-age=3600"
+  </IfModule>
+</FilesMatch>
+
 # Apple Pay domain verification (Paystack): served as-is with the content type Apple/Paystack expect.
 <Files "apple-developer-merchantid-domain-association">
   ForceType application/text

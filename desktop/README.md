@@ -31,7 +31,13 @@ The buttons link to the newest GitHub Release:
 - Mac: `https://github.com/Josephadebiyi/desk/releases/latest/download/ZionDesk-mac.dmg`
 - Windows: `https://github.com/Josephadebiyi/desk/releases/latest/download/ZionDesk-Setup.exe`
 
-(Host the files elsewhere by building the website with `VITE_DESKTOP_MAC_URL` / `VITE_DESKTOP_WIN_URL`.)
+**Shipping the installers with the website (`dist/downloads/`):** run `npm run desktop:fetch` in the repo root
+before building. It downloads `ZionDesk-mac.dmg` and `ZionDesk-Setup.exe` into `public/downloads/` (git-ignored —
+too big for git), so the build copies them to `dist/downloads/` and the buttons serve them from ziondesk.com.
+`npm run build:hostinger` does this automatically. Sources: the newest GitHub Release, otherwise the newest
+successful Actions build (needs `gh auth login` or `GITHUB_TOKEN`). Add `-- --downloads` to also save copies in
+your Downloads folder. If a deployment has no installers, the buttons fall back to the GitHub Release links above
+(or `VITE_DESKTOP_MAC_URL` / `VITE_DESKTOP_WIN_URL` if set).
 
 **Publishing a version:** push a tag such as `desktop-v1.0.0`:
 

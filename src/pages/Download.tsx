@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useT } from '../i18n'
 import { LangMenu } from '../i18n/Flags'
-import { DESKTOP_MAC_URL, DESKTOP_WIN_URL, detectOS, type DesktopOS } from '../lib/desktop'
+import { detectOS, useDesktopLinks, type DesktopOS } from '../lib/desktop'
 import { ThemeToggle } from '../theme'
 import './public.css'
 
@@ -34,6 +34,7 @@ function Version({ title, children }: { title: string; children: React.ReactNode
 export default function DownloadPage() {
   const { t } = useT()
   const detected = detectOS()
+  const links = useDesktopLinks()
   const [tab, setTab] = useState<Os>(detected === 'win' ? 'win' : 'mac')
   const order: Os[] = detected === 'win' ? ['win', 'mac'] : ['mac', 'win']
   const macCommon = ['s1', 's2', 's3', 's4'].map((s) => `dl.macStep.${s}`)
@@ -62,7 +63,7 @@ export default function DownloadPage() {
             {order.map((os, i) => (
               <a
                 key={os}
-                href={os === 'mac' ? DESKTOP_MAC_URL : DESKTOP_WIN_URL}
+                href={links[os]}
                 className={`dl-btn ${i === 0 && detected !== 'other' ? 'is-primary' : ''}`}
                 onClick={() => setTab(os)}
                 download
