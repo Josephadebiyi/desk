@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Bell, Check, HelpCircle, Languages, LogOut, Settings as SettingsIcon, Sparkles, UserRound, X } from 'lucide-react'
+import { ArrowRightLeft, Bell, Check, Download, HelpCircle, Languages, LogOut, Settings as SettingsIcon, Sparkles, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { buildInbox } from '../ai/inbox'
@@ -6,6 +6,7 @@ import { agentName } from '../ai/orchestrator'
 import { useAi } from '../ai/store'
 import type { ToolContext } from '../ai/tools'
 import { useT } from '../i18n'
+import { isDesktopApp } from '../lib/desktop'
 import { useSession } from '../lib/session'
 import { tEnum } from './kit'
 import { useBranchNotices } from './Branches'
@@ -238,6 +239,11 @@ export function ProfileMenu() {
           <Row to="/dashboard/help" icon={<HelpCircle size={16} />} onClick={close}>
             {t('dash.nav.help')}
           </Row>
+          {!isDesktopApp() && (
+            <Row to="/download" icon={<Download size={16} />} onClick={close}>
+              {t('dl.menu')}
+            </Row>
+          )}
           {session.remote ? (
             <Row
               icon={<LogOut size={16} />}

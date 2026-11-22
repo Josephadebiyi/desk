@@ -56,11 +56,12 @@
         "NSCameraUsageDescription": "ZionDesk uses the camera for check-in QR scanning and Design Studio photos.",
         "NSMicrophoneUsageDescription": "ZionDesk uses the microphone when you talk to Ellen."
       },
-      "minimumSystemVersion": "12.0"
+      "minimumSystemVersion": "12.0",
+      "artifactName": "ZionDesk-mac.${ext}"
     },
     "dmg": {
       "title": "ZionDesk",
-      "artifactName": "ZionDesk-${version}-mac.${ext}"
+      "artifactName": "ZionDesk-mac.${ext}"
     },
     "win": {
       "icon": "build/icon.ico",
@@ -73,7 +74,7 @@
           ]
         }
       ],
-      "artifactName": "ZionDesk-Setup-${version}.${ext}"
+      "artifactName": "ZionDesk-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -95,7 +96,7 @@
         "provider": "github",
         "owner": "josephadebiyi",
         "repo": "desk",
-        "releaseType": "draft"
+        "releaseType": "release"
       }
     ]
   },

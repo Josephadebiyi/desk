@@ -23,12 +23,28 @@ What the app adds on top of the website:
 
 ## Get the installers
 
-GitHub → **Actions → Desktop apps**. Every push that touches `desktop/` builds both apps; open the run and
-download **ZionDesk-mac** (`.dmg`) and **ZionDesk-win** (`.exe`) under *Artifacts*. You can also start a build by
-hand with **Run workflow**.
+**For churches:** the website's **Download app** button (header, footer and the dashboard's profile menu) opens
+`/download` (`src/pages/Download.tsx`). It picks the right file for the visitor's computer and shows step-by-step
+install instructions for macOS 15 Sequoia / 26 Tahoe, macOS 12–14, Windows 11 and Windows 10, in all 5 languages.
+The buttons link to the newest GitHub Release:
 
-To publish a version: push a tag such as `desktop-v1.0.0`. The installers are attached to a **draft** GitHub
-Release with that version number; check it, then press *Publish*.
+- Mac: `https://github.com/Josephadebiyi/desk/releases/latest/download/ZionDesk-mac.dmg`
+- Windows: `https://github.com/Josephadebiyi/desk/releases/latest/download/ZionDesk-Setup.exe`
+
+(Host the files elsewhere by building the website with `VITE_DESKTOP_MAC_URL` / `VITE_DESKTOP_WIN_URL`.)
+
+**Publishing a version:** push a tag such as `desktop-v1.0.0`:
+
+```bash
+git tag desktop-v1.0.0 && git push origin desktop-v1.0.0
+```
+
+GitHub Actions builds both apps and publishes a Release with them; the download buttons pick it up right away.
+Bump the number for each new desktop release (only needed when `desktop/` changes — website changes reach the app
+without a new release).
+
+**Test builds:** every push that touches `desktop/` builds both apps. Open GitHub → **Actions → Desktop apps**
+→ the run → *Artifacts* to download **ZionDesk-mac** / **ZionDesk-win** (sign-in to GitHub required).
 
 ## Run or build locally
 
@@ -37,15 +53,16 @@ cd desktop
 npm install
 npm start              # opens the app on https://ziondesk.com/dashboard
 npm run start:local    # against the dev server (npm run dev in the repo root)
-npm run dist:mac       # on a Mac   → release/ZionDesk-<version>-mac.dmg
-npm run dist:win       # on Windows → release/ZionDesk-Setup-<version>.exe
+npm run dist:mac       # on a Mac   → release/ZionDesk-mac.dmg
+npm run dist:win       # on Windows → release/ZionDesk-Setup.exe
 ```
 
 Point the app anywhere with `ZIONDESK_URL=https://… npm start`.
 
 ## Code signing (recommended before handing it to churches)
 
-Unsigned builds work but show a warning the first time:
+Without certificates, the Mac app is ad-hoc signed and the Windows installer is unsigned. Both work, but ask
+for a confirmation the first time (the /download page walks people through it):
 
 - **macOS:** "can't be opened because Apple cannot check it". Right-click the app → *Open* → *Open*.
   To remove the warning, join the Apple Developer Program ($99/yr), export a *Developer ID Application*

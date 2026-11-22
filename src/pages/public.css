@@ -108,3 +108,29 @@
 .pub-method-head { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; }
 .pub-method-head b { font-size: 15px; }
 .pub-logo { flex-shrink: 0; width: 42px; height: 42px; border-radius: 14px; object-fit: contain; background: #fff; border: 1px solid var(--line-2); }
+
+/* ── /download: desktop apps ── */
+.pub-card.dl { width: min(760px, 100%); }
+.dl-icon { width: 72px; height: 72px; border-radius: 18px; }
+.dl h2 { display: flex; align-items: center; gap: 8px; font-family: var(--grotesk); font-size: 21px; letter-spacing: -0.02em; margin-top: 12px; }
+.dl-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.dl-btn { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; border: 1.5px solid var(--line-2); background: var(--bg); color: var(--text); text-decoration: none; transition: border-color 0.15s, transform 0.15s; }
+.dl-btn:hover { border-color: var(--purple); transform: translateY(-1px); }
+.dl-btn span { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.dl-btn b { font-family: var(--grotesk); font-size: 16px; }
+.dl-btn small { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.dl-btn.is-primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+.dl-btn.is-primary small { color: rgba(255, 255, 255, 0.8); }
+.dl-btn.is-primary:hover { background: var(--purple-deep); }
+.dl-note { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+.dl-note svg { vertical-align: -2px; }
+.dl-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); justify-self: start; }
+.dl-tabs button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-family: var(--grotesk); font-weight: 650; font-size: 14px; cursor: pointer; }
+.dl-tabs button.is-on { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(20, 10, 50, 0.15); }
+.dl-version { display: grid; gap: 10px; padding: 18px 20px; border-radius: 20px; border: 1px solid var(--line); }
+.dl-version h3 { font-family: var(--grotesk); font-size: 16px; font-weight: 700; }
+.dl-steps { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; counter-reset: dl; }
+.dl-steps li { position: relative; padding-left: 38px; font-size: 14.5px; line-height: 1.55; counter-increment: dl; }
+.dl-steps li::before { content: counter(dl); position: absolute; left: 0; top: -1px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--purple) 12%, transparent); color: var(--purple); font-family: var(--grotesk); font-weight: 750; font-size: 13px; }
+.dl-help { display: grid; gap: 10px; padding-left: 18px; font-size: 14px; line-height: 1.55; }
+.dl code, .dl-help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; padding: 2px 6px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); word-break: break-all; }

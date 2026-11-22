@@ -113,7 +113,7 @@ const site: Dict['site'] = {
     tagline: 'Controle as operações da sua igreja e a produtividade da equipa num só lugar.',
     sub: 'Receber novidades', subscribe: 'Subscrever',
     platform: 'Plataforma', ministries: 'Ministérios', company: 'Empresa',
-    hub: 'Tudo num só', design: 'Estúdio de design', giving: 'Ofertas online', pricing: 'Preços',
+    hub: 'Tudo num só', design: 'Estúdio de design', giving: 'Ofertas online', pricing: 'Preços', apps: 'Apps para Mac e Windows',
     pastors: 'Pastores', admins: 'Administradores', finance: 'Equipas de finanças',
     stories: 'Testemunhos', faq: 'Perguntas frequentes', privacy: 'Política de privacidade', terms: 'Termos de utilização', cookies: 'Política de cookies', legal: 'Legal e conformidade',
     help: 'Como podemos ajudar?', contact: 'Contacte-nos', rights: '© {year} ZionDesk. Todos os direitos reservados.', photos: 'Fotos de',

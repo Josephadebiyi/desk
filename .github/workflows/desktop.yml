@@ -1,6 +1,7 @@
 # Builds the ZionDesk desktop apps: macOS (.dmg, universal Intel + Apple Silicon) and Windows (.exe installer).
 #   • Every run uploads the installers as downloadable artifacts (Actions → this run → Artifacts).
-#   • Pushing a tag like `desktop-v1.0.0` also attaches them to a draft GitHub Release.
+#   • Pushing a tag like `desktop-v1.0.0` publishes a GitHub Release with them. The website's download
+#     buttons (/download) always point at the newest release: ZionDesk-mac.dmg and ZionDesk-Setup.exe.
 # Signing is optional — add these repository secrets when you have the certificates:
 #   macOS:   MAC_CSC_LINK (base64 .p12 "Developer ID Application"), MAC_CSC_KEY_PASSWORD,
 #            APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID   (notarization)
@@ -59,11 +60,27 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Without a certificate, build unsigned instead of failing.
-          [ -z "$CSC_LINK" ] && unset CSC_LINK CSC_KEY_PASSWORD && export CSC_IDENTITY_AUTO_DISCOVERY=false
+          EXTRA=()
+          if [ -z "$CSC_LINK" ]; then
+            unset CSC_LINK CSC_KEY_PASSWORD
+            # No certificate: Windows builds unsigned; the Mac app is ad-hoc signed ("-"), which Apple
+            # silicon requires for the app to open at all (otherwise macOS reports it as damaged).
+            if [ "${{ matrix.target }}" = mac ]; then EXTRA+=("-c.mac.identity=-"); else export CSC_IDENTITY_AUTO_DISCOVERY=false; fi
+          fi
           [ -z "$APPLE_ID" ] && unset APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
           if [[ "$GITHUB_REF" == refs/tags/desktop-v* ]]; then PUBLISH=always; else PUBLISH=never; fi
-          npx electron-builder --${{ matrix.target }} --publish "$PUBLISH"
+          npx electron-builder --${{ matrix.target }} --publish "$PUBLISH" "${EXTRA[@]}"
+
+      - name: Check the Mac app (signature, Intel + Apple silicon)
+        if: matrix.target == 'mac'
+        run: |
+          APP=release/mac-universal/ZionDesk.app
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv "$APP" 2>&1 | grep -E 'Signature|Authority|TeamIdentifier|flags' || true
+          lipo -archs "$APP/Contents/MacOS/ZionDesk"
+          lipo -archs "$APP/Contents/MacOS/ZionDesk" | grep -q x86_64
+          lipo -archs "$APP/Contents/MacOS/ZionDesk" | grep -q arm64
+          /usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -71,5 +88,5 @@ jobs:
           path: |
             desktop/release/*.dmg
             desktop/release/*.exe
-            desktop/release/*-mac.zip
+            desktop/release/*.zip
           if-no-files-found: error
