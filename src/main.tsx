@@ -7,6 +7,7 @@ import { I18nProvider } from './i18n'
 import { SessionProvider } from './lib/session.tsx'
 import { isAdminHost } from './lib/site'
 import { captureSignupCode } from './lib/signupCode'
+import { CrashGuard } from './components/CrashGuard'
 
 captureSignupCode()
 
@@ -62,6 +63,7 @@ createRoot(document.getElementById('root')!).render(
     <SessionProvider>
     <ThemeProvider>
     <BrowserRouter>
+      <CrashGuard>
       <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
       {ADMIN_HOST ? (
         <Routes>
@@ -115,6 +117,7 @@ createRoot(document.getElementById('root')!).render(
       </Routes>
       )}
       </Suspense>
+      </CrashGuard>
     </BrowserRouter>
     </ThemeProvider>
     </SessionProvider>

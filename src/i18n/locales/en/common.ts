@@ -66,4 +66,12 @@ export default {
   darkMode: 'Dark mode',
   switchToLight: 'Switch to light mode',
   switchToDark: 'Switch to dark mode',
+  crash: {
+    title: "This screen hit a problem",
+    body: "Your data is safe. Reload to try again, or go back and carry on.",
+    reload: "Reload",
+    dashboard: "Back to dashboard",
+    home: "Go to the home page",
+    details: "Technical details",
+  },
 }

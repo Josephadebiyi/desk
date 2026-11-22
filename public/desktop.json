@@ -1,6 +1,6 @@
 {
-  "latest": "1.0.1",
-  "notes": "Google sign-in now works: it opens in your browser and brings you straight back. Plus Back and Forward buttons on every page.",
+  "latest": "1.0.2",
+  "notes": "Google sign-in works (it opens in your browser and brings you straight back), Back and Forward buttons that stay clear of the sidebar, and a friendly message instead of a blank screen if something goes wrong.",
   "required": false,
   "message": null
 }

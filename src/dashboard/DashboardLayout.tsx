@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode, Suspense } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { CrashGuard } from '../components/CrashGuard'
 import { NotificationsMenu, ProfileMenu } from './TopMenus'
 import { useSession } from '../lib/session'
 import { useWorkspace, WorkspaceProvider } from './workspace'
@@ -392,9 +393,11 @@ function Shell() {
     <DashboardFrame>
       {live && settings.planStatus === 'expired' && !/\/dashboard\/(settings|help)/.test(pathname) ? <Paywall /> : (
         // Pages load on demand; the dashboard frame stays on screen meanwhile.
-        <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
-          <Outlet />
-        </Suspense>
+        <CrashGuard inDashboard>
+          <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
+            <Outlet />
+          </Suspense>
+        </CrashGuard>
       )}
     </DashboardFrame>
   )

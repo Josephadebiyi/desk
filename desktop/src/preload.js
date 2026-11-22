@@ -49,7 +49,15 @@ function mountNav() {
   const fwd = root.querySelector('.fwd')
   back.addEventListener('click', () => ipcRenderer.send('zd:nav', 'back'))
   fwd.addEventListener('click', () => ipcRenderer.send('zd:nav', 'forward'))
+  // Stay clear of the dashboard's left sidebar: sit just to its right when it reaches the bottom corner.
+  const place = () => {
+    const rail = document.querySelector('.d-rail')
+    const r = rail && rail.offsetParent ? rail.getBoundingClientRect() : null
+    bar.style.left = r && r.left < 120 && r.bottom > window.innerHeight - 90 ? `${Math.round(r.right + 12)}px` : '14px'
+  }
+  window.addEventListener('resize', place)
   applyNav = () => {
+    place()
     bar.classList.toggle('hidden', !navState.back && !navState.forward)
     back.hidden = !navState.back
     fwd.hidden = !navState.forward
@@ -62,6 +70,7 @@ function mountNav() {
   window.addEventListener('popstate', refresh)
   let last = location.href
   setInterval(() => {
+    place()
     if (location.href !== last) {
       last = location.href
       refresh()
