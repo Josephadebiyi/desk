@@ -3,6 +3,13 @@
 A native app around the live ZionDesk web app (https://ziondesk.com). Because it loads the live site,
 every web release reaches desktop users instantly — no reinstall needed. Built with Electron.
 
+- **It is the dashboard, not the website.** It opens on the sign-in screen (or straight into the dashboard
+  when already signed in). The home page and other marketing pages are never shown: the logo, "back to
+  website" and sign-out all land on the sign-in screen.
+- **Mac:** one universal `.dmg` for Intel and Apple Silicon (M1–M4 and newer), macOS 12 Monterey or later.
+  Distributed as a direct download, not through the Mac App Store.
+- **Windows:** one installer for Windows 10/11, 64-bit Intel/AMD and ARM.
+
 What the app adds on top of the website:
 
 - Its own window, Dock/taskbar icon, Start-menu and desktop shortcut (Windows), and menus with shortcuts

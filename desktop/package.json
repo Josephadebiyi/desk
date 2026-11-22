@@ -9,7 +9,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "start:local": "ZIONDESK_URL=http://localhost:5173 electron .",
+    "start:local": "ZIONDESK_URL=http://localhost:5173/dashboard electron .",
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
@@ -55,7 +55,8 @@
       "extendInfo": {
         "NSCameraUsageDescription": "ZionDesk uses the camera for check-in QR scanning and Design Studio photos.",
         "NSMicrophoneUsageDescription": "ZionDesk uses the microphone when you talk to Ellen."
-      }
+      },
+      "minimumSystemVersion": "12.0"
     },
     "dmg": {
       "title": "ZionDesk",

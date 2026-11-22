@@ -35,6 +35,19 @@ const isFlowUrl = (u) => {
     return false
   }
 }
+// Pages the desktop app shows. Anything else on the website (home page, pricing, features…) is
+// the marketing site and is replaced by the sign-in screen.
+const LOGIN = new URL('/login', HOME).href
+const APP_PATHS = /^\/(login|register|forgot-password|reset-password|dashboard|admin|join|give|checkin|api|legal|privacy|terms|cookies|dpa|subprocessors|refunds|acceptable-use|email-preview)(\/|$)/
+const isLandingUrl = (u) => {
+  try {
+    const url = new URL(u)
+    if (!isAppUrl(u) || url.host.startsWith('admin.') || url.host.startsWith('api.') || url.host.endsWith('onrender.com')) return false
+    return !APP_PATHS.test(url.pathname)
+  } catch {
+    return false
+  }
+}
 const openExternal = (u) => {
   if (/^(https?|mailto|tel):/i.test(u)) shell.openExternal(u)
 }
@@ -98,11 +111,26 @@ function createWindow() {
   // Once inside a flow (e.g. a card checkout redirecting to a bank's 3-D Secure page), let it finish.
   wc.on('will-navigate', (e, url) => {
     if (url.startsWith('file:')) return
+    if (isLandingUrl(url)) {
+      e.preventDefault()
+      wc.loadURL(LOGIN)
+      return
+    }
     const fromApp = isAppUrl(wc.getURL()) || wc.getURL().startsWith('file:')
     if (!fromApp || isAppUrl(url) || isFlowUrl(url)) return
     e.preventDefault()
     openExternal(url)
   })
+
+  // The desktop app is the dashboard, never the marketing website: links to the home page
+  // (logo, "back to website", sign-out) go to the sign-in screen, which opens the dashboard
+  // straight away when already signed in.
+  const toLoginIfLanding = (_e, url, ...rest) => {
+    const isMainFrame = typeof rest[0] === 'boolean' ? rest[0] : true
+    if (isMainFrame && isLandingUrl(url)) wc.loadURL(LOGIN)
+  }
+  wc.on('did-navigate', toLoginIfLanding)
+  wc.on('did-navigate-in-page', toLoginIfLanding)
 
   // No connection → a friendly offline page that retries.
   wc.on('did-fail-load', (_e, code, _desc, url, isMainFrame) => {
